@@ -11,7 +11,7 @@
             <!-- Añadir botón para avanzar estado -->
             <xpath expr="//sheet" position="before">
                 <header>
-                    <button name="action_next_state" string="Pasar de Estado" type="object" class="oe_highlight" attrs="{'invisible': [('state', '=', 'done')]}"/>
+                    <button name="action_next_state" string="Pasar de Estado" type="object" class="oe_highlight" invisible = [('state', '=', 'done')] />
                 </header>
             </xpath>
         </field>
