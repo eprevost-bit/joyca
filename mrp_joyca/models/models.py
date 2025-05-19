@@ -15,6 +15,7 @@ class MrpProduction(models.Model):
             ('montaje', 'Montaje'),
             ('done', 'Finalizado'),
         ],
+        default='draft',
         ondelete={
             'draft': 'set default',
             'medicion': 'set default',
