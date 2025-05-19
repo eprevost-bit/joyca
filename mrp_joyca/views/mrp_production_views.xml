@@ -30,6 +30,7 @@
             <xpath expr="//kanban" position="attributes">
                 <attribute name="default_group_by">state</attribute>
                 <attribute name="group_create">true</attribute>
+                <attribute name="group_delete">true</attribute>
             </xpath>
         </field>
     </record>
