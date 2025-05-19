@@ -25,6 +25,31 @@ class MrpProduction(models.Model):
         help="Estado de la orden de producción"
     )
 
+    # Sobreescribir action_confirm para usar tu primer estado personalizado
+    def action_confirm(self):
+        for order in self:
+            if order.state == 'draft':
+                order.state = 'medicion'
+        return True
+
+    # Método para avanzar al siguiente estado
+    def action_next_state(self):
+        state_sequence = [
+            'draft',
+            'medicion',
+            'sketchup',
+            'layout',
+            'fabricacion',
+            'barnizado',
+            'montaje',
+            'done'
+        ]
+        for order in self:
+            current_index = state_sequence.index(order.state)
+            if current_index < len(state_sequence) - 1:
+                order.state = state_sequence[current_index + 1]
+        return True
+
     @api.depends('move_raw_ids.state', 'move_raw_ids.quantity', 
                 'move_finished_ids.state', 'workorder_ids.state', 
                 'product_qty', 'qty_producing', 'move_raw_ids.picked')
@@ -33,14 +58,10 @@ class MrpProduction(models.Model):
         Computar el estado de producción con los nuevos estados personalizados
         """
         for production in self:
-            # Mantener la lógica básica pero adaptada a tus estados
             if not production.state or not production.product_uom_id:
                 production.state = 'draft'
             elif production.state == 'cancel':
                 production.state = 'cancel'
             elif production.state == 'done':
                 production.state = 'done'
-            # Aquí puedes añadir más lógica para tus estados personalizados
-            # Por ejemplo:
-            elif production.state == 'fabricacion' and all(move.state == 'done' for move in production.move_raw_ids):
-                production.state = 'montaje'
+            # Lógica adicional para transiciones automáticas si es necesario
