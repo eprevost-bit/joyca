@@ -1,0 +1,15 @@
+<odoo>
+    <record id="view_mrp_production_form_inherit" model="ir.ui.view">
+        <field name="name">mrp.production.form.inherit</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <!-- Modificar el campo state en el formulario -->
+            <field name="state" position="replace">
+                <field name="state" widget="statusbar" 
+                       statusbar_visible="draft,medicion,sketchup,layout,fabricacion,barnizado,montaje,done" 
+                       statusbar_colors='{"draft":"blue","medicion":"lightblue","sketchup":"cyan","layout":"teal","fabricacion":"orange","barnizado":"brown","montaje":"purple","done":"green"}'/>
+            </field>
+        </field>
+    </record>
+</odoo>
