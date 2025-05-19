@@ -22,14 +22,13 @@
             </xpath>
 
             <!-- Opcional: Añadir botones para cambiar estados -->
-            <xpath expr="//templates" position="inside">
+            <!-- <xpath expr="//templates" position="inside">
                 <div class="oe_kanban_bottom_right">
                     <button name="action_confirm" string="Confirmar" class="oe_kanban_action" states="draft"/>
                     <button name="action_medicion" string="Medición" class="oe_kanban_action" states="draft"/>
                     <button name="action_sketchup" string="Sketch Up" class="oe_kanban_action" states="medicion"/>
-                    <!-- Añade más botones según necesites -->
                 </div>
-            </xpath>
+            </xpath> -->
         </field>
     </record>
 </odoo>
