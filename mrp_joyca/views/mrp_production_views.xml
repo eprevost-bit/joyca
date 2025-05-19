@@ -20,15 +20,9 @@
             <xpath expr="//field[@name='state']" position="replace">
                 <field name="state" widget="statusbar" statusbar_visible="draft,medicion,sketchup,layout,fabricacion,barnizado,montaje,done,cancel" statusbar_colors='{"draft":"lightblue","medicion":"#FFC107","sketchup":"#9C27B0","layout":"#3F51B5","fabricacion":"#FF5722","barnizado":"#795548","montaje":"#607D8B","done":"green","cancel":"red"}'/>
             </xpath>
-
-            <!-- Opcional: Añadir botones para cambiar estados -->
-            <!-- <xpath expr="//templates" position="inside">
-                <div class="oe_kanban_bottom_right">
-                    <button name="action_confirm" string="Confirmar" class="oe_kanban_action" states="draft"/>
-                    <button name="action_medicion" string="Medición" class="oe_kanban_action" states="draft"/>
-                    <button name="action_sketchup" string="Sketch Up" class="oe_kanban_action" states="medicion"/>
-                </div>
-            </xpath> -->
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="default_group_by">state</attribute>
+            </xpath>
         </field>
     </record>
 </odoo>
