@@ -20,13 +20,11 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
             if (result.error) {
                 this.el.insertAdjacentHTML('afterbegin', `<div class="alert alert-danger" role="alert">${result.error}</div>`);
             } else {
-                // Mostrar mensaje de éxito temporal
                 this.el.insertAdjacentHTML('afterbegin',
                     `<div class="alert alert-success" role="alert">
                         Registro de ${result.action === 'check_in' ? 'ENTRADA' : 'SALIDA'} exitoso
                     </div>`);
             }
-            // Recargar después de 1.5 segundos para ver el mensaje
             setTimeout(() => window.location.reload(), 1500);
 
         } catch (error) {
@@ -34,6 +32,60 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
             this.el.querySelectorAll('.btn-clock-in, .btn-clock-out').forEach(btn => btn.disabled = false);
         }
     },
+});
+
+publicWidget.registry.AttendancePortalWidget.include({
+    events: {
+        ...publicWidget.registry.AttendancePortalWidget.prototype.events,
+        'click .btn-save': '_onSaveChanges',
+    },
+
+    _onSaveChanges: function(ev) {
+        const btn = ev.currentTarget;
+        const attendanceId = parseInt(btn.dataset.id);
+        const row = btn.closest('tr');
+
+        const checkInInput = row.querySelector('input[data-field="check_in"]');
+        const checkOutInput = row.querySelector('input[data-field="check_out"]');
+
+        const checkIn = checkInInput.value;
+        const checkOut = checkOutInput ? checkOutInput.value : null;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
+
+        this._rpc({
+            route: '/my/attendance/update',
+            params: {
+                attendance_id: attendanceId,
+                new_check_in: checkIn,
+                new_check_out: checkOut,
+            },
+        }).then((result) => {
+            if (result.error) {
+                this.displayAlert('danger', result.error);
+            } else {
+                this.displayAlert('success', 'Registro actualizado correctamente');
+                const durationCell = row.querySelector('td:nth-child(4)');
+                durationCell.textContent = result.worked_hours.toFixed(2) + ' h';
+            }
+        }).finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-save"></i> Guardar';
+        });
+    },
+
+    displayAlert: function(type, message) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} mt-2`;
+        alert.role = 'alert';
+        alert.innerHTML = message;
+
+        const container = this.el.querySelector('#editable-attendances');
+        container.parentNode.insertBefore(alert, container);
+
+        setTimeout(() => alert.remove(), 5000);
+    }
 });
 
 export default publicWidget.registry.AttendancePortalWidget;

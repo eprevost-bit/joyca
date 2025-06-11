@@ -23,14 +23,17 @@
                     </div>
                     <div class="card-body text-center">
                         <h5 class="mb-3">
-                            Hola <t t-esc="employee.name"/>, tu estado actual es:
-                            <span t-if="employee.attendance_state == 'checked_in'" class="badge bg-success">DENTRO</span>
+                            Hola<t t-esc="employee.name"/>, tu estado actual es:
+                            <span t-if="employee.attendance_state == 'checked_in'" class="badge bg-success">DENTRO
+                            </span>
                             <span t-else="" class="badge bg-danger">FUERA</span>
                         </h5>
-                        <button class="btn btn-success btn-lg mx-2 btn-clock-in" t-att-disabled="employee.attendance_state == 'checked_in' or None">
+                        <button class="btn btn-success btn-lg mx-2 btn-clock-in"
+                                t-att-disabled="employee.attendance_state == 'checked_in' or None">
                             <i class="fa fa-sign-in me-2"/>Registrar ENTRADA
                         </button>
-                        <button class="btn btn-danger btn-lg mx-2 btn-clock-out" t-att-disabled="employee.attendance_state == 'checked_out' or None">
+                        <button class="btn btn-danger btn-lg mx-2 btn-clock-out"
+                                t-att-disabled="employee.attendance_state == 'checked_out' or None">
                             <i class="fa fa-sign-out me-2"/>Registrar SALIDA
                         </button>
                     </div>
@@ -49,13 +52,71 @@
                         </thead>
                         <tbody>
                             <tr t-foreach="attendances" t-as="att">
-                                <td><t t-esc="att.check_in.strftime('%d/%m/%Y')"/></td>
-                                <td><t t-esc="att.check_in.strftime('%H:%M:%S')"/></td>
-                                <td><t t-if="att.check_out" t-esc="att.check_out.strftime('%H:%M:%S')"/></td>
-                                <td><t t-esc="'%.2f' % att.worked_hours"/> h</td>
+                                <td>
+                                    <t t-esc="att.check_in.strftime('%d/%m/%Y')"/>
+                                </td>
+                                <td>
+                                    <t t-esc="att.check_in.strftime('%H:%M:%S')"/>
+                                </td>
+                                <td>
+                                    <t t-if="att.check_out" t-esc="att.check_out.strftime('%H:%M:%S')"/>
+                                </td>
+                                <td>
+                                    <t t-esc="'%.2f' % att.worked_hours"/>
+                                    h
+                                </td>
                             </tr>
                         </tbody>
                     </table>
+
+                </div>
+                <div class="card mt-4" t-if="employee">
+                    <div class="card-header">
+                        <h4 class="mb-0">Modificar Registros Recientes</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            Solo puedes modificar registros de los últimos 7 días
+                        </div>
+                        <table class="table table-hover" id="editable-attendances">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Entrada</th>
+                                    <th>Salida</th>
+                                    <th>Duración</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="recent_attendances" t-as="att">
+                                    <td>
+                                        <t t-esc="att.check_in.strftime('%d/%m/%Y')"/>
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control time-input"
+                                               t-att-value="att.check_in.strftime('%H:%M')"
+                                               t-att-data-id="att.id" data-field="check_in"/>
+                                    </td>
+                                    <td>
+                                        <input t-if="att.check_out" type="time" class="form-control time-input"
+                                               t-att-value="att.check_out.strftime('%H:%M')"
+                                               t-att-data-id="att.id" data-field="check_out"/>
+                                    </td>
+                                    <td>
+                                        <t t-esc="'%.2f' % att.worked_hours"/>
+                                        h
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm btn-save" t-att-data-id="att.id">
+                                            <i class="fa fa-save"/>
+                                            Guardar
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </t>
@@ -65,8 +126,12 @@
         <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
             <a class="list-group-item list-group-item-action" href="/my/attendances">
                 <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1"><i class="fa fa-clock-o me-2"/>Mi Registro</h5>
-                    <small><t t-esc="attendance_count"/> Registros</small>
+                    <h5 class="mb-1"><i class="fa fa-clock-o me-2"/>Mi Registro
+                    </h5>
+                    <small>
+                        <t t-esc="attendance_count"/>
+                        Registros
+                    </small>
                 </div>
                 <p class="mb-1">
                     Registra tu jornada laboral y consulta tus horas.
