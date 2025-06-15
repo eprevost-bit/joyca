@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from odoo import http, fields
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
@@ -21,13 +23,22 @@ class EmployeePortal(CustomerPortal):
         if not employee:
             return request.render("website.404")
 
+        # Obtener los últimos 20 registros para la tabla principal
         attendances = request.env['hr.attendance'].search([
             ('employee_id', '=', employee.id)
         ], order='check_in desc', limit=20)
 
+        # Obtener registros de los últimos 7 días para edición
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        recent_attendances = request.env['hr.attendance'].search([
+            ('employee_id', '=', employee.id),
+            ('check_in', '>=', seven_days_ago)
+        ], order='check_in desc')
+
         values = {
             'employee': employee,
             'attendances': attendances,
+            'recent_attendances': recent_attendances,  # Añadir esta línea
             'page_name': 'attendances',
         }
         return request.render("ibec_portal_empleado.portal_attendances_template", values)
