@@ -96,12 +96,14 @@
                                     <td>
                                         <input type="time" class="form-control time-input"
                                                t-att-value="att.check_in.strftime('%H:%M')"
-                                               t-att-data-id="att.id" data-field="check_in"/>
+                                               t-att-data-id="att.id" data-field="check_in"
+                                               placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}"/>
                                     </td>
                                     <td>
                                         <input t-if="att.check_out" type="time" class="form-control time-input"
                                                t-att-value="att.check_out.strftime('%H:%M')"
-                                               t-att-data-id="att.id" data-field="check_out"/>
+                                               t-att-data-id="att.id" data-field="check_out"
+                                               placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}"/>
                                     </td>
                                     <td>
                                         <t t-esc="'%.2f' % att.worked_hours"/>

@@ -48,15 +48,28 @@ publicWidget.registry.AttendancePortalWidget.include({
         const checkInInput = row.querySelector('input[data-field="check_in"]');
         const checkOutInput = row.querySelector('input[data-field="check_out"]');
 
-        // Obtener valores y asegurar formato HH:MM
+        // Obtener valores y validar formato HH:MM
+        const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/; // Formato HH:MM
+
         const checkIn = checkInInput.value;
-        const checkOut = checkOutInput ? checkOutInput.value : null;
+        if (!timeRegex.test(checkIn)) {
+            this.displayAlert('danger', 'Formato de hora de entrada inválido. Use HH:MM');
+            return;
+        }
+
+        let checkOut = null;
+        if (checkOutInput && checkOutInput.value) {
+            checkOut = checkOutInput.value;
+            if (!timeRegex.test(checkOut)) {
+                this.displayAlert('danger', 'Formato de hora de salida inválido. Use HH:MM');
+                return;
+            }
+        }
 
         btn.disabled = true;
         btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
 
         try {
-            // Usar rpc directamente en lugar de this._rpc
             const result = await rpc('/my/attendance/update', {
                 attendance_id: attendanceId,
                 new_check_in: checkIn,

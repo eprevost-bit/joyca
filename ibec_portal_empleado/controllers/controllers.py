@@ -92,14 +92,28 @@ class EmployeePortal(CustomerPortal):
             if (fields.Date.today() - attendance.check_in.date()).days > 7:
                 return {'error': 'Solo puedes modificar registros de los últimos 7 días'}
 
+            # Obtener la fecha original del check_in
+            original_date = attendance.check_in.date()
+
+            new_check_in_time = datetime.strptime(new_check_in, '%H:%M').time()
+            new_check_in_dt = datetime.combine(original_date, new_check_in_time)
+
+            # Manejar el check_out (puede ser None)
+            new_check_out_dt = False
+            if new_check_out:
+                new_check_out_time = datetime.strptime(new_check_out, '%H:%M').time()
+                new_check_out_dt = datetime.combine(original_date, new_check_out_time)
+
             attendance.write({
-                'check_in': new_check_in,
-                'check_out': new_check_out
+                'check_in': new_check_in_dt,
+                'check_out': new_check_out_dt or False
             })
 
             return {
                 'success': True,
                 'worked_hours': attendance.worked_hours
             }
+        except ValueError as ve:
+            return {'error': f'Formato de hora inválido: {str(ve)}. Use HH:MM'}
         except Exception as e:
             return {'error': str(e)}
