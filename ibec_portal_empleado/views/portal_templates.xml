@@ -129,7 +129,16 @@
         </t>
     </template>
 
+    <template id="my_layout" inherit_id="website.layout" name="My Layout">
+        <xpath expr="//header[@id='top']" position="replace"/>
+         <xpath expr="//footer[@id='bottom']" position="replace"/>
+
+    </template>
+
     <template id="portal_my_home_attendance" name="Portal My Home: Attendances" inherit_id="portal.portal_my_home">
+
+
+
         <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
             <!-- Widget de registro de asistencia -->
             <t t-set="employee" t-value="request.env.user.employee_id" t-if="request.env.user.employee_id"/>
