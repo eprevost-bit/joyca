@@ -26,8 +26,19 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
                 this._displayAlert('danger', result.error);
             } else {
                 const action = result.action === 'check_in' ? 'ENTRADA' : 'SALIDA';
+
                 this._displayAlert('success', `Registro de ${action} exitoso`);
-                setTimeout(() => window.location.reload(), 1500);
+
+                if (result.action === 'check_in') {
+                    this._displayAlert(
+                        'warning',
+                        'Disfrute su tiempo de trabajo. Recuerde que debe registrar su salida al finalizar su jornada laboral.'
+                    );
+                }
+                if (result.action === 'check_in') {
+                    localStorage.setItem('attendance_entry_notice', '1');
+                }
+                setTimeout(() => window.location.reload(), 3500);
             }
         } catch (error) {
             this._displayAlert('danger', 'Error de conexión con el servidor');
@@ -134,6 +145,14 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
             trigger: 'hover',
             placement: 'top'
         });
+        const notice = localStorage.getItem('attendance_entry_notice');
+        if (notice) {
+            this._displayAlert(
+                'warning',
+                'Oye, recuerda que tu jornada laboral es de 8 horas. Si necesitas trabajar más de este tiempo, contacta con tu jefe directo y no olvides registrar tu salida.'
+            );
+            localStorage.removeItem('attendance_entry_notice');
+        }
 
         return this._super.apply(this, arguments);
     }
