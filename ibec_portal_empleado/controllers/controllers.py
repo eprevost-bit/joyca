@@ -4,6 +4,14 @@ from odoo import http, fields
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
 
+from odoo.http import request, content_disposition
+from odoo.addons.web.controllers.report import ReportController
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+
 
 class EmployeePortal(CustomerPortal):
 
@@ -53,15 +61,19 @@ class EmployeePortal(CustomerPortal):
             return {'error': 'No se encontró el empleado asociado.'}
 
         try:
-            # La función _attendance_action_change devuelve un registro de hr.attendance
             attendance = employee._attendance_action_change()
+            action = 'check_in' if not attendance.check_out else 'check_out'
 
-            # Determinar si fue una entrada o salida
-            action = 'check_in' if attendance.check_out is None else 'check_out'
+            worked_hours = 0
+            if action == 'check_out' and attendance.check_in and attendance.check_out:
+                delta = attendance.check_out - attendance.check_in
+                worked_hours = delta.total_seconds() / 3600
 
             return {
                 'action': action,
                 'attendance_state': employee.attendance_state,
+                'check_in_time': attendance.check_in.strftime('%H:%M') if attendance.check_in else '',
+                'worked_hours': worked_hours,
                 'message': 'Registro exitoso'
             }
         except Exception as e:
@@ -117,3 +129,71 @@ class EmployeePortal(CustomerPortal):
             return {'error': f'Formato de hora inválido: {str(ve)}. Use HH:MM'}
         except Exception as e:
             return {'error': str(e)}
+
+    @http.route('/my/attendances/pdf_report', type='http', auth="user", website=True)
+    def attendance_pdf_report(self, **kwargs):
+        employee = request.env.user.employee_id
+        if not employee:
+            return request.not_found()
+
+        # Obtener los registros de asistencia
+        attendances = request.env['hr.attendance'].search([
+            ('employee_id', '=', employee.id)
+        ], order='check_in desc')
+
+        # Crear el PDF
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
+
+        # Estilos
+        styles = getSampleStyleSheet()
+        style_title = styles['Title']
+        style_normal = styles['BodyText']
+
+        # Título
+        title = Paragraph(f"Registros de Asistencia - {employee.name}", style_title)
+        elements.append(title)
+        elements.append(Paragraph("<br/>", style_normal))
+
+        # Datos para la tabla
+        data = [
+            ["Fecha", "Entrada", "Salida", "Duración (horas)"]
+        ]
+
+        for att in attendances:
+            data.append([
+                att.check_in.strftime('%d/%m/%Y') if att.check_in else '',
+                att.check_in.strftime('%H:%M:%S') if att.check_in else '',
+                att.check_out.strftime('%H:%M:%S') if att.check_out else '',
+                "%.2f" % att.worked_hours
+            ])
+
+        # Crear tabla
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+
+        elements.append(table)
+
+        # Generar PDF
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+
+        # Descargar el archivo
+        filename = f"registros_asistencia_{employee.name.replace(' ', '_')}.pdf"
+        headers = [
+            ('Content-Type', 'application/pdf'),
+            ('Content-Length', len(pdf)),
+            ('Content-Disposition', content_disposition(filename))
+        ]
+        return request.make_response(pdf, headers=headers)

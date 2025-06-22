@@ -1,3 +1,9 @@
 .btn-clock-in, .btn-clock-out {
     min-width: 200px;
 }
+.o_portal_category{
+    display: none;
+}
+.o_portal_my_details{
+    display: none;
+}

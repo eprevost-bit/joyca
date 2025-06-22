@@ -3,7 +3,7 @@
 
     <template id="portal_attendances_template" name="Portal My Attendances">
         <t t-call="portal.portal_layout">
-            <t t-call-assets="web.assets_core" t-css="false"/>
+            <t t-call-assets="web.asset2s_core" t-css="false"/>
             <t t-set="breadcrumbs" t-value="[('my_home', {'url': '/my'}), ('Fichajes', {})]"/>
 
             <t t-call="portal.portal_searchbar">
@@ -68,6 +68,11 @@
                             </tr>
                         </tbody>
                     </table>
+                    <div class="text-end mt-3">
+                        <a href="/my/attendances/pdf_report" class="btn btn-primary">
+                            <i class="fa fa-download me-2"></i>Descargar Registros (PDF)
+                        </a>
+                    </div>
 
                 </div>
                 <div class="card mt-4" t-if="employee">
@@ -125,7 +130,36 @@
     </template>
 
     <template id="portal_my_home_attendance" name="Portal My Home: Attendances" inherit_id="portal.portal_my_home">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <!-- Widget de registro de asistencia -->
+            <t t-set="employee" t-value="request.env.user.employee_id" t-if="request.env.user.employee_id"/>
+
+            <div t-if="employee" id="attendance_portal_widget" class="mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">Registrar Jornada</h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <h5 class="mb-3">
+                            Hola<t t-esc="employee.name"/>, tu estado actual es:
+                            <span t-if="employee.attendance_state == 'checked_in'" class="badge bg-success">DENTRO
+                            </span>
+                            <span t-else="" class="badge bg-danger">FUERA</span>
+                        </h5>
+                        <button class="btn btn-success btn-lg mx-2 btn-clock-in"
+                                t-att-disabled="employee.attendance_state == 'checked_in' or None">
+                            <i class="fa fa-sign-in me-2"/>Registrar ENTRADA
+                        </button>
+                        <button class="btn btn-danger btn-lg mx-2 btn-clock-out"
+                                t-att-disabled="employee.attendance_state == 'checked_out' or None">
+                            <i class="fa fa-sign-out me-2"/>Registrar SALIDA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </xpath>
         <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+
             <a class="list-group-item list-group-item-action" href="/my/attendances">
                 <div class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1"><i class="fa fa-clock-o me-2"/>Mi Registro
