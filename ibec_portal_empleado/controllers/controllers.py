@@ -1,16 +1,40 @@
-from datetime import datetime, timedelta
-
 from odoo import http, fields
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
 
 from odoo.http import request, content_disposition
-from odoo.addons.web.controllers.report import ReportController
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+from odoo import models, fields, api
+from datetime import datetime, timedelta, time
+import random
+from dateutil.relativedelta import relativedelta
+import logging
+
+_logger = logging.getLogger(__name__)
+
+
+class WebsiteRedirectController(http.Controller):
+
+    @http.route('/', type='http', auth="public", website=True)
+    def redirect_to_login(self, **kw):
+        """
+        Este controlador se activa al acceder a la raíz del sitio web.
+        - Si el usuario NO ha iniciado sesión (es un usuario público),
+          lo redirige a la página de login.
+        - Si el usuario SÍ ha iniciado sesión, lo redirige a la
+          página principal del portal para evitar que vea el sitio web.
+        """
+        # El método _is_public() devuelve True si el usuario no está autenticado.
+        if request.env.user._is_public():
+            # Redirigir al login de Odoo
+            return request.redirect('/web/login')
+        else:
+            # Si ya está logueado, lo enviamos a su portal
+            return request.redirect('/my/home')
 
 
 class EmployeePortal(CustomerPortal):
@@ -197,3 +221,92 @@ class EmployeePortal(CustomerPortal):
             ('Content-Disposition', content_disposition(filename))
         ]
         return request.make_response(pdf, headers=headers)
+
+
+class AttendanceAutomation(models.Model):
+    _name = 'attendance.automation'
+    _description = 'Automatización de Registros Horarios'
+
+    @api.model
+    def process_weekly_attendance(self):
+        # Obtener la fecha del último domingo
+        today = fields.Date.today()
+        last_sunday = today - timedelta(days=today.weekday() + 1)
+        week_start = last_sunday - timedelta(days=6)  # Lunes de la semana pasada
+
+        # Obtener todos los empleados activos
+        employees = self.env['hr.employee'].search([('active', '=', True)])
+
+        for employee in employees:
+            # Buscar registros de la semana pasada
+            existing_attendances = self.env['hr.attendance'].search([
+                ('employee_id', '=', employee.id),
+                ('check_in', '>=', week_start),
+                ('check_in', '<=', last_sunday)
+            ], order='check_in')
+
+            # Archivar registros existentes (marcarlos como archivados)
+            existing_attendances.write({'archived': True})
+
+            # Obtener días únicos con registros
+            days_with_attendance = set()
+            for att in existing_attendances:
+                days_with_attendance.add(att.check_in.date())
+
+            # Crear nuevos registros para cada día
+            for day in days_with_attendance:
+                # Registro mañana
+                morning_check_in = datetime.combine(
+                    day,
+                    time(hour=8, minute=random.randint(55, 65) % 60)
+                )
+                morning_check_out = datetime.combine(
+                    day,
+                    time(hour=12, minute=random.randint(55, 65) % 60)
+                )
+
+                # Verificar si ya existe un registro en ese rango
+                existing_morning = self.env['hr.attendance'].search([
+                    ('employee_id', '=', employee.id),
+                    ('check_in', '>=', morning_check_in - timedelta(minutes=15)),
+                    ('check_in', '<=', morning_check_in + timedelta(minutes=15))
+                ], limit=1)
+
+                if not existing_morning:
+                    try:
+                        self.env['hr.attendance'].create({
+                            'employee_id': employee.id,
+                            'check_in': morning_check_in,
+                            'check_out': morning_check_out,
+                            'auto_generated': True
+                        })
+                    except Exception as e:
+                        _logger.error(f"Error creando registro mañana: {str(e)}")
+
+                # Registro tarde
+                afternoon_check_in = datetime.combine(
+                    day,
+                    time(hour=14, minute=random.randint(55, 65) % 60)
+                )
+                afternoon_check_out = datetime.combine(
+                    day,
+                    time(hour=17, minute=random.randint(55, 65) % 60)
+                )
+
+                # Verificar si ya existe un registro en ese rango
+                existing_afternoon = self.env['hr.attendance'].search([
+                    ('employee_id', '=', employee.id),
+                    ('check_in', '>=', afternoon_check_in - timedelta(minutes=15)),
+                    ('check_in', '<=', afternoon_check_in + timedelta(minutes=15))
+                ], limit=1)
+
+                if not existing_afternoon:
+                    try:
+                        self.env['hr.attendance'].create({
+                            'employee_id': employee.id,
+                            'check_in': afternoon_check_in,
+                            'check_out': afternoon_check_out,
+                            'auto_generated': True
+                        })
+                    except Exception as e:
+                        _logger.error(f"Error creando registro tarde: {str(e)}")

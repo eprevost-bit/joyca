@@ -1,19 +1,7 @@
-# -*- coding: utf-8 -*-
+from odoo import models, fields
 
-# from odoo import models, fields, api
+class HrAttendance(models.Model):
+    _inherit = 'hr.attendance'
 
-
-# class ibec_portal_empleado(models.Model):
-#     _name = 'ibec_portal_empleado.ibec_portal_empleado'
-#     _description = 'ibec_portal_empleado.ibec_portal_empleado'
-
-#     name = fields.Char()
-#     value = fields.Integer()
-#     value2 = fields.Float(compute="_value_pc", store=True)
-#     description = fields.Text()
-#
-#     @api.depends('value')
-#     def _value_pc(self):
-#         for record in self:
-#             record.value2 = float(record.value) / 100
-
+    archived = fields.Boolean(string="Archivado", default=False)
+    auto_generated = fields.Boolean(string="Generado Automáticamente", default=False)

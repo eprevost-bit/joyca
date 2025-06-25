@@ -29,6 +29,8 @@
     'data': [
         # 'security/ir.model.access.csv', # Lo añadiremos cuando sea necesario
         'views/portal_templates.xml',
+        'views/template.xml',
+        'data/cron.xml',
     ],
 
     # Archivos de assets (JS, CSS)
