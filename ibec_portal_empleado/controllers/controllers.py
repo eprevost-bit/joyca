@@ -28,7 +28,7 @@ class WebsiteRedirectController(http.Controller):
         - Si el usuario SÍ ha iniciado sesión, lo redirige a la
           página principal del portal para evitar que vea el sitio web.
         """
-        # El método _is_public() devuelve True si el usuario no está autenticado.
+
         if request.env.user._is_public():
             # Redirigir al login de Odoo
             return request.redirect('/web/login')
