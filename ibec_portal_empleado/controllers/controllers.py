@@ -21,19 +21,19 @@ class WebsiteRedirectController(http.Controller):
 
     @http.route('/', type='http', auth="public", website=True)
     def redirect_to_login(self, **kw):
-        """
-        Este controlador se activa al acceder a la raíz del sitio web.
-        - Si el usuario NO ha iniciado sesión (es un usuario público),
-          lo redirige a la página de login.
-        - Si el usuario SÍ ha iniciado sesión, lo redirige a la
-          página principal del portal para evitar que vea el sitio web.
-        """
+        user = request.env.user
+        if not user or not user.exists():
+            return request.redirect('/web/login')
 
-        if request.env.user._is_public():
-            # Redirigir al login de Odoo
+        # Asegúrate de que solo sea uno
+        if len(user) != 1:
+            _logger.error("Se esperaba un solo usuario pero se obtuvo: %s", user)
+            return request.redirect('/web/login')
+
+        # Ya seguro puedes usar:
+        if user._is_public():
             return request.redirect('/web/login')
         else:
-            # Si ya está logueado, lo enviamos a su portal
             return request.redirect('/my/home')
 
 
