@@ -17,24 +17,9 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class WebsiteRedirectController(http.Controller):
-
-    @http.route('/', type='http', auth="public", website=True)
-    def redirect_to_login(self, **kw):
-        user = request.env.user
-        if not user or not user.exists():
-            return request.redirect('/web/login')
-
-        # Asegúrate de que solo sea uno
-        if len(user) != 1:
-            _logger.error("Se esperaba un solo usuario pero se obtuvo: %s", user)
-            return request.redirect('/web/login')
-
-        # Ya seguro puedes usar:
-        if user._is_public():
-            return request.redirect('/web/login')
-        else:
-            return request.redirect('/my/home')
+# class WebsiteRedirectController(http.Controller):
+#
+#
 
 
 class EmployeePortal(CustomerPortal):
