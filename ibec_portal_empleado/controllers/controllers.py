@@ -17,9 +17,12 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-# class WebsiteRedirectController(http.Controller):
-#
-#
+class WebsiteRedirectController(http.Controller):
+
+    @http.route('/', type='http', auth="public", website=True)
+    def redirect_to_login(self, **kw):
+        return request.redirect('/my')
+
 
 
 class EmployeePortal(CustomerPortal):

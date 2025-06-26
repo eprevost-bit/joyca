@@ -57,6 +57,8 @@ class Home(WebHome):
                 credential = {'login': request.params['login'], 'password': request.params['password'],
                               'type': 'password'}
                 uid = request.session.authenticate(request.session.db, credential)
+                if isinstance(uid, (list, tuple)):
+                    uid = uid[0]
                 request.params['login_success'] = True
                 return request.redirect(
                     self._login_redirect(uid, redirect=redirect))
