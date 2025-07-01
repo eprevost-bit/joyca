@@ -21,8 +21,12 @@ class WebsiteRedirectController(http.Controller):
 
     @http.route('/', type='http', auth="public", website=True)
     def redirect_to_login(self, **kw):
-        return request.redirect('/my')
-
+        if request.env.user._is_public():
+            # Redirigir al login de Odoo
+            return request.redirect('/web/login')
+        else:
+            # Si ya está logueado, lo enviamos a su portal
+            return request.redirect('/my/home')
 
 
 class EmployeePortal(CustomerPortal):
@@ -43,23 +47,50 @@ class EmployeePortal(CustomerPortal):
         if not employee:
             return request.render("website.404")
 
-        # Obtener los últimos 20 registros para la tabla principal
+        # Configuración de paginación para Últimos Registros
+        page = int(kw.get('page', 1))
+        recent_page = int(kw.get('recent_page', 1))
+        per_page = 7  # 7 registros por página
+
+        # Paginación para Últimos Registros
+        total_attendances = request.env['hr.attendance'].search_count([
+            ('employee_id', '=', employee.id)
+        ])
+        offset = (page - 1) * per_page
         attendances = request.env['hr.attendance'].search([
             ('employee_id', '=', employee.id)
-        ], order='check_in desc', limit=20)
+        ], order='check_in desc', limit=per_page, offset=offset)
 
-        # Obtener registros de los últimos 7 días para edición
+        # Paginación para Registros Recientes (últimos 7 días)
         seven_days_ago = datetime.now() - timedelta(days=7)
+        total_recent = request.env['hr.attendance'].search_count([
+            ('employee_id', '=', employee.id),
+            ('check_in', '>=', seven_days_ago)
+        ])
+        recent_offset = (recent_page - 1) * per_page
         recent_attendances = request.env['hr.attendance'].search([
             ('employee_id', '=', employee.id),
             ('check_in', '>=', seven_days_ago)
-        ], order='check_in desc')
+        ], order='check_in desc', limit=per_page, offset=recent_offset)
+
+        # Calcular total de páginas
+        total_pages = (total_attendances + per_page - 1) // per_page
+        total_recent_pages = (total_recent + per_page - 1) // per_page
 
         values = {
             'employee': employee,
             'attendances': attendances,
-            'recent_attendances': recent_attendances,  # Añadir esta línea
+            'recent_attendances': recent_attendances,
             'page_name': 'attendances',
+            'today': fields.Date.today(),
+            # Paginación Últimos Registros
+            'current_page': page,
+            'total_pages': total_pages,
+            'total_attendances': total_attendances,
+            # Paginación Registros Recientes
+            'recent_current_page': recent_page,
+            'total_recent_pages': total_recent_pages,
+            'total_recent': total_recent,
         }
         return request.render("ibec_portal_empleado.portal_attendances_template", values)
 
@@ -95,7 +126,7 @@ class EmployeePortal(CustomerPortal):
             }
 
     @http.route('/my/attendance/update', type='json', auth="user", website=True)
-    def portal_attendance_update(self, attendance_id, new_check_in, new_check_out, **kw):
+    def portal_attendance_update(self, attendance_id, new_check_in_date, new_check_in, new_check_out, **kw):
         """
         Endpoint para actualizar registros de asistencia
         """
@@ -116,17 +147,16 @@ class EmployeePortal(CustomerPortal):
             if (fields.Date.today() - attendance.check_in.date()).days > 7:
                 return {'error': 'Solo puedes modificar registros de los últimos 7 días'}
 
-            # Obtener la fecha original del check_in
-            original_date = attendance.check_in.date()
-
+            # Parsear la nueva fecha y hora
+            new_check_in_date = datetime.strptime(new_check_in_date, '%Y-%m-%d').date()
             new_check_in_time = datetime.strptime(new_check_in, '%H:%M').time()
-            new_check_in_dt = datetime.combine(original_date, new_check_in_time)
+            new_check_in_dt = datetime.combine(new_check_in_date, new_check_in_time)
 
             # Manejar el check_out (puede ser None)
             new_check_out_dt = False
             if new_check_out:
                 new_check_out_time = datetime.strptime(new_check_out, '%H:%M').time()
-                new_check_out_dt = datetime.combine(original_date, new_check_out_time)
+                new_check_out_dt = datetime.combine(new_check_in_date, new_check_out_time)
 
             attendance.write({
                 'check_in': new_check_in_dt,
@@ -135,10 +165,42 @@ class EmployeePortal(CustomerPortal):
 
             return {
                 'success': True,
-                'worked_hours': attendance.worked_hours
+                'worked_hours': attendance.worked_hours,
+                'new_date': new_check_in_date.strftime('%d/%m/%Y')
             }
         except ValueError as ve:
-            return {'error': f'Formato de hora inválido: {str(ve)}. Use HH:MM'}
+            return {'error': f'Formato de fecha/hora inválido: {str(ve)}. Use YYYY-MM-DD para fecha y HH:MM para hora'}
+        except Exception as e:
+            return {'error': str(e)}
+
+    @http.route('/my/attendance/delete', type='json', auth="user", website=True)
+    def portal_attendance_delete(self, attendance_id, **kw):
+        """
+        Endpoint para eliminar registros de asistencia
+        """
+        employee = request.env.user.employee_id
+        if not employee:
+            return {'error': 'No se encontró el empleado asociado.'}
+
+        try:
+            attendance = request.env['hr.attendance'].search([
+                ('id', '=', attendance_id),
+                ('employee_id', '=', employee.id)
+            ])
+
+            if not attendance:
+                return {'error': 'Registro no encontrado o no pertenece al empleado'}
+
+            # Verificar que el registro no tenga más de 7 días
+            if (fields.Date.today() - attendance.check_in.date()).days > 7:
+                return {'error': 'Solo puedes eliminar registros de los últimos 7 días'}
+
+            attendance.unlink()
+
+            return {
+                'success': True,
+                'message': 'Registro eliminado correctamente'
+            }
         except Exception as e:
             return {'error': str(e)}
 
@@ -209,6 +271,56 @@ class EmployeePortal(CustomerPortal):
             ('Content-Disposition', content_disposition(filename))
         ]
         return request.make_response(pdf, headers=headers)
+
+    @http.route('/my/attendance/manual_entry', type='http', auth="user", website=True, methods=['POST'])
+    def portal_attendance_manual_entry(self, **post):
+        """
+        Endpoint para registro manual de asistencia
+        """
+        redirect_url = '/my/attendances'
+        employee = request.env.user.employee_id
+
+        if not employee:
+            return request.redirect(f"{redirect_url}?error=No se encontró el empleado asociado")
+
+        date = post.get('date')
+        check_in = post.get('check_in')
+        check_out = post.get('check_out')
+
+        try:
+            today = fields.Date.today()
+            entry_date = fields.Date.to_date(date)
+
+            if entry_date > today:
+                return request.redirect(f"{redirect_url}?error=No puedes registrar días futuros")
+
+            if (today - entry_date).days > 7:
+                return request.redirect(f"{redirect_url}?error=Solo puedes registrar días de los últimos 7 días")
+
+            existing = request.env['hr.attendance'].search([
+                ('employee_id', '=', employee.id),
+                ('check_in', '>=', fields.Datetime.to_datetime(date + ' 00:00:00')),
+                ('check_in', '<=', fields.Datetime.to_datetime(date + ' 23:59:59'))
+            ], limit=1)
+
+            if existing:
+                return request.redirect(f"{redirect_url}?error=Ya existe un registro para este día")
+
+            check_in_dt = fields.Datetime.to_datetime(f"{date} {check_in}:00")
+            check_out_dt = fields.Datetime.to_datetime(f"{date} {check_out}:00")
+
+            request.env['hr.attendance'].create({
+                'employee_id': employee.id,
+                'check_in': check_in_dt,
+                'check_out': check_out_dt,
+            })
+
+            return request.redirect(f"{redirect_url}?success=Registro manual creado correctamente")
+
+        except ValueError as ve:
+            return request.redirect(f"{redirect_url}?error=Formato de fecha/hora inválido")
+        except Exception as e:
+            return request.redirect(f"{redirect_url}?error=Error al guardar el registro")
 
 
 class AttendanceAutomation(models.Model):
