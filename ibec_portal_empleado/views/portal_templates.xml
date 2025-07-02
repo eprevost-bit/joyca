@@ -143,7 +143,62 @@
                                     </td>
                                 </tr>
                             </tbody>
+
                         </table>
+                        <button class="btn btn-info btn-lg mx-2 btn-manual-entry" data-bs-toggle="modal"
+                                data-bs-target="#manualEntryModal">
+                            <i class="fa fa-calendar-plus me-2"/>Registrar día completo
+                        </button>
+                        <div class="modal fade" id="manualEntryModal" tabindex="-1"
+                             aria-labelledby="manualEntryModalLabel"
+                             aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="manualEntryModalLabel">Registrar día completo
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                    </div>
+                                    <form id="manualEntryForm" action="/my/attendance/manual_entry" method="post">
+                                        <div class="modal-body">
+                                            <input type="hidden" name="csrf_token"
+                                                   t-att-value="request.csrf_token()"/>
+                                            <div class="mb-3">
+                                                <label for="manualEntryDate" class="form-label">Fecha</label>
+                                                <input type="date" class="form-control" id="manualEntryDate"
+                                                       name="date" required="1" t-att-max="today"/>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="manualCheckIn" class="form-label">Hora de entrada
+                                                </label>
+                                                <input type="time" class="form-control" id="manualCheckIn"
+                                                       name="check_in"
+                                                       required="1"/>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="manualCheckOut" class="form-label">Hora de salida
+                                                </label>
+                                                <input type="time" class="form-control" id="manualCheckOut"
+                                                       name="check_out"
+                                                       required="1"/>
+                                            </div>
+                                            <div class="alert alert-warning">
+                                                <i class="fa fa-exclamation-triangle me-2"></i>
+                                                Solo puedes registrar días que no tengan más de 7 días de
+                                                antigüedad.
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                Cancelar
+                                            </button>
+                                            <button type="submit" class="btn btn-primary">Guardar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -257,62 +312,9 @@
                                 <i class="fa fa-sign-out me-2"/>Registrar SALIDA
                             </button>
                         </div>
-
-                        <!-- Botón para abrir el modal de registro manual -->
-                        <button class="btn btn-info btn-lg mx-2 btn-manual-entry" data-bs-toggle="modal"
-                                data-bs-target="#manualEntryModal">
-                            <i class="fa fa-calendar-plus me-2"/>Registrar día completo
-                        </button>
-
-                        <!-- Botón de cerrar sesión -->
-                        <a href="/web/session/logout" class="btn btn-secondary">
-                            <i class="fa fa-sign-out-alt me-1"/>Cerrar Sesión
-                        </a>
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="manualEntryModal" tabindex="-1" aria-labelledby="manualEntryModalLabel"
-                 aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="manualEntryModalLabel">Registrar día completo</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form id="manualEntryForm" action="/my/attendance/manual_entry" method="post">
-                            <div class="modal-body">
-                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                <div class="mb-3">
-                                    <label for="manualEntryDate" class="form-label">Fecha</label>
-                                    <input type="date" class="form-control" id="manualEntryDate"
-                                           name="date" required="1" t-att-max="today"/>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="manualCheckIn" class="form-label">Hora de entrada</label>
-                                    <input type="time" class="form-control" id="manualCheckIn" name="check_in"
-                                           required="1"/>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="manualCheckOut" class="form-label">Hora de salida</label>
-                                    <input type="time" class="form-control" id="manualCheckOut" name="check_out"
-                                           required="1"/>
-                                </div>
-                                <div class="alert alert-warning">
-                                    <i class="fa fa-exclamation-triangle me-2"></i>
-                                    Solo puedes registrar días que no tengan más de 7 días de antigüedad.
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar
-                                </button>
-                                <button type="submit" class="btn btn-primary">Guardar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-
         </xpath>
 
         <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
@@ -328,6 +330,14 @@
                 <p class="mb-1">
                     Registra tu jornada laboral y consulta tus horas.
                 </p>
+            </a>
+        </xpath>
+    </template>
+
+    <template id="custom_side_content_logout" inherit_id="portal.side_content" name="Custom Side Content Logout">
+        <xpath expr="//div[hasclass('o_portal_my_details')]" position="after">
+            <a href="/web/session/logout" class="btn btn-secondary mt-3">
+                <i class="fa fa-sign-out-alt me-1"/>Cerrar Sesión
             </a>
         </xpath>
     </template>
