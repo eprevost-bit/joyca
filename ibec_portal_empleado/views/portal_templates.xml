@@ -131,6 +131,12 @@
                                         <t t-set="total_hours" t-value="att.x_worked_time_calculated"/>
                                         <t t-set="hours" t-value="int(total_hours)"/>
                                         <t t-set="minutes" t-value="int(round((total_hours - hours) * 60))"/>
+
+                                        <t t-if="minutes == 60">
+                                            <t t-set="hours" t-value="hours + 1"/>
+                                            <t t-set="minutes" t-value="0"/>
+                                        </t>
+
                                         <t t-esc="f'{hours:02d}:{minutes:02d}'"/>
                                     </td>
                                     <td>
@@ -231,6 +237,12 @@
                                     <t t-set="total_hours" t-value="att.x_worked_time_calculated"/>
                                     <t t-set="hours" t-value="int(total_hours)"/>
                                     <t t-set="minutes" t-value="int(round((total_hours - hours) * 60))"/>
+
+                                    <t t-if="minutes == 60">
+                                        <t t-set="hours" t-value="hours + 1"/>
+                                        <t t-set="minutes" t-value="0"/>
+                                    </t>
+
                                     <t t-esc="f'{hours:02d}:{minutes:02d}'"/>
                                 </td>
                             </tr>
