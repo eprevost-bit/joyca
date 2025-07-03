@@ -14,6 +14,8 @@ class HrAttendance(models.Model):
         help="Calcula las horas trabajadas directamente de la entrada y salida, sin otras consideraciones."
     )
 
+    worked_hours = fields.Float(string='Worked Hours', store=True, readonly=True)
+
     @api.depends('check_in', 'check_out')
     def _compute_worked_time_calculated(self):
         for attendance in self:
