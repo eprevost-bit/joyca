@@ -52,18 +52,17 @@ class Home(WebHome):
         except odoo.exceptions.AccessDenied:
             values['databases'] = None
         if request.httprequest.method == 'POST':
-            old_uid = request.update_env(user=request.session.uid)
+            old_uid = request.session.uid
             try:
-                credential = {'login': request.params['login'], 'password': request.params['password'],
-                              'type': 'password'}
-                uid = request.session.authenticate(request.session.db, credential)
-                if isinstance(uid, (list, tuple)):
-                    uid = uid[0]
+                # La función authenticate devuelve un único ID de usuario (int)
+                uid = request.session.authenticate(request.session.db, request.params['login'],
+                                                   request.params['password'])
                 request.params['login_success'] = True
-                return request.redirect(
-                    self._login_redirect(uid, redirect=redirect))
+                # Redirigimos directamente con el uid obtenido
+                return request.redirect(self._login_redirect(uid, redirect=redirect))
             except odoo.exceptions.AccessDenied as e:
-                request.update_env = old_uid
+                # Revertimos el entorno en caso de error
+                request.env['res.users'].browse(old_uid)._is_internal()
                 if e.args == odoo.exceptions.AccessDenied().args:
                     values['error'] = _("Wrong login/password")
                 else:
