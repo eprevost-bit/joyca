@@ -128,7 +128,7 @@
                                                placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}"/>
                                     </td>
                                     <td>
-                                        <t t-esc="'%.2f' % att.worked_hours"/>
+                                        <t t-esc="'%.2f' % att.x_worked_time_calculated"/>
                                         h
                                     </td>
                                     <td>
@@ -226,7 +226,7 @@
                                     <t t-if="att.check_out" t-esc="att.check_out.strftime('%H:%M:%S')"/>
                                 </td>
                                 <td>
-                                    <t t-esc="'%.2f' % att.worked_hours"/>
+                                    <t t-esc="'%.2f' % att.x_worked_time_calculated"/>
                                     h
                                 </td>
                             </tr>
