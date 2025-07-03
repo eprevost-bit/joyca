@@ -128,8 +128,10 @@
                                                placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}"/>
                                     </td>
                                     <td>
-                                        <t t-esc="int(round(att.x_worked_time_calculated))"/>
-                                        h
+                                        <t t-set="total_hours" t-value="att.x_worked_time_calculated"/>
+                                        <t t-set="hours" t-value="int(total_hours)"/>
+                                        <t t-set="minutes" t-value="int(round((total_hours - hours) * 60))"/>
+                                        <t t-esc="f'{hours:02d}:{minutes:02d}'"/>
                                     </td>
                                     <td>
                                         <button class="btn btn-primary btn-sm btn-save me-2" t-att-data-id="att.id">
@@ -226,8 +228,10 @@
                                     <t t-if="att.check_out" t-esc="att.check_out.strftime('%H:%M:%S')"/>
                                 </td>
                                 <td>
-                                    <t t-esc="int(round(att.x_worked_time_calculated))"/>
-                                    h
+                                    <t t-set="total_hours" t-value="att.x_worked_time_calculated"/>
+                                    <t t-set="hours" t-value="int(total_hours)"/>
+                                    <t t-set="minutes" t-value="int(round((total_hours - hours) * 60))"/>
+                                    <t t-esc="f'{hours:02d}:{minutes:02d}'"/>
                                 </td>
                             </tr>
                         </tbody>
