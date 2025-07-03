@@ -22,3 +22,12 @@ class HrAttendance(models.Model):
                 attendance.x_worked_time_calculated = delta.total_seconds() / 3600.0
             else:
                 attendance.x_worked_time_calculated = 0.0
+
+    @api.depends('x_worked_time_calculated')
+    def _compute_worked_hours(self):
+        """
+        Sobrescribe el cálculo de Odoo para que 'worked_hours'
+        sea siempre igual a nuestro campo calculado.
+        """
+        for attendance in self:
+            attendance.worked_hours = attendance.x_worked_time_calculated
