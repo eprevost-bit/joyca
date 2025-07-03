@@ -31,24 +31,30 @@ from odoo.addons.web.controllers.home import Home as WebHome
 # No necesitas _get_login_redirect_url ni SIGN_UP_REQUEST_PARAMS aquí
 # porque el controlador de Odoo ya los maneja.
 
+import hashlib
+import odoo
+from odoo import http
+from odoo.tools import pycompat
+from odoo.tools.translate import _
+from odoo.http import request
+from odoo.addons.web.controllers.home import Home as WebHome
+
+
 class Home(WebHome):
     @http.route(route='/web/login', type='http', auth="none")
     def web_login(self, redirect=None, **kw):
         # 1. Ejecutar la lógica de login original de Odoo.
-        # Esto manejará la autenticación, errores, bases de datos, etc.
         response = super(Home, self).web_login(redirect=redirect, **kw)
 
-        if response.is_redirect:
+        # 2. Comprobar si la respuesta es una redirección por su código de estado (3xx).
+        #    ESTA ES LA LÍNEA CORREGIDA.
+        if 300 <= response.status_code < 400:
             return response
 
-        # 3. Si no hay redirección, significa que seguimos en la página de login
-        #    (ya sea porque es la primera vez que se carga o porque hubo un error).
-
-        # 4. Obtenemos los valores que preparó Odoo (errores, bases de datos, etc.)
+        # 3. Si no es una redirección, continuamos con la lógica personalizada.
         values = response.qcontext
 
-        # 5. Añadimos NUESTRA lógica para estilos y fondos.
-        #    Este es el código de tu módulo que quieres conservar.
+        # 4. Añadimos NUESTRA lógica para estilos y fondos.
         conf_param = request.env['ir.config_parameter'].sudo()
         orientation = conf_param.get_param('web_login_styles.orientation')
         image = conf_param.get_param('web_login_styles.image')
@@ -59,8 +65,6 @@ class Home(WebHome):
             values['bg'] = ''
             values['color'] = conf_param.sudo().get_param('web_login_styles.color')
         elif background_type == 'image':
-            # Optimizamos para no crear un adjunto nuevo en cada carga de página
-            # Buscamos un adjunto con un nombre específico
             attachment = request.env['ir.attachment'].sudo().search([('name', '=', 'web_login_background')], limit=1)
             if image and (not attachment or attachment.checksum != image):
                 if not attachment:
@@ -74,7 +78,7 @@ class Home(WebHome):
         elif background_type == 'url' and url:
             values['bg_img'] = url
 
-        # 6. Renderizamos la plantilla personalizada correcta con TODOS los valores (los de Odoo + los nuestros).
+        # 5. Renderizamos la plantilla personalizada correcta.
         if orientation == 'right':
             return request.render('web_login_styles.login_template_right', values)
         elif orientation == 'left':
