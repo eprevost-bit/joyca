@@ -54,8 +54,9 @@ class Home(WebHome):
         if request.httprequest.method == 'POST':
             old_uid = request.session.uid
             try:
-                # La función authenticate devuelve un único ID de usuario (int)
-                uid = request.session.authenticate(request.session.db, request.params['login'],
+                # La función authenticate solo necesita login y password.
+                # La sesión ya conoce la base de datos.
+                uid = request.session.authenticate(request.params['login'],
                                                    request.params['password'])
                 request.params['login_success'] = True
                 # Redirigimos directamente con el uid obtenido
