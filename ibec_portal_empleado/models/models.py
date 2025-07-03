@@ -14,8 +14,6 @@ class HrAttendance(models.Model):
         help="Calcula las horas trabajadas directamente de la entrada y salida, sin otras consideraciones."
     )
 
-    worked_hours = fields.Float(string='Worked Hours', store=True, readonly=True)
-
     @api.depends('check_in', 'check_out')
     def _compute_worked_time_calculated(self):
         for attendance in self:
@@ -27,11 +25,17 @@ class HrAttendance(models.Model):
 
             attendance.worked_hours = attendance.x_worked_time_calculated
 
-    @api.depends('x_worked_time_calculated')
+    @api.depends('check_in', 'check_out')
     def _compute_worked_hours(self):
         """
-        Sobrescribe el cálculo de Odoo para que 'worked_hours'
-        sea siempre igual a nuestro campo calculado.
+        SOBRESCRITURA TOTAL del cálculo de Odoo.
+        Ahora 'worked_hours' siempre será la resta simple de check_out y check_in.
         """
         for attendance in self:
-            attendance.worked_hours = attendance.x_worked_time_calculated
+            if attendance.check_out and attendance.check_in:
+                # Tu lógica de cálculo simple
+                delta = attendance.check_out - attendance.check_in
+                # Se asigna el resultado directamente al campo estándar de Odoo
+                attendance.worked_hours = delta.total_seconds() / 3600.0
+            else:
+                attendance.worked_hours = 0.0
