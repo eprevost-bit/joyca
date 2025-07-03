@@ -226,7 +226,7 @@
                                     <t t-if="att.check_out" t-esc="att.check_out.strftime('%H:%M:%S')"/>
                                 </td>
                                 <td>
-                                    <t t-esc="att.worked_hours.strftime('%H:%M:%S')"/>
+                                    <t t-esc="att.worked_hours"/>
                                     h
                                 </td>
                             </tr>
