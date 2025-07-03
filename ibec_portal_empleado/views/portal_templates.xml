@@ -226,10 +226,8 @@
                                     <t t-if="att.check_out" t-esc="att.check_out.strftime('%H:%M:%S')"/>
                                 </td>
                                 <td>
-                                    <t t-set="total_hours" t-value="att.worked_hours"/>
-                                    <t t-set="hours" t-value="int(total_hours)"/>
-                                    <t t-set="minutes" t-value="int((total_hours % 1) * 60)"/>
-                                    <t t-esc="f'{hours}:{minutes:02d} h'"/>
+                                    <t t-esc="att.worked_hours"/>
+                                    h
                                 </td>
                             </tr>
                         </tbody>
