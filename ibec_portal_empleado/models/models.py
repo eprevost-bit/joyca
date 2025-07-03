@@ -27,11 +27,11 @@ class HrAttendance(models.Model):
 
             attendance.worked_hours = attendance.x_worked_time_calculated
 
-    # @api.depends('x_worked_time_calculated')
-    # def _compute_worked_hours(self):
-    #     """
-    #     Sobrescribe el cálculo de Odoo para que 'worked_hours'
-    #     sea siempre igual a nuestro campo calculado.
-    #     """
-    #     for attendance in self:
-    #         attendance.worked_hours = attendance.x_worked_time_calculated
+    @api.depends('x_worked_time_calculated')
+    def _compute_worked_hours(self):
+        """
+        Sobrescribe el cálculo de Odoo para que 'worked_hours'
+        sea siempre igual a nuestro campo calculado.
+        """
+        for attendance in self:
+            attendance.worked_hours = attendance.x_worked_time_calculated
