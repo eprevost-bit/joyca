@@ -23,19 +23,8 @@ class HrAttendance(models.Model):
             else:
                 attendance.x_worked_time_calculated = 0.0
 
-            attendance.worked_hours = attendance.x_worked_time_calculated
-
-    @api.depends('check_in', 'check_out')
+    # 2. Hacemos que el cálculo de 'worked_hours' dependa de tu campo
+    @api.depends('x_worked_time_calculated')
     def _compute_worked_hours(self):
-        """
-        SOBRESCRITURA TOTAL del cálculo de Odoo.
-        Ahora 'worked_hours' siempre será la resta simple de check_out y check_in.
-        """
         for attendance in self:
-            if attendance.check_out and attendance.check_in:
-                # Tu lógica de cálculo simple
-                delta = attendance.check_out - attendance.check_in
-                # Se asigna el resultado directamente al campo estándar de Odoo
-                attendance.worked_hours = delta.total_seconds() / 3600.0
-            else:
-                attendance.worked_hours = 0.0
+            attendance.worked_hours = attendance.x_worked_time_calculated
