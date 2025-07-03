@@ -226,17 +226,10 @@
                                     <t t-if="att.check_out" t-esc="att.check_out.strftime('%H:%M:%S')"/>
                                 </td>
                                 <td>
-                                    <t t-if="att.check_out">
-                                        <!-- Calculamos la diferencia entre check_out y check_in -->
-                                        <t t-set="time_diff" t-value="att.check_out - att.check_in"/>
-                                        <t t-set="total_seconds" t-value="time_diff.total_seconds()"/>
-                                        <t t-set="hours" t-value="int(total_seconds // 3600)"/>
-                                        <t t-set="minutes" t-value="int((total_seconds % 3600) // 60)"/>
-                                        <t t-esc="f'{hours}:{minutes:02d} h'"/>
-                                    </t>
-                                    <t t-else="">
-                                        --:-- h
-                                    </t>
+                                    <t t-set="total_hours" t-value="att.worked_hours"/>
+                                    <t t-set="hours" t-value="int(total_hours)"/>
+                                    <t t-set="minutes" t-value="int((total_hours % 1) * 60)"/>
+                                    <t t-esc="f'{hours}:{minutes:02d} h'"/>
                                 </td>
                             </tr>
                         </tbody>
