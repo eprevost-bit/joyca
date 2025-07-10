@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <menuitem
+            id="menu_product_import_wizard"
+            name="Importar Tarifas desde Excel"
+            action="action_product_import_wizard"
+            parent="sale.product_menu_catalog"
+            sequence="100"/>
+    </data>
+</odoo>
