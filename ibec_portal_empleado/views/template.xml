@@ -10,6 +10,7 @@
                 <xpath expr="//field[@name='employee_id']" position="after">
                     <field name="archived" widget="boolean"/>
                     <field name="auto_generated" widget="boolean"/>
+                    <field name="x_worked_time_calculated" widget="float_time"/>
                 </xpath>
             </field>
         </record>
