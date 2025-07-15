@@ -1,4 +1,44 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- <?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_custom_section" model="ir.ui.view">
+        <field name="name">sale.order.form.custom.section.v18</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='order_line']" position="after">
+                <div class="oe_right" style="text-align: right; padding: 10px 15px 0 0;">
+                    <button name="action_add_custom_section" type="object" class="btn-primary" icon="fa-plus-square" string="Añadir Sección Completa"/>
+                     <p class="text-muted" style="margin-left: 5px;">
+                        Crea una sección completa con servicios y costes porcentuales.
+                     </p>
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']" position="replace">
+                <field name="order_line">
+                    <list editable="bottom">
+                        
+                        <field name="product_id" string="Producto"/>
+                        <field name="name" string="Descripción"/>
+                        
+                        <field name="product_default_code" invisible="1"/>
+
+                        <field name="product_uom_qty" string="Cantidad" readonly= "1"/>
+                        
+                        <field name="product_uom" string="UdM"/>
+                        
+                        <field name="price_unit" string="Precio Unitario" readonly="product_default_code and product_default_code.startswith('PCT-')"/>
+
+                        <field name="tax_id" widget="many2many_tags" string="Impuestos"/>
+                        <field name="price_subtotal" widget="monetary" string="Subtotal"/>
+                    </list>
+                </field>
+            </xpath>
+
+        </field>
+    </record>
+</odoo> -->
 <odoo>
     <data>
         <record id="view_order_form_custom_section" model="ir.ui.view">
@@ -17,25 +57,29 @@
 
                 <xpath expr="//field[@name='order_line']" position="after">
                     <div class="oe_right oe_button_box" style="text-align: right; padding-top: 10px; padding-right: 15px;">
-                        <button name="action_add_custom_section"
-                                type="object"
-                                class="btn-primary"
-                                string="Añadir Sección Personalizada"/>
+                        <button name="action_add_custom_section" type="object" class="btn-primary" string="Añadir Sección Personalizada"/>
                         <p class="text-muted" style="margin-left: 5px;">
                            Crea una sección completa con servicios y costes porcentuales.
                         </p>
                     </div>
                 </xpath>
+                <xpath expr="//field[@name='order_line']" position="replace">
+                    <field name="order_line">
+                        <list editable="bottom">
 
-                <xpath expr="//field[@name='order_line']/list/field[@name='product_template_id']" position="after">
-                    <field name="product_default_code" column_invisible="True"/>
-                </xpath>
+                            <field name="product_id" string="Producto"/>
+                            <field name="name" string="Descripción"/>
 
-                <xpath expr="//field[@name='order_line']/list//field[@name='price_unit']" position="attributes">
-                     <attribute name="attrs">{'readonly': [('product_default_code', '!=', False), ('product_default_code', 'ilike', 'PCT-%')]}</attribute>
-                </xpath>
-                <xpath expr="//field[@name='order_line']/list//field[@name='product_uom_qty']" position="attributes">
-                     <attribute name="attrs">{'readonly': [('product_default_code', '!=', False), ('product_default_code', 'ilike', 'PCT-%')]}</attribute>
+                            <field name="product_default_code" invisible="1"/>
+
+                            <field name="product_uom_qty" string="Cantidad" readonly= "1"/>
+
+                            <field name="product_uom" string="UdM"/>
+
+                            <field name="tax_id" widget="many2many_tags" string="Impuestos"/>
+                            <field name="price_subtotal" widget="monetary" string="Subtotal"/>
+                        </list>
+                    </field>
                 </xpath>
 
             </field>

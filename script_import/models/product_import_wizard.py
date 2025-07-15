@@ -40,31 +40,30 @@ class ProductImportWizard(models.TransientModel):
         ProductCategory = self.env['product.category']
         PricelistItem = self.env['product.pricelist.item']
 
-        # Variable para guardar la categoría actual
         current_category_id = None
 
         for index, row in df.iterrows():
             nombre_o_categoria = str(row.iloc[0]) if not pd.isna(row.iloc[0]) else None
-            precio_base_str = str(row.iloc[1]) if not pd.isna(row.iloc[1]) else None
+            precio_coste_str = str(row.iloc[1]) if not pd.isna(row.iloc[1]) else None # Renombrado para claridad
 
-            # --- NUEVA LÓGICA PARA DETECTAR CATEGORÍAS ---
-            # Si la fila tiene un nombre pero no un precio, la tratamos como una categoría
-            if nombre_o_categoria and not precio_base_str:
-                # Buscar o crear la categoría de producto
+            # --- LÓGICA PARA DETECTAR CATEGORÍAS ---
+            if nombre_o_categoria and not precio_coste_str:
                 category = ProductCategory.search([('name', '=', nombre_o_categoria)], limit=1)
                 if not category:
                     category = ProductCategory.create({'name': nombre_o_categoria})
                 current_category_id = category.id
-                # Saltar a la siguiente fila del Excel
                 continue
             
-            # Si la fila no tiene nombre, la ignoramos
             if not nombre_o_categoria:
                 continue
 
             # --- LÓGICA PARA PROCESAR PRODUCTOS ---
             try:
-                precio_base = 0.0 if not precio_base_str else float(precio_base_str.replace(',', '.'))
+                # --- MODIFICADO: Ahora leemos el coste del producto ---
+                costo_producto = 0.0 if not precio_coste_str else float(precio_coste_str.replace(',', '.'))
+                
+                # --- NUEVO: Calculamos el precio de venta ---
+                precio_venta = costo_producto * 1.3
                 
                 cantidad_condicional = None
                 cantidad_texto = row.iloc[2]
@@ -80,12 +79,15 @@ class ProductImportWizard(models.TransientModel):
             except (ValueError, TypeError):
                 raise UserError(f"Error en la fila {index + 2} del Excel. Verifique que los precios sean números válidos.")
 
-            # Preparamos los valores para crear o actualizar el producto
+            # --- MODIFICADO: Preparamos los valores correctos para el producto ---
             vals = {
                 'name': nombre_o_categoria,
-                'list_price': precio_base,
+                # 1. Guardamos el coste en 'standard_price'
+                'standard_price': costo_producto,
+                # 2. Guardamos el precio de venta calculado en 'list_price'
+                'list_price': precio_venta,
+                # 3. Definimos el producto como 'Almacenable' ('product') para rastrear inventario
                 'type': 'consu',
-                # Asignamos el ID de la categoría que encontramos
                 'categ_id': current_category_id,
             }
             
@@ -95,7 +97,7 @@ class ProductImportWizard(models.TransientModel):
             else:
                 product_template = ProductTemplate.create(vals)
 
-            # Lógica para las reglas de precios
+            # Lógica para las reglas de precios (sin cambios)
             if product_template and cantidad_condicional is not None and precio_condicional is not None:
                 PricelistItem.create({
                     'pricelist_id': self.pricelist_id.id,
