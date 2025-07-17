@@ -67,6 +67,11 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
         const attendanceId = parseInt(btn.dataset.id);
         const row = btn.closest('tr');
 
+        // Si no se encuentra una fila (estamos en una página sin tabla), no hacemos nada.
+        if (!row) {
+            return;
+        }
+
         const dateInput = row.querySelector('input[data-field="check_in_date"]');
         const checkInInput = row.querySelector('input[data-field="check_in"]');
         const checkOutInput = row.querySelector('input[data-field="check_out"]');
@@ -112,17 +117,21 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
                 this._displayAlert('danger', result.error);
             } else {
                 this._displayAlert('success', 'Registro actualizado correctamente');
-                // Actualizar la visualización de la fecha
+                
+                // --- INICIO DE LA CORRECCIÓN ---
+                // Actualizar la visualización de la fecha (solo si la celda existe)
                 const dateCell = row.querySelector('td:nth-child(1)');
                 if (dateCell) {
                     const dateParts = dateValue.split('-');
                     dateCell.textContent = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
                 }
-                // Actualizar la duración
+                
+                // Actualizar la duración (solo si la celda existe)
                 const durationCell = row.querySelector('td:nth-child(4)');
                 if (durationCell) {
                     durationCell.textContent = `${result.worked_hours.toFixed(2)} h`;
                 }
+                // --- FIN DE LA CORRECCIÓN ---
             }
         } catch (error) {
             this._displayAlert('danger', 'Error al conectar con el servidor');
@@ -131,7 +140,6 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
             btn.innerHTML = '<i class="fa fa-save"></i> Guardar';
         }
     },
-
     /**
      * Maneja la eliminación de un registro
      */
