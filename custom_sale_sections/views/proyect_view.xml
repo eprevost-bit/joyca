@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_project_project_form_inherit_sale_order" model="ir.ui.view">
+            <field name="name">project.project.form.inherit.sale</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button name="action_send_so_list_by_email" type="object" string="Enviar Lista por Correo" class="oe_highlight" icon="fa-envelope"/>
+                </xpath>
+                <xpath expr="//notebook" position="inside">
+                    <page string="Presupuestos" name="sale_orders">
+                        <field name="sale_order_ids" 
+                           mode="list,form" 
+                           context="{'default_partner_id': partner_id, 'from_project_form': True}">
+                            <list string="Presupuestos" delete="true">
+                                <field name="name"/>
+                                <field name="partner_id"/>
+                                <field name="date_order"/>
+                                <field name="amount_total"/>
+                                <field name="state"/>
+                            </list>
+                        </field>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
