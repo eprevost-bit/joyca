@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, _, http
+from odoo import models, fields, _, http, api
 from odoo.exceptions import UserError
 
 class ProjectProject(models.Model):
@@ -10,6 +10,51 @@ class ProjectProject(models.Model):
         'project_id',
         string='Órdenes de Venta'
     )
+    
+    total_amount_untaxed = fields.Monetary(
+        string='Base Imponible Total',
+        compute='_compute_sale_order_totals',
+        readonly=True,
+        store=True # Opcional: mejora el rendimiento si necesitas buscar o agrupar por este campo
+    )
+    total_amount_tax = fields.Monetary(
+        string='Impuestos Totales',
+        compute='_compute_sale_order_totals',
+        readonly=True,
+        store=True
+    )
+    total_amount_total = fields.Monetary(
+        string='Total General',
+        compute='_compute_sale_order_totals',
+        readonly=True,
+        store=True
+    )
+    # Es necesario tener un campo de moneda
+    currency_id = fields.Many2one(
+        'res.currency', 
+        related='company_id.currency_id', 
+        string='Moneda'
+    )
+
+
+    @api.depends('sale_order_ids.amount_untaxed', 'sale_order_ids.amount_tax', 'sale_order_ids.amount_total')
+    def _compute_sale_order_totals(self):
+        """
+        Calcula la suma de los totales de todas las órdenes de venta
+        asociadas a este proyecto.
+        """
+        for project in self:
+            untaxed = 0.0
+            tax = 0.0
+            total = 0.0
+            for so in project.sale_order_ids:
+                untaxed += so.amount_untaxed
+                tax += so.amount_tax
+                total += so.amount_total
+            
+            project.total_amount_untaxed = untaxed
+            project.total_amount_tax = tax
+            project.total_amount_total = total
 
     def action_send_so_list_by_email(self):
         self.ensure_one()

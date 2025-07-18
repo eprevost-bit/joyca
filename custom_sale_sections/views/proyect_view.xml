@@ -24,6 +24,13 @@
                         </field>
                     </page>
                 </xpath>
+                <xpath expr="//page[@name='sale_orders']/field[@name='sale_order_ids']" position="after">
+                    <group class="oe_subtotal_footer oe_right">
+                        <field name="total_amount_untaxed" nolabel="0" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        <field name="total_amount_tax" nolabel="0" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        <field name="total_amount_total" class="oe_subtotal_footer_separator" nolabel="0" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                    </group>
+                </xpath>
             </field>
         </record>
     </data>
