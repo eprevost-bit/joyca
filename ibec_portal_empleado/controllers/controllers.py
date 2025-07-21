@@ -272,7 +272,7 @@ class EmployeePortal(CustomerPortal):
         ]
         return request.make_response(pdf, headers=headers)
 
-    @http.route('/my/attendance/manual_entry', type='http', auth="user", website=True, methods=['POST'])
+    @http.route('/my/attendance/manual_entry', type='http', auth="public", website=True, methods=['POST'])
     def portal_attendance_manual_entry(self, **post):
         """
         Endpoint para registro manual de asistencia
@@ -309,7 +309,7 @@ class EmployeePortal(CustomerPortal):
             check_in_dt = fields.Datetime.to_datetime(f"{date} {check_in}:00")
             check_out_dt = fields.Datetime.to_datetime(f"{date} {check_out}:00")
 
-            request.env['hr.attendance'].create({
+            request.env['hr.attendance'].sudo().create({
                 'employee_id': employee.id,
                 'check_in': check_in_dt,
                 'check_out': check_out_dt,
