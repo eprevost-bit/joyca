@@ -34,7 +34,21 @@ class ProjectProject(models.Model):
         related='company_id.currency_id', 
         string='Moneda'
     )
+    
+    x_total_muestra = fields.Monetary(string="Total Muestras (5%)", compute='_compute_pct_totals', store=True, readonly=True)
+    x_total_barniz = fields.Monetary(string="Total Barniz (1%)", compute='_compute_pct_totals', store=True, readonly=True)
+    x_total_ofitec = fields.Monetary(string="Total Oficina Téc. (4%)", compute='_compute_pct_totals', store=True, readonly=True)
+    x_total_repasos = fields.Monetary(string="Total Repasos (1%)", compute='_compute_pct_totals', store=True, readonly=True)
 
+    
+    def _calculate_and_set_pct_totals(self):
+        all_lines = self.sale_order_ids.mapped('order_line')
+        self.x_total_muestra = sum(all_lines.filtered(lambda l: l.product_id.default_code == 'PCT-MUESTRA').mapped('price_subtotal'))
+        self.x_total_barniz = sum(all_lines.filtered(lambda l: l.product_id.default_code == 'PCT-BARNIZ').mapped('price_subtotal'))
+        self.x_total_ofitec = sum(all_lines.filtered(lambda l: l.product_id.default_code == 'PCT-OFITEC').mapped('price_subtotal'))
+        self.x_total_repasos = sum(all_lines.filtered(lambda l: l.product_id.default_code == 'PCT-REPASOS').mapped('price_subtotal'))
+        
+        
     # --- MÉTODO DE CÁLCULO CENTRALIZADO ---
     def _calculate_and_set_totals(self):
         """
@@ -44,12 +58,14 @@ class ProjectProject(models.Model):
         untaxed = sum(self.sale_order_ids.mapped('amount_untaxed'))
         tax = sum(self.sale_order_ids.mapped('amount_tax'))
         total = sum(self.sale_order_ids.mapped('amount_total'))
-        
-        # Asigna los valores. En un onchange, esto actualiza la vista.
-        # En un compute, esto prepara los valores para ser guardados.
         self.total_amount_untaxed = untaxed
         self.total_amount_tax = tax
         self.total_amount_total = total
+        
+    @api.depends('sale_order_ids.order_line.price_subtotal', 'sale_order_ids.order_line.product_id.default_code')
+    def _compute_pct_totals(self):
+        for project in self:
+            project._calculate_and_set_pct_totals()
 
     # --- ONCHANGE para la Interfaz de Usuario (UI) ---
     @api.onchange('sale_order_ids')

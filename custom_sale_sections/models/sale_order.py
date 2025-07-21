@@ -40,7 +40,6 @@ class SaleOrderLine(models.Model):
                 else:
                     section_end_index = len(lines)
                 
-                # Sumamos el subtotal de las líneas de producto dentro de esta sección
                 section_total = sum(
                     l.price_subtotal for l in lines[section_start_index + 1:section_end_index] if not l.display_type
                 )
@@ -63,7 +62,27 @@ class SaleOrder(models.Model):
         index=True,
         copy=False,
     )
+    @api.onchange('order_line')
+    def _onchange_recalculate_percentages(self):
+        """
+        Calcula el precio de las líneas de porcentaje basado en el 
+        subtotal de las líneas de producto normales.
+        """
+        # 1. Separar las líneas normales de las de porcentaje
+        percentage_lines = self.order_line.filtered(
+            lambda line: line.product_id and line.product_id.x_percentage_of_total > 0
+        )
+        
+        normal_lines = self.order_line - percentage_lines
 
+        # 2. Calcular el subtotal base (solo de las líneas normales)
+        base_subtotal = sum(normal_lines.mapped('price_subtotal'))
+
+        # 3. Actualizar el precio de cada línea de porcentaje
+        for line in percentage_lines:
+            percentage = line.product_id.x_percentage_of_total / 100.0
+            line.price_unit = base_subtotal * percentage
+            line.product_uom_qty = 1 
 
     def action_add_custom_section(self):
         self.ensure_one()
@@ -82,20 +101,16 @@ class SaleOrder(models.Model):
             raise UserError(f"No se encontraron los siguientes productos necesarios: {', '.join(missing_refs)}. "
                             "Por favor, créalos o asegúrate de que su 'Referencia Interna' sea correcta.")
 
-        # Obtenemos la secuencia más alta para empezar a añadir desde ahí
         sequence = max(self.order_line.mapped('sequence') or [0]) + 1
         lines_to_create = []
 
-        # --- PASO 1: AÑADIR LA LÍNEA DE SECCIÓN PRINCIPAL ---
-        # Esta es la corrección clave: usamos 'line_section' en lugar de 'line_note'.
         lines_to_create.append((0, 0, {
             'display_type': 'line_section',
-            'name': 'SERVICIOS ADICIONALES',  # Este será el nombre de tu nueva sección
+            'name': 'SERVICIOS ADICIONALES',
             'sequence': sequence
         }))
         sequence += 1
 
-        # --- PASO 2: AÑADIR LOS PRODUCTOS DE SERVICIO DENTRO DE LA SECCIÓN ---
         for ref in service_refs:
             product = products_by_ref[ref]
             lines_to_create.append((0, 0, {

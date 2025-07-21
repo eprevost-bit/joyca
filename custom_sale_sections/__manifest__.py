@@ -8,7 +8,8 @@
     'depends': ['sale_management', 'sale', 'mail', 'project'], 
     'data': [
         'views/sale_order_view.xml',
-        'views/proyect_view.xml',
+        'views/proyect_view.xml', 
+        'views/product_template.xml', 
     ],
     'installable': True,
     'application': False,
