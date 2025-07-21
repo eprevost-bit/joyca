@@ -14,49 +14,68 @@ class ProjectProject(models.Model):
     total_amount_untaxed = fields.Monetary(
         string='Base Imponible Total',
         compute='_compute_sale_order_totals',
-        readonly=True,
-        store=True # Opcional: mejora el rendimiento si necesitas buscar o agrupar por este campo
+        store=True,
+        readonly=True
     )
     total_amount_tax = fields.Monetary(
         string='Impuestos Totales',
         compute='_compute_sale_order_totals',
-        readonly=True,
-        store=True
+        store=True,
+        readonly=True
     )
     total_amount_total = fields.Monetary(
         string='Total General',
         compute='_compute_sale_order_totals',
-        readonly=True,
-        store=True
+        store=True,
+        readonly=True
     )
-    # Es necesario tener un campo de moneda
     currency_id = fields.Many2one(
         'res.currency', 
         related='company_id.currency_id', 
         string='Moneda'
     )
 
+    # --- MÉTODO DE CÁLCULO CENTRALIZADO ---
+    def _calculate_and_set_totals(self):
+        """
+        Lógica de cálculo reutilizable.
+        Funciona tanto para el onchange como para el compute.
+        """
+        untaxed = sum(self.sale_order_ids.mapped('amount_untaxed'))
+        tax = sum(self.sale_order_ids.mapped('amount_tax'))
+        total = sum(self.sale_order_ids.mapped('amount_total'))
+        
+        # Asigna los valores. En un onchange, esto actualiza la vista.
+        # En un compute, esto prepara los valores para ser guardados.
+        self.total_amount_untaxed = untaxed
+        self.total_amount_tax = tax
+        self.total_amount_total = total
 
+    # --- ONCHANGE para la Interfaz de Usuario (UI) ---
+    @api.onchange('sale_order_ids')
+    def _onchange_sale_order_ids(self):
+        """
+        Se dispara INMEDIATAMENTE en la interfaz cuando añades,
+        editas o eliminas una línea de presupuesto.
+        """
+        # Usamos la lógica centralizada
+        self._calculate_and_set_totals()
+
+    # --- COMPUTE para la Base de Datos (Server) ---
     @api.depends('sale_order_ids.amount_untaxed', 'sale_order_ids.amount_tax', 'sale_order_ids.amount_total')
     def _compute_sale_order_totals(self):
         """
-        Calcula la suma de los totales de todas las órdenes de venta
-        asociadas a este proyecto.
+        Se dispara al guardar o cuando hay cambios a nivel de servidor.
+        Esencial para la integridad de los datos.
         """
         for project in self:
-            untaxed = 0.0
-            tax = 0.0
-            total = 0.0
-            for so in project.sale_order_ids:
-                untaxed += so.amount_untaxed
-                tax += so.amount_tax
-                total += so.amount_total
+            # Usamos la lógica centralizada
+            project._calculate_and_set_totals()
             
-            project.total_amount_untaxed = untaxed
-            project.total_amount_tax = tax
-            project.total_amount_total = total
-
+    # Tu método para enviar el correo (sin cambios)
     def action_send_so_list_by_email(self):
+        # ... (el resto de tu código para el botón de email) ...
+        # (El código que proporcionaste para este método es correcto y no necesita cambios)
         self.ensure_one()
 
         if not self.partner_id:
@@ -71,8 +90,6 @@ class ProjectProject(models.Model):
         body_html += "<p>A continuación, le presentamos un resumen de los presupuestos asociados a su proyecto:</p>"
         body_html += "<ul>"
         for so in presupuestos_validos:
-            # --- LÍNEA SIMPLIFICADA ---
-            # Se ha eliminado la parte del estado del presupuesto.
             body_html += f"<li>{so.name}: {so.amount_total} {so.currency_id.symbol}</li>"
         body_html += "</ul>"
         body_html += "<p>Gracias por su confianza.</p>"

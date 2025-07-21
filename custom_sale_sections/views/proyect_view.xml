@@ -11,9 +11,7 @@
                 </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Presupuestos" name="sale_orders">
-                        <field name="sale_order_ids" 
-                           mode="list,form" 
-                           context="{'default_partner_id': partner_id, 'from_project_form': True}">
+                        <field name="sale_order_ids" mode="list,form" context="{'default_partner_id': partner_id, 'from_project_form': True}">
                             <list string="Presupuestos" delete="true">
                                 <field name="name"/>
                                 <field name="partner_id"/>
