@@ -40,18 +40,18 @@ class ProjectProject(models.Model):
     )
     
     # --- CAMPOS DE DESGLOSE DE PORCENTAJES (MONETARIOS) ---
-    x_total_muestra = fields.Monetary(string="Total Muestras (5%)", compute='_compute_pct_totals', store=True, readonly=True)
-    x_total_barniz = fields.Monetary(string="Total Barniz (1%)", compute='_compute_pct_totals', store=True, readonly=True)
-    x_total_ofitec = fields.Monetary(string="Total Oficina Téc. (4%)", compute='_compute_pct_totals', store=True, readonly=True)
-    x_total_repasos = fields.Monetary(string="Total Repasos (1%)", compute='_compute_pct_totals', store=True, readonly=True)
+    x_total_muestra = fields.Monetary(string="MUESTRA (5%)", compute='_compute_pct_totals', store=True, readonly=True)
+    x_total_barniz = fields.Monetary(string="REPASO DE BARNIZ (1%)", compute='_compute_pct_totals', store=True, readonly=True)
+    x_total_ofitec = fields.Monetary(string="OFICINA TÉCNICA (4%)", compute='_compute_pct_totals', store=True, readonly=True)
+    x_total_repasos = fields.Monetary(string="REPASOS (1%)", compute='_compute_pct_totals', store=True, readonly=True)
     
     # --- CAMPOS DE RESUMEN DE CANTIDADES (NUMÉRICOS) ---
-    x_qty_cajones = fields.Float(string="Cant. Cajones", compute='_compute_service_quantities', store=True, readonly=True)
-    x_qty_plataforma = fields.Float(string="Cant. Plataformas", compute='_compute_service_quantities', store=True, readonly=True)
-    x_qty_desplazamiento = fields.Float(string="Cant. Desplazamientos", compute='_compute_service_quantities', store=True, readonly=True)
-    x_qty_reparto = fields.Float(string="Cant. Repartos", compute='_compute_service_quantities', store=True, readonly=True)
-    x_qty_fabricacion = fields.Float(string="Cant. Fabricación", compute='_compute_service_quantities', store=True, readonly=True)
-    x_qty_montaje = fields.Float(string="Cant. Montajes", compute='_compute_service_quantities', store=True, readonly=True)
+    x_qty_cajones = fields.Float(string="TOTAL DE CAJONES", compute='_compute_service_quantities', store=True, readonly=True)
+    x_qty_plataforma = fields.Float(string="IMPORTE TOTAL SUBIDA DE MATERIAL CON PLATAFORMA", compute='_compute_service_quantities', store=True, readonly=True)
+    x_qty_desplazamiento = fields.Float(string="HORAS DE DESPLAZAMIENTOS", compute='_compute_service_quantities', store=True, readonly=True)
+    x_qty_reparto = fields.Float(string="TOTAL HORAS REPARTO DE MATERIAL EN OBRA", compute='_compute_service_quantities', store=True, readonly=True)
+    x_qty_fabricacion = fields.Float(string="TOTAL HORAS DE FABRICACIÓN", compute='_compute_service_quantities', store=True, readonly=True)
+    x_qty_montaje = fields.Float(string="TOTAL HORAS DE MONTAJE", compute='_compute_service_quantities', store=True, readonly=True)
 
     # -------------------------------------------------------------------------
     # MÉTODOS COMPUTE (Para guardar en Base de Datos)
