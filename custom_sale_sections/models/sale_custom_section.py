@@ -10,7 +10,6 @@ class SaleCustomSection(models.Model):
     sequence = fields.Integer(default=10)
     order_id = fields.Many2one('sale.order', string='Presupuesto', ondelete='cascade', required=True)
     
-    # Campo para mostrar los totales en la cabecera de la pestaña
     currency_id = fields.Many2one(related='order_id.currency_id')
     amount_untaxed = fields.Monetary(string='Base Imponible', compute='_compute_section_total', store=True)
 

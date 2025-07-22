@@ -24,8 +24,72 @@
                 </xpath>
                 <xpath expr="//page[@name='sale_orders']/field[@name='sale_order_ids']" position="after">
                     <group class="oe_subtotal_footer oe_right">
+                        <span class="oe_form_label">
+                            <b>Resumen de Cantidades</b>
+                        </span>
                         <div class="oe_clear">
                             <div style="display: flex; justify-content: flex-end; align-items: flex-start; gap: 48px; width: 100%;">
+                                <div style="flex-shrink: 0;">
+
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Servicio</th>
+                                                <th class="text-right">Cantidad</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <label for="x_qty_cajones"/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <field name="x_qty_cajones" nolabel="1"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <label for="x_qty_plataforma"/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <field name="x_qty_plataforma" nolabel="1"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <label for="x_qty_desplazamiento"/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <field name="x_qty_desplazamiento" nolabel="1"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <label for="x_qty_reparto"/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <field name="x_qty_reparto" nolabel="1"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <label for="x_qty_fabricacion"/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <field name="x_qty_fabricacion" nolabel="1"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <label for="x_qty_montaje"/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <field name="x_qty_montaje" nolabel="1"/>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <group>
                                     <field name="x_total_muestra" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                     <field name="x_total_barniz" widget="monetary" options="{'currency_field': 'currency_id'}"/>
