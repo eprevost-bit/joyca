@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_report_project_summary" model="ir.actions.report">
+            <field name="name">Informe de Proyecto</field>
+            <field name="model">project.project</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_sale_sections.report_template_project_summary</field>
+            <field name="report_file">custom_sale_sections.report_template_project_summary</field>
+            <field name="binding_model_id" ref="model_project_project"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">(object.name or 'Presupuesto de Proyecto').replace('/', '_')</field>
+        </record>
+        <template id="report_template_project_summary">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="doc">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <h2 class="mt-4">Informe de Proyecto: <span t-field="doc.name"/>
+                            </h2>
+
+                            <p class="mt-4 mb-3">
+                        A continuación se presenta el resumen de los presupuestos asociados al proyecto.
+                            </p>
+
+                            <table class="table table-sm o_main_table mt-4">
+                                <thead>
+                                    <tr>
+                                        <th name="th_description" class="text-left" style="width: 80%;">Descripción</th>
+                                        <th name="th_untaxed" class="text-right">Base Imponible</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.sale_order_ids" t-as="so">
+                                        <tr>
+                                            <td>
+                                                <span t-esc="so.note"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-field="so.amount_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <div id="total" class="row justify-content-end mt-4">
+                                <div class="col-4">
+                                    <table class="table table-sm">
+                                        <tr class="border-black o_total">
+                                            <td>
+                                                <strong>Base Imponible Total</strong>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-field="doc.total_amount_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <strong>Impuestos Totales</strong>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-field="doc.total_amount_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-black o_total">
+                                            <td>
+                                                <strong>Total General</strong>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-field="doc.total_amount_total" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

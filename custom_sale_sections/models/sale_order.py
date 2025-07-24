@@ -55,6 +55,7 @@ class SaleOrderLine(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
     
+    conecpt_sale = fields.Char(string="Conecpto de Venta")
     project_id = fields.Many2one(
         'project.project',
         string='Proyecto',
@@ -62,6 +63,7 @@ class SaleOrder(models.Model):
         index=True,
         copy=False,
     )
+    
     @api.onchange('order_line')
     def _onchange_recalculate_percentages(self):
         """
@@ -115,7 +117,7 @@ class SaleOrder(models.Model):
             product = products_by_ref[ref]
             lines_to_create.append((0, 0, {
                 'product_id': product.id,
-                'product_uom_qty': 1,
+                'product_uom_qty': 0,
                 'price_unit': product.list_price,
                 'sequence': sequence
             }))

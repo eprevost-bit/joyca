@@ -8,13 +8,14 @@
             <field name="arch" type="xml">
                 <xpath expr="//header" position="inside">
                     <button name="action_send_so_list_by_email" type="object" string="Enviar Lista por Correo" class="oe_highlight" icon="fa-envelope"/>
+                    <button name="%(custom_sale_sections.action_report_project_summary)d" string="Imprimir Resumen" type="action" class="oe_highlight" icon="fa-print"/>
                 </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Presupuestos" name="sale_orders">
                         <field name="sale_order_ids" mode="list,form" context="{'default_partner_id': partner_id, 'from_project_form': True}">
                             <list string="Presupuestos" delete="true">
                                 <field name="name"/>
-                                <field name="partner_id"/>
+                                <field name="conecpt_sale"/>
                                 <field name="date_order"/>
                                 <field name="amount_total"/>
                                 <field name="state"/>

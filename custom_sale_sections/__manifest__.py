@@ -10,6 +10,7 @@
         'views/sale_order_view.xml',
         'views/proyect_view.xml', 
         'views/product_template.xml', 
+        'reports/project_report_views.xml', 
     ],
     'installable': True,
     'application': False,
