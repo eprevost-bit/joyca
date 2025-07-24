@@ -25,6 +25,19 @@
                     </div>
                 </xpath>
 
+                <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="replace">
+                    <field name="x_unitary_qty" string="Cant. Unitaria"/>
+                    <field name="x_factor_qty" string="Nº Piezas"/>
+                    <field name="product_uom_qty" string="Cant. Total" readonly="1" force_save="1"/>
+                </xpath>
+
+                <xpath expr="//field[@name='order_line']/list/field[@name='price_subtotal']" position="after">
+                    <field name="x_section_untaxed_amount"
+                           attrs="{'invisible': [('display_type', '!=', 'line_section')]}"
+                           widget="monetary"
+                           options="{'currency_field': 'currency_id'}"/>
+                </xpath>
+
             </field>
         </record>
     </data>

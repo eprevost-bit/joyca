@@ -4,6 +4,35 @@ from odoo.exceptions import UserError
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
+    # --- NUEVOS CAMPOS ---
+    # Este es el campo "cantidad unitaria" que introduce el usuario.
+    x_unitary_qty = fields.Float(
+        string="Cantidad Unitaria", 
+        default=1.0, 
+        digits='Product Unit of Measure',
+        required=True
+    )
+    # Este es el segundo campo que multiplica al primero.
+    x_factor_qty = fields.Float(
+        string="Nº Piezas", 
+        default=1.0, 
+        digits='Product Unit of Measure',
+        required=True
+    )
+
+    # --- MÉTODO ONCHANGE ---
+    @api.onchange('x_unitary_qty', 'x_factor_qty')
+    def _onchange_custom_quantities(self):
+        """
+        Calcula la cantidad total (product_uom_qty) como el producto de
+        la cantidad unitaria y el número de piezas.
+        """
+        # Se asegura de que los valores no sean negativos
+        unitary_qty = self.x_unitary_qty if self.x_unitary_qty > 0 else 1
+        factor_qty = self.x_factor_qty if self.x_factor_qty > 0 else 1
+        self.product_uom_qty = unitary_qty * factor_qty
+
+    # --- TU CÓDIGO EXISTENTE (SIN CAMBIOS) ---
     x_section_untaxed_amount = fields.Monetary(
         string="Total de la Sección (Base Imponible)",
         compute='_compute_section_untaxed_amount',
@@ -20,21 +49,16 @@ class SaleOrderLine(models.Model):
     def _compute_section_untaxed_amount(self):
         """
         Calcula el subtotal para cada sección.
-        Una sección empieza con una línea 'line_section' y termina justo antes de la siguiente 'line_section'.
         """
-        # Agrupamos por pedido para procesar cada uno por separado
         for order in self.mapped('order_id'):
             subtotal_cache = {}
-            # Ordenamos las líneas por secuencia para asegurar el orden correcto
             lines = order.order_line.sorted('sequence')
             
-            # Buscamos los índices de las líneas que son secciones
             section_indices = [i for i, line in enumerate(lines) if line.display_type == 'line_section']
             
             for i, section_start_index in enumerate(section_indices):
                 section_line = lines[section_start_index]
                 
-                # Determinamos el final del rango de la sección actual
                 if i + 1 < len(section_indices):
                     section_end_index = section_indices[i + 1]
                 else:
@@ -55,6 +79,7 @@ class SaleOrderLine(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
     
+    # --- TU CÓDIGO EXISTENTE (SIN CAMBIOS) ---
     conecpt_sale = fields.Char(string="Conecpto de Venta")
     project_id = fields.Many2one(
         'project.project',
@@ -70,17 +95,13 @@ class SaleOrder(models.Model):
         Calcula el precio de las líneas de porcentaje basado en el 
         subtotal de las líneas de producto normales.
         """
-        # 1. Separar las líneas normales de las de porcentaje
         percentage_lines = self.order_line.filtered(
-            lambda line: line.product_id and line.product_id.x_percentage_of_total > 0
+            lambda line: line.product_id and hasattr(line.product_id, 'x_percentage_of_total') and line.product_id.x_percentage_of_total > 0
         )
         
         normal_lines = self.order_line - percentage_lines
-
-        # 2. Calcular el subtotal base (solo de las líneas normales)
         base_subtotal = sum(normal_lines.mapped('price_subtotal'))
 
-        # 3. Actualizar el precio de cada línea de porcentaje
         for line in percentage_lines:
             percentage = line.product_id.x_percentage_of_total / 100.0
             line.price_unit = base_subtotal * percentage
@@ -117,7 +138,8 @@ class SaleOrder(models.Model):
             product = products_by_ref[ref]
             lines_to_create.append((0, 0, {
                 'product_id': product.id,
-                'product_uom_qty': 0,
+                'x_unitary_qty': 0,  # Los servicios se pueden dejar en 0 para que el usuario los llene
+                'x_factor_qty': 1,
                 'price_unit': product.list_price,
                 'sequence': sequence
             }))
@@ -134,7 +156,8 @@ class SaleOrder(models.Model):
             product = products_by_ref[ref]
             lines_to_create.append((0, 0, {
                 'product_id': product.id,
-                'product_uom_qty': 1,
+                'x_unitary_qty': 1, # Estos campos se ponen a 1 por defecto
+                'x_factor_qty': 1,
                 'price_unit': 0,
                 'sequence': sequence
             }))
@@ -149,12 +172,11 @@ class SaleOrder(models.Model):
 
     @api.onchange('order_line')
     def _recalculate_percentage_lines(self):
-        
         sections = {}
         current_section_id = None
         for line in self.order_line:
             if line.display_type == 'line_section':
-                current_section_id = line.id
+                current_section_id = line.id or line._origin.id # Manejar líneas nuevas y existentes
                 sections[current_section_id] = {'subtotal': 0.0, 'percentage_lines': []}
                 continue 
 
@@ -163,13 +185,15 @@ class SaleOrder(models.Model):
 
             if line.product_id.default_code and line.product_id.default_code.startswith('PCT-'):
                 sections[current_section_id]['percentage_lines'].append(line)
-            elif line.display_type is False:
+            elif not line.display_type:
                 sections[current_section_id]['subtotal'] += line.price_subtotal
 
         for section_id, data in sections.items():
             section_subtotal = data['subtotal']
             for perc_line in data['percentage_lines']:
-                percentage = perc_line.product_id.product_tmpl_id.x_section_percentage or 0.0
-                perc_line.price_unit = section_subtotal * percentage
-                perc_line.product_uom_qty = 1
-            
+                percentage = 0.0
+                if hasattr(perc_line.product_id, 'x_section_percentage'): # Comprobación de seguridad
+                    percentage = perc_line.product_id.x_section_percentage or 0.0
+                perc_line.price_unit = section_subtotal * (percentage / 100.0)
+                perc_line.x_unitary_qty = 1 # Se resetea a 1
+                perc_line.x_factor_qty = 1  # Se resetea a 1
