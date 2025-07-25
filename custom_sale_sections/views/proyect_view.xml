@@ -12,7 +12,13 @@
                 </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Presupuestos" name="sale_orders">
-                        <field name="sale_order_ids" mode="list,form" context="{'default_partner_id': partner_id, 'from_project_form': True}">
+                        <button name="action_create_sale_order_with_lines" 
+                                type="object" 
+                                string="Crear Presupuesto" 
+                                class="oe_highlight mb-2" 
+                                icon="fa-plus"/>
+                        
+                        <field name="sale_order_ids" mode="list" options="{'create': False}" context="{'default_partner_id': partner_id}">
                             <list string="Presupuestos" delete="true">
                                 <field name="name"/>
                                 <field name="conecpt_sale"/>

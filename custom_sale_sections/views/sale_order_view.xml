@@ -11,30 +11,11 @@
                 <xpath expr="//field[@name='partner_id']" position="after">
                     <field name="conecpt_sale"/>
                     <field name="project_id"/>
+                    <field name="cantidad"/>
                 </xpath>
                 <xpath expr="//field[@name='note']" position="attributes">
                     <attribute name="string">Descripción para cliente</attribute>
                     <attribute name="placeholder">Descripción para cliente...</attribute>
-                </xpath>
-                <xpath expr="//field[@name='order_line']" position="after">
-                    <div class="oe_right oe_button_box" style="text-align: right; padding-top: 10px; padding-right: 15px;">
-                        <button name="action_add_custom_section" type="object" class="btn-primary" string="Añadir Sección Personalizada"/>
-                        <p class="text-muted" style="margin-left: 5px;">
-           Crea una sección completa con servicios y costes porcentuales.
-                        </p>
-                    </div>
-                </xpath>
-                <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="replace">
-                    <field name="x_unitary_qty" string="Cant. Unitaria"/>
-                    <field name="x_factor_qty" string="Nº Piezas"/>
-                    <field name="product_uom_qty" string="Cant. Total" readonly="1" force_save="1"/>
-                </xpath>
-
-                <xpath expr="//field[@name='order_line']/list/field[@name='price_subtotal']" position="after">
-                    <field name="x_section_untaxed_amount"
-                           attrs="{'invisible': [('display_type', '!=', 'line_section')]}"
-                           widget="monetary"
-                           options="{'currency_field': 'currency_id'}"/>
                 </xpath>
 
             </field>

@@ -51,6 +51,75 @@ class ProjectProject(models.Model):
     x_qty_reparto = fields.Float(string="TOTAL HORAS REPARTO DE MATERIAL EN OBRA", compute='_compute_service_quantities', store=True, readonly=True)
     x_qty_fabricacion = fields.Float(string="TOTAL HORAS DE FABRICACIÓN", compute='_compute_service_quantities', store=True, readonly=True)
     x_qty_montaje = fields.Float(string="TOTAL HORAS DE MONTAJE", compute='_compute_service_quantities', store=True, readonly=True)
+    
+    def action_create_sale_order_with_lines(self):
+        self.ensure_one()
+
+        # --- VALIDACIÓN CLAVE ---
+        # Asegúrate de que el proyecto tenga un cliente asignado
+        if not self.partner_id:
+            raise UserError(_("Por favor, asigna un cliente al proyecto antes de crear un presupuesto."))
+
+        # --- LÓGICA PARA PREPARAR LÍNEAS (Tu código) ---
+        service_refs = [
+            'SERV-CAJONES', 'SERV-PLATAFORMA', 'SERV-DESPLAZAMIENTO', 
+            'SERV-REPARTO', 'SERV-FABRICACION', 'SERV-MONTAJE'
+        ]
+        percentage_refs = ['PCT-MUESTRA', 'PCT-BARNIZ', 'PCT-OFITEC', 'PCT-REPASOS']
+        all_refs = service_refs + percentage_refs
+        
+        products = self.env['product.product'].search([('default_code', 'in', all_refs)])
+        products_by_ref = {p.default_code: p for p in products}
+        
+        missing_refs = [ref for ref in all_refs if ref not in products_by_ref]
+        if missing_refs:
+            raise UserError(_("No se encontraron los siguientes productos necesarios: %s.", ', '.join(missing_refs)))
+
+        sequence = 10
+        lines_to_create = []
+        sequence += 1
+
+        for ref in service_refs:
+            product = products_by_ref[ref]
+            lines_to_create.append((0, 0, {
+                'product_id': product.id,
+                'name': product.name,
+                'product_uom_qty': 0, # Inicia en 0 para que el usuario lo llene
+                'price_unit': product.list_price,
+                'sequence': sequence
+            }))
+            sequence += 1
+            
+        lines_to_create.append((0, 0, {
+            'display_type': 'line_note',
+            'name': 'Cargos por porcentaje sobre los productos y servicios',
+            'sequence': sequence
+        }))
+        sequence += 1
+
+        for ref in percentage_refs:
+            product = products_by_ref[ref]
+            lines_to_create.append((0, 0, {
+                'product_id': product.id,
+                'name': product.name,
+                'product_uom_qty': 1,
+                'price_unit': 0,
+                'sequence': sequence
+            }))
+            sequence += 1
+        
+        # --- CREACIÓN DEL PRESUPUESTO ---
+        new_sale_order = self.env['sale.order'].create({
+            'partner_id': self.partner_id.id,
+            'project_id': self.id,
+            'order_line': lines_to_create
+        })
+        
+        # Llama a tu función de recálculo si es necesario
+        new_sale_order._recalculate_percentage_lines()
+
+        # Odoo refrescará la vista automáticamente, no necesitas devolver una acción.
+        return True
 
     @api.depends('company_id')
     def _compute_currency(self):
