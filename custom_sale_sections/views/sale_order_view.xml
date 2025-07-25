@@ -24,7 +24,6 @@
                         </p>
                     </div>
                 </xpath>
-
                 <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="replace">
                     <field name="x_unitary_qty" string="Cant. Unitaria"/>
                     <field name="x_factor_qty" string="Nº Piezas"/>
