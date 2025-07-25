@@ -17,6 +17,9 @@
                     <attribute name="string">Descripción para cliente</attribute>
                     <attribute name="placeholder">Descripción para cliente...</attribute>
                 </xpath>
+                <xpath expr="//field[@name='order_line']/list" position="attributes">
+                    <attribute name="editable">top</attribute>
+                </xpath>
 
             </field>
         </record>
