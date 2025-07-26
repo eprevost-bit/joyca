@@ -16,6 +16,24 @@ class SaleOrderLine(models.Model):
         store=True
     )
 
+    x_numero_piezas = fields.Float(
+        string='Número de Piezas',
+        compute='_compute_numero_piezas',
+        store=True,  # Guardar en la base de datos para mejor rendimiento
+        readonly=True,
+        digits='Product Unit of Measure'  # Usa la misma precisión que los campos de cantidad
+    )
+
+    @api.depends('product_uom_qty', 'order_id.cantidad')
+    def _compute_numero_piezas(self):
+        """
+        Calcula el número total de piezas para la línea.
+        Se actualiza cuando cambia la cantidad unitaria de la línea o la cantidad de la cabecera.
+        """
+        for line in self:
+            # Multiplica la cantidad de la cabecera por la cantidad de la línea
+            line.x_numero_piezas = line.order_id.cantidad * line.product_uom_qty
+
     @api.depends('order_id.order_line', 'order_id.order_line.price_subtotal', 'display_type', 'sequence')
     def _compute_section_untaxed_amount(self):
         """
@@ -55,7 +73,7 @@ class SaleOrderLine(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
     
-    conecpt_sale = fields.Char(string="Conecpto de Venta")
+    conecpt_sale = fields.Char(string="Concepto de Venta")
     project_id = fields.Many2one(
         'project.project',
         string='Proyecto',

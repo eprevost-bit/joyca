@@ -16,7 +16,7 @@
                 <t t-foreach="docs" t-as="doc">
                     <t t-call="web.external_layout">
                         <div class="page">
-                            <h2 class="mt-4">Informe de Proyecto: <span t-field="doc.name"/>
+                            <h2 class="mt-4">Presupuesto: <span t-field="doc.name"/>
                             </h2>
 
                             <p class="mt-4 mb-3">
