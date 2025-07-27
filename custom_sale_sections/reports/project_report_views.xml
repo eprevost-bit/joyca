@@ -11,16 +11,15 @@
             <field name="binding_type">report</field>
             <field name="print_report_name">(object.name or 'Presupuesto de Proyecto').replace('/', '_')</field>
         </record>
+
         <template id="report_template_project_summary">
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="doc">
                     <t t-call="web.external_layout">
                         <div class="page">
-                            <h2 class="mt-4">Presupuesto: <span t-field="doc.name"/>
-                            </h2>
-
+                            <h2 class="mt-4">Presupuesto: <span t-field="doc.name"/></h2>
                             <p class="mt-4 mb-3">
-                        A continuación se presenta el resumen de los presupuestos asociados al proyecto.
+                            A continuación se presenta el resumen de los presupuestos asociados al proyecto.
                             </p>
 
                             <table class="table table-sm o_main_table mt-4">
@@ -36,7 +35,7 @@
                                             <td>
                                                 <span t-esc="so.note"/>
                                             </td>
-                                            <td class="text-right">
+                                            <td class="text-right" style="text-align: right;">
                                                 <span t-field="so.amount_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                             </td>
                                         </tr>
@@ -51,7 +50,7 @@
                                             <td>
                                                 <strong>Base Imponible Total</strong>
                                             </td>
-                                            <td class="text-right">
+                                            <td class="text-right" style="text-align: right;">
                                                 <span t-field="doc.total_amount_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                             </td>
                                         </tr>
@@ -59,7 +58,7 @@
                                             <td>
                                                 <strong>Impuestos Totales</strong>
                                             </td>
-                                            <td class="text-right">
+                                            <td class="text-right" style="text-align: right;">
                                                 <span t-field="doc.total_amount_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                             </td>
                                         </tr>
@@ -67,14 +66,13 @@
                                             <td>
                                                 <strong>Total General</strong>
                                             </td>
-                                            <td class="text-right">
+                                            <td class="text-right" style="text-align: right;">
                                                 <span t-field="doc.total_amount_total" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                             </td>
                                         </tr>
                                     </table>
                                 </div>
                             </div>
-
                         </div>
                     </t>
                 </t>

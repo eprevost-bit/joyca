@@ -23,7 +23,7 @@
                                 <field name="name"/>
                                 <field name="conecpt_sale"/>
                                 <field name="date_order"/>
-                                <field name="amount_total"/>
+                                <field name="amount_untaxed"/>
                                 <field name="state"/>
                             </list>
                         </field>
