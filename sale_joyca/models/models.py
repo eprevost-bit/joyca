@@ -49,8 +49,6 @@ class SaleOrder(models.Model):
 
         # --- Lógica para crear el NUEVO presupuesto ---
         new_version_name = f"{base_name}-V{new_version_number}"
-
-        # Usamos el método copy() para duplicar el registro
         new_quotation = self.copy(default={
             'name': new_version_name,
             'state': 'draft', # El nuevo presupuesto empieza en borrador
