@@ -51,7 +51,7 @@ class SaleOrder(models.Model):
         new_version_name = f"{base_name}-V{new_version_number}"
         new_quotation = self.copy(default={
             'name': new_version_name,
-            'state': 'draft', # El nuevo presupuesto empieza en borrador
+            'state': 'version', # El nuevo presupuesto empieza en borrador
             'origin': self.name, # Guardamos como origen el nombre del presupuesto del que venimos
         })
 
