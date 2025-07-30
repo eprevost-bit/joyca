@@ -14,6 +14,8 @@ class SaleOrder(models.Model):
         ondelete={'version': 'cascade'}
     )
     
+    name_presupuesto = fields.Char(string='Nombre del Presupuesto')
+    
     def action_create_new_version(self):
         self.ensure_one()
 
@@ -58,3 +60,22 @@ class SaleOrder(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def action_confirm(self):
+        # Primero, ejecuta la lógica original del botón de confirmar
+        res = super(SaleOrder, self).action_confirm()
+
+        # Después, agrega tu nueva lógica para crear el proyecto
+        for order in self:
+            # Crea un proyecto en el modelo 'project.project'
+            project = self.env['project.project'].create({
+                'name': order.name,  # Nombra el proyecto como el pedido de venta
+                'partner_id': order.partner_id.id, # Asigna el mismo cliente al proyecto
+            })
+            
+            # Opcional pero recomendado: Vincula el nuevo proyecto al pedido de venta
+            order.write({
+                'project_id': project.id
+            })
+            
+        return res
