@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        
+
         <record id="sale.action_quotations_with_onboarding" model="ir.actions.act_window">
-            <field name="domain">[('state', 'in', ['draft', 'sent', 'version'])]</field>
+            <field name="domain">[('state', 'in', ['draft', 'sent'])]</field>
         </record>
 
 
@@ -13,11 +13,9 @@
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//header" position="inside">
-                    <button name="action_create_new_version"
-                            string="Crear Versión"
-                            type="object"
-                            class="oe_highlight"/>
+                    <button name="action_create_new_version" string="Crear Versión" type="object" class="oe_highlight" />
                 </xpath>
+                
             </field>
         </record>
 
