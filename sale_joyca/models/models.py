@@ -5,7 +5,7 @@ from odoo import models, fields, _
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
-    # Campo 'state' que ya teníamos
+    # ... tu campo 'state' modificado va aquí ...
     state = fields.Selection(
         selection_add=[
             ('version', 'Versión'),
@@ -13,47 +13,46 @@ class SaleOrder(models.Model):
         ], 
         ondelete={'version': 'cascade'}
     )
-
+    
     def action_create_new_version(self):
-        self.ensure_one()  # Aseguramos que solo se ejecuta para un registro
+        self.ensure_one()
 
-        # Usamos expresiones regulares para encontrar el nombre base y la versión
-        match = re.match(r'^(.*?)(?:-V(\d+))?$', self.name)
-        base_name, version_number_str = match.groups()
-        current_version = int(version_number_str) if version_number_str else 0
+        # 1. Determinar el nombre base del presupuesto (ej: 'S00040' de 'S00040-V2')
+        base_name_match = re.match(r'^(.*?)(?:-V(\d+))?$', self.name)
+        base_name = base_name_match.groups()[0] if base_name_match else self.name
 
-        new_version_number = 0
+        # 2. Buscar todos los presupuestos relacionados para encontrar el número de versión más alto
+        related_orders = self.env['sale.order'].search([
+            '|',
+            ('name', '=', base_name),
+            ('name', '=like', f"{base_name}-V%")
+        ])
 
-        # --- Lógica para manejar el presupuesto ORIGINAL ---
-        if current_version == 0:
-            # Si es el presupuesto base (ej. S00040), lo renombramos a V1
-            # y lo ponemos en estado 'Versión'.
-            self.write({
-                'name': f"{base_name}-V1",
-                'state': 'version'
-            })
-            # La nueva versión que vamos a crear será la V2
-            new_version_number = 2
-        else:
-            # Si ya es una versión (ej. S00040-V1), solo cambiamos su estado a 'Versión'.
-            self.write({
-                'state': 'version'
-            })
-            # La nueva versión será la siguiente a la actual
-            new_version_number = current_version + 1
+        max_version = 0
+        for order in related_orders:
+            version_match = re.search(r'-V(\d+)$', order.name)
+            if version_match:
+                max_version = max(max_version, int(version_match.group(1)))
+        
+        # El número para la nueva versión es el máximo encontrado + 1
+        new_version_number = max_version + 1
 
-        self.flush_model(['name', 'state'])
-        new_version_name = f"{base_name}-V{new_version_number}"
+        # 3. Crear la nueva versión como una copia del presupuesto actual.
+        # Esta nueva versión será el borrador activo.
         new_quotation = self.copy(default={
-            'name': new_version_name,
-            'state': 'draft',  # El nuevo presupuesto empieza como un borrador activo.
-            'origin': self.name,  # Guardamos como origen el nombre del presupuesto del que venimos
+            'name': f"{base_name}-V{new_version_number}",
+            'state': 'version',
+            'origin': self.name,  # Guardar referencia al documento del que se origina
         })
 
-        # Devolvemos una acción para que Odoo abra el nuevo presupuesto en pantalla
+        # 4. Cambiar el estado del presupuesto ACTUAL a 'version' para archivarlo.
+        # El nombre no se toca, cumpliendo con tu requisito.
+        # self.write({'state': 'version'})
+
+        # 5. Devolver una acción para abrir el formulario de la nueva versión creada.
         return {
             'type': 'ir.actions.act_window',
-            'name': _('New Version'),
+            'name': _('Nueva Versión'),
             'res_model': 'sale.order',
             'res_id': new_quotation.id,
             'view_mode': 'form',
