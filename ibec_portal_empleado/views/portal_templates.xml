@@ -306,7 +306,7 @@
                 <t t-esc="request.httprequest.args.get('success')"/>
             </div>
 
-            <div t-if="employee" id="attendance_portal_widget" class="mb-4">
+            <div t-if="employee" id="attendance_portal_widget_home" class="mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h4 class="mb-0">Registrar Jornada</h4>
