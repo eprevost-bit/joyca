@@ -67,7 +67,6 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
         const attendanceId = parseInt(btn.dataset.id);
         const row = btn.closest('tr');
 
-        // Si no se encuentra una fila (estamos en una página sin tabla), no hacemos nada.
         if (!row) {
             return;
         }
@@ -76,23 +75,19 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
         const checkInInput = row.querySelector('input[data-field="check_in"]');
         const checkOutInput = row.querySelector('input[data-field="check_out"]');
 
-        // Validar formato de fecha YYYY-MM-DD
+        // --- Your validation logic here (it's correct, no changes needed) ---
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         const dateValue = dateInput.value;
         if (!dateRegex.test(dateValue)) {
             this._displayAlert('danger', 'Formato de fecha inválido. Use YYYY-MM-DD');
             return;
         }
-
-        // Validar formato HH:MM
         const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-
         const checkIn = checkInInput.value;
         if (!timeRegex.test(checkIn)) {
             this._displayAlert('danger', 'Formato de hora de entrada inválido. Use HH:MM');
             return;
         }
-
         let checkOut = null;
         if (checkOutInput && checkOutInput.value) {
             checkOut = checkOutInput.value;
@@ -101,6 +96,7 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
                 return;
             }
         }
+        // --- End of validation ---
 
         btn.disabled = true;
         btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
@@ -117,21 +113,12 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
                 this._displayAlert('danger', result.error);
             } else {
                 this._displayAlert('success', 'Registro actualizado correctamente');
-                
-                // --- INICIO DE LA CORRECCIÓN ---
-                // Actualizar la visualización de la fecha (solo si la celda existe)
-                const dateCell = row.querySelector('td:nth-child(1)');
-                if (dateCell) {
-                    const dateParts = dateValue.split('-');
-                    dateCell.textContent = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-                }
-                
-                // Actualizar la duración (solo si la celda existe)
+
+                // ✅ CORRECTED LOGIC: Only update the duration cell's text.
                 const durationCell = row.querySelector('td:nth-child(4)');
-                if (durationCell) {
+                if (durationCell && result.worked_hours !== undefined) {
                     durationCell.textContent = `${result.worked_hours.toFixed(2)} h`;
                 }
-                // --- FIN DE LA CORRECCIÓN ---
             }
         } catch (error) {
             this._displayAlert('danger', 'Error al conectar con el servidor');
@@ -140,6 +127,84 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
             btn.innerHTML = '<i class="fa fa-save"></i> Guardar';
         }
     },
+    // async _onSaveChanges(ev) {
+    //     const btn = ev.currentTarget;
+    //     const attendanceId = parseInt(btn.dataset.id);
+    //     const row = btn.closest('tr');
+
+    //     // Si no se encuentra una fila (estamos en una página sin tabla), no hacemos nada.
+    //     if (!row) {
+    //         return;
+    //     }
+
+    //     const dateInput = row.querySelector('input[data-field="check_in_date"]');
+    //     const checkInInput = row.querySelector('input[data-field="check_in"]');
+    //     const checkOutInput = row.querySelector('input[data-field="check_out"]');
+
+    //     // Validar formato de fecha YYYY-MM-DD
+    //     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    //     const dateValue = dateInput.value;
+    //     if (!dateRegex.test(dateValue)) {
+    //         this._displayAlert('danger', 'Formato de fecha inválido. Use YYYY-MM-DD');
+    //         return;
+    //     }
+
+    //     // Validar formato HH:MM
+    //     const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+
+    //     const checkIn = checkInInput.value;
+    //     if (!timeRegex.test(checkIn)) {
+    //         this._displayAlert('danger', 'Formato de hora de entrada inválido. Use HH:MM');
+    //         return;
+    //     }
+
+    //     let checkOut = null;
+    //     if (checkOutInput && checkOutInput.value) {
+    //         checkOut = checkOutInput.value;
+    //         if (!timeRegex.test(checkOut)) {
+    //             this._displayAlert('danger', 'Formato de hora de salida inválido. Use HH:MM');
+    //             return;
+    //         }
+    //     }
+
+    //     btn.disabled = true;
+    //     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
+
+    //     try {
+    //         const result = await rpc('/my/attendance/update', {
+    //             attendance_id: attendanceId,
+    //             new_check_in_date: dateValue,
+    //             new_check_in: checkIn,
+    //             new_check_out: checkOut,
+    //         });
+
+    //         if (result.error) {
+    //             this._displayAlert('danger', result.error);
+    //         } else {
+    //             this._displayAlert('success', 'Registro actualizado correctamente');
+                
+    //             // --- INICIO DE LA CORRECCIÓN ---
+    //             // Actualizar la visualización de la fecha (solo si la celda existe)
+    //             const dateCell = row.querySelector('td:nth-child(1)');
+    //             if (dateCell) {
+    //                 const dateParts = dateValue.split('-');
+    //                 dateCell.textContent = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+    //             }
+                
+    //             // Actualizar la duración (solo si la celda existe)
+    //             const durationCell = row.querySelector('td:nth-child(4)');
+    //             if (durationCell) {
+    //                 durationCell.textContent = `${result.worked_hours.toFixed(2)} h`;
+    //             }
+    //             // --- FIN DE LA CORRECCIÓN ---
+    //         }
+    //     } catch (error) {
+    //         this._displayAlert('danger', 'Error al conectar con el servidor');
+    //     } finally {
+    //         btn.disabled = false;
+    //         btn.innerHTML = '<i class="fa fa-save"></i> Guardar';
+    //     }
+    // },
     /**
      * Maneja la eliminación de un registro
      */
