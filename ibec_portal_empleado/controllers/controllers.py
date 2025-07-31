@@ -321,6 +321,61 @@ class EmployeePortal(CustomerPortal):
             return request.redirect(f"{redirect_url}?error=Formato de fecha/hora inválido")
         except Exception as e:
             return request.redirect(f"{redirect_url}?error=Error al guardar el registro")
+    
+    # Añade este nuevo método a tu controlador EmployeePortal
+    @http.route('/my/attendance/manual_entry_intervals', type='json', auth="user", website=True, methods=['POST'])
+    def portal_attendance_manual_intervals(self, date, intervals, **kw):
+        """
+        Endpoint JSON para registrar múltiples intervalos de asistencia en un día.
+        """
+        employee = request.env.user.employee_id
+        if not employee:
+            return {'error': 'No se encontró el empleado asociado.'}
+
+        try:
+            entry_date = fields.Date.to_date(date)
+            today = fields.Date.today()
+
+            # Validaciones de seguridad
+            if entry_date > today:
+                return {'error': 'No puedes registrar días futuros.'}
+            if (today - entry_date).days > 7:
+                return {'error': 'Solo puedes registrar días de los últimos 7 días.'}
+
+            # --- Clave: Eliminar registros existentes de ese día para evitar duplicados ---
+            domain_start = fields.Datetime.to_datetime(f"{date} 00:00:00")
+            domain_end = fields.Datetime.to_datetime(f"{date} 23:59:59")
+            
+            existing_attendances = request.env['hr.attendance'].search([
+                ('employee_id', '=', employee.id),
+                ('check_in', '>=', domain_start),
+                ('check_in', '<=', domain_end)
+            ])
+            if existing_attendances:
+                existing_attendances.sudo().unlink() # Usamos sudo() por si el usuario no tiene permisos de borrado
+
+            # Crear los nuevos registros
+            for interval in intervals:
+                check_in_str = interval.get('check_in')
+                check_out_str = interval.get('check_out')
+
+                if not check_in_str or not check_out_str:
+                    continue # Ignorar intervalos vacíos
+
+                check_in_dt = fields.Datetime.to_datetime(f"{date} {check_in_str}:00")
+                check_out_dt = fields.Datetime.to_datetime(f"{date} {check_out_str}:00")
+
+                request.env['hr.attendance'].sudo().create({
+                    'employee_id': employee.id,
+                    'check_in': check_in_dt,
+                    'check_out': check_out_dt,
+                })
+            
+            return {'success': True, 'message': 'Registros guardados correctamente.'}
+
+        except Exception as e:
+            _logger.error(f"Error en registro manual de intervalos: {e}")
+            return {'error': f'Error al procesar los registros: {e}'}
 
 
 class AttendanceAutomation(models.Model):

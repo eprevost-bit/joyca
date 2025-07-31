@@ -157,53 +157,49 @@
                                 data-bs-target="#manualEntryModal">
                             <i class="fa fa-calendar-plus me-2"/>Registrar día completo
                         </button>
-                        <div class="modal fade" id="manualEntryModal" tabindex="-1"
-                             aria-labelledby="manualEntryModalLabel"
-                             aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
+                        <div class="modal fade" id="manualEntryModal" tabindex="-1" aria-labelledby="manualEntryModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg"> <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="manualEntryModalLabel">Registrar día completo
-                                        </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Close"></button>
+                                        <h5 class="modal-title" id="manualEntryModalLabel">Registrar Horarios Manualmente</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                    <form id="manualEntryForm" action="/my/attendance/manual_entry" method="post">
-                                        <div class="modal-body">
-                                            <input type="hidden" name="csrf_token"
-                                                   t-att-value="request.csrf_token()"/>
-                                            <div class="mb-3">
-                                                <label for="manualEntryDate" class="form-label">Fecha</label>
-                                                <input type="date" class="form-control" id="manualEntryDate"
-                                                       name="date" required="1" t-att-max="today"/>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="manualCheckIn" class="form-label">Hora de entrada
-                                                </label>
-                                                <input type="time" class="form-control" id="manualCheckIn"
-                                                       name="check_in"
-                                                       required="1"/>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="manualCheckOut" class="form-label">Hora de salida
-                                                </label>
-                                                <input type="time" class="form-control" id="manualCheckOut"
-                                                       name="check_out"
-                                                       required="1"/>
-                                            </div>
-                                            <div class="alert alert-warning">
-                                                <i class="fa fa-exclamation-triangle me-2"></i>
-                                                Solo puedes registrar días que no tengan más de 7 días de
-                                                antigüedad.
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="manualEntryDate" class="form-label fw-bold">Fecha de los registros</label>
+                                            <input type="date" class="form-control" id="manualEntryDate" name="date" required="1"/>
+                                        </div>
+                                        <hr/>
+                                        
+                                        <div id="time-intervals-container">
+                                            <div class="row g-3 align-items-center mb-2 time-interval-row">
+                                                <div class="col-auto">
+                                                    <label class="col-form-label">De:</label>
+                                                </div>
+                                                <div class="col">
+                                                    <input type="time" class="form-control manual-check-in" required="1"/>
+                                                </div>
+                                                <div class="col-auto">
+                                                <label class="col-form-label">A:</label>
+                                                </div>
+                                                <div class="col">
+                                                    <input type="time" class="form-control manual-check-out" required="1"/>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <button type="button" class="btn btn-danger btn-sm btn-remove-interval" title="Eliminar horario">
+                                                        <i class="fa fa-trash"/>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                Cancelar
-                                            </button>
-                                            <button type="submit" class="btn btn-primary">Guardar</button>
-                                        </div>
-                                    </form>
+
+                                        <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-interval-btn">
+                                            <i class="fa fa-plus me-1"/>Añadir Horario
+                                        </button>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-primary" id="btn-save-manual-intervals">Guardar Horarios</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -333,7 +329,7 @@
             </div>
         </xpath>
 
-        <!-- <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
             <a class="list-group-item list-group-item-action" href="/my/attendances">
                 <div class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1"><i class="fa fa-clock-o me-2"/>Mi Registro
@@ -347,7 +343,7 @@
                     Registra tu jornada laboral y consulta tus horas.
                 </p>
             </a>
-        </xpath> -->
+        </xpath>
     </template>
 
     <template id="custom_side_content_logout" inherit_id="portal.side_content" name="Custom Side Content Logout">
