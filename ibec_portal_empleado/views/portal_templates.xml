@@ -333,7 +333,7 @@
             </div>
         </xpath>
 
-        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+        <!-- <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
             <a class="list-group-item list-group-item-action" href="/my/attendances">
                 <div class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1"><i class="fa fa-clock-o me-2"/>Mi Registro
@@ -347,7 +347,7 @@
                     Registra tu jornada laboral y consulta tus horas.
                 </p>
             </a>
-        </xpath>
+        </xpath> -->
     </template>
 
     <template id="custom_side_content_logout" inherit_id="portal.side_content" name="Custom Side Content Logout">
