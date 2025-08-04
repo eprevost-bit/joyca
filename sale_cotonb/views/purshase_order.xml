@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="purchase_order_form_intermediate_state" model="ir.ui.view">
+            <field name="name">purchase.order.form.intermediate.state</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="arch" type="xml">
+
+                <!-- 
+                    1. Usamos xpath para encontrar el campo 'state' y modificar su atributo 'statusbar_visible'.
+                       Esto añade nuestro nuevo estado 'intermediate' a la barra de estado visual.
+                -->
+                <xpath expr="//field[@name='state']" position="attributes">
+                    <attribute name="statusbar_visible">draft,sent,intermediate,purchase</attribute>
+                </xpath>
+
+                <!--
+                    2. Usamos xpath para encontrar el botón de confirmar y añadir nuestro nuevo botón justo antes.
+                       Este botón moverá el pedido al estado 'Intermedio'.
+                -->
+                <xpath expr="//button[@name='button_confirm']" position="before">
+                    <button name="button_confirm_intermediate"
+                            string="Pasar a Intermedio"
+                            class="oe_highlight"
+                            type="object"
+                            help="Mueve el pedido al estado intermedio para una revisión final antes de confirmar."/>
+                </xpath>
+
+                <!--
+                    3. Finalmente, modificamos los atributos del botón 'button_confirm' original.
+                       Ahora solo será visible en el nuevo estado 'intermediate'.
+                -->
+                <xpath expr="//button[@name='button_confirm']" position="attributes">
+                    <attribute name="invisible">state != 'intermediate'</attribute>
+                </xpath>
+                
+
+            </field>
+        </record>
+    </data>
+</odoo>

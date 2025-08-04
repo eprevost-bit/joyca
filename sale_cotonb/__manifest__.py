@@ -19,6 +19,9 @@
     'data': [
         # 'security/ir.model.access.csv', # No es necesario para este ejemplo
         'views/sale_order_view.xml',  # Cargamos nuestro archivo de vista
+        'data/cron_data.xml',  # Cargamos nuestro archivo de vista
+        'views/product_category_views.xml',
+        'views/purshase_order.xml',
     ],
     'installable': True,
     'application': False,
