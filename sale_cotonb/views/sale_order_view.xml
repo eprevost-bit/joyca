@@ -11,8 +11,22 @@
                 <xpath expr="//notebook" position="attributes">
                     <attribute name="readonly">custom_state == 'confirmed'</attribute>
                 </xpath>
+
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    
+                    <button class="oe_stat_button"
+                            type="object"
+                            name="action_view_purchase_orders"
+                            icon="fa-shopping-cart"
+                            invisible = "[('purchase_order_count', '=', 0)]">
+                        
+                        <field name="purchase_order_count" widget="statinfo" string="Compras"/>
+                    </button>
+                    
+                </xpath>
+
                 <xpath expr="//header" position="inside">
-                    <button name="action_waiting_purchase" string="A la Espera de Compras" type="object"
+                    <button name="action_waiting_purchase" string="Generar Presupuestos de Compra" type="object"
                             class="btn-primary" invisible="custom_state != 'draft'"/>
                     <!-- <button name="action_ready_to_ship" string="Listo para Enviar" type="object"
                             class="btn-primary" invisible="custom_state != 'waiting_purchase'"/>

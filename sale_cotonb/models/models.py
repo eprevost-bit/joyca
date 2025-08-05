@@ -12,6 +12,43 @@ class SaleOrder(models.Model):
         ('sent', 'Enviado'),
         ('confirmed', 'Confirmado'),
     ], string='Estado Personalizado', default='draft', readonly=True, copy=False, tracking=True)
+    
+    purchase_order_count = fields.Integer(
+        string="Órdenes de Compra",
+        compute='_compute_purchase_order_count',
+        readonly=True
+    )
+
+    # 2. Método de cómputo para el campo anterior
+    def _compute_purchase_order_count(self):
+        """
+        Calcula el número de órdenes de compra creadas a partir de esta venta.
+        """
+        for order in self:
+            # Usamos search_count para una mayor eficiencia.
+            # Busca en 'purchase.order' todos los registros cuyo campo 'origin'
+            # sea igual al nombre (referencia) de este pedido de venta.
+            order.purchase_order_count = self.env['purchase.order'].search_count(
+                [('origin', '=', order.name)]
+            )
+
+    # 3. Método de acción que se ejecutará al hacer clic en el botón
+    def action_view_purchase_orders(self):
+        """
+        Esta función es llamada por el botón inteligente.
+        Devuelve una acción que muestra la vista de lista de las
+        órdenes de compra relacionadas.
+        """
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Órdenes de Compra'),
+            'res_model': 'purchase.order',
+            'view_mode': 'list,form',
+            'domain': [('origin', '=', self.name)], # Filtra para mostrar solo las PO de esta SO
+            'target': 'current',
+        }
+
 
     # 2. Funciones para los botones de nuestro flujo personalizado.
     def action_waiting_purchase(self):
