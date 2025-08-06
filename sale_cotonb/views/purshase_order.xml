@@ -21,7 +21,7 @@
                 -->
                 <xpath expr="//button[@name='button_confirm']" position="before">
                     <button name="button_confirm_intermediate"
-                            string="Pasar a Intermedio"
+                            string="Pasar a Pendiente"
                             class="oe_highlight"
                             type="object"
                             help="Mueve el pedido al estado intermedio para una revisión final antes de confirmar."/>
