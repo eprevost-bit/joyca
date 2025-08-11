@@ -87,11 +87,40 @@ class SaleOrder(models.Model):
 
     def action_confirm(self):
         """
-        Heredamos la acción de confirmar estándar.
-        Primero se ejecuta la lógica original y LUEGO actualizamos nuestro estado.
+        Heredamos la acción de confirmar.
+        1. Se ejecuta la lógica original de Odoo.
+        2. Se actualiza nuestro estado personalizado.
+        3. Se crea un proyecto para la venta.
+        4. Se crea una tarea en ese proyecto por cada línea del presupuesto,
+        EXCLUYENDO las que son gastos refacturados.
         """
         res = super(SaleOrder, self).action_confirm()
+
         self.write({'custom_state': 'confirmed'})
+
+        for order in self:
+            project = self.env['project.project'].create({
+                'name': 'Proyecto_'+order.name,
+                'partner_id': order.partner_id.id,
+            })
+
+            for line in order.order_line:
+                # Ignorar líneas que son secciones o notas.
+                if line.display_type:
+                    continue
+
+                # **AÑADIR ESTA LÍNEA PARA SOLUCIONAR EL ERROR**
+                # Ignorar líneas que son gastos refacturados.
+                if line.is_expense:
+                    continue
+
+                self.env['project.task'].create({
+                    'name': line.name,
+                    'project_id': project.id,
+                    'partner_id': order.partner_id.id,
+                    # 'sale_line_id': line.id
+                })
+
         return res
     
     def action_create_purchase_order(self):
@@ -173,8 +202,3 @@ class SaleOrder(models.Model):
             if all_confirmed:
                 # Si es así, cambia el estado de la SO.
                 order.action_ready_to_ship()
-                
-                
-                
-                
-        
