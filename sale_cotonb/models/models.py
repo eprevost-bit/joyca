@@ -105,39 +105,30 @@ class SaleOrder(models.Model):
             })
 
             for line in order.order_line:
-                # Ignorar líneas que son secciones o notas.
                 if line.display_type:
                     continue
-
-                # **AÑADIR ESTA LÍNEA PARA SOLUCIONAR EL ERROR**
-                # Ignorar líneas que son gastos refacturados.
                 if line.is_expense:
                     continue
 
                 self.env['project.task'].create({
-                    'name': line.name,
+                    'name': line.product_id.name,
                     'project_id': project.id,
                     'partner_id': order.partner_id.id,
-                    # 'sale_line_id': line.id
                 })
 
         return res
     
     def action_create_purchase_order(self):
         self.ensure_one()
-
-        # 1. Buscar al proveedor por defecto llamado "Proveedor Reserva"
-        # Asegúrate de que este proveedor exista en tu sistema en "Contactos".
+        
         default_supplier = self.env['res.partner'].search([('name', '=', 'Proveedor Reserva')], limit=1)
         if not default_supplier:
             raise UserError(_("No se pudo encontrar el proveedor por defecto 'Proveedor Reserva'. Por favor, créelo o verifique el nombre."))
 
         category_lines = {}
-        # 2. Filtrar líneas con productos que se puedan comprar y agruparlas por categoría
         for line in self.order_line.filtered(lambda l: l.product_id and l.product_id.purchase_ok):
             category = line.product_id.categ_id
             if not category:
-                # Opcional: Omitir productos sin categoría o asignar una por defecto
                 continue
             
             if category not in category_lines:
@@ -168,8 +159,7 @@ class SaleOrder(models.Model):
             }
             purchase_order = self.env['purchase.order'].create(po_vals)
             purchase_orders_created += purchase_order
-
-        # 4. Devolver una acción para mostrar las órdenes de compra creadas
+            
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
