@@ -112,7 +112,7 @@ class SaleOrder(models.Model):
 
                 self.env['project.task'].create({
                     'name': line.product_id.name,
-                    'description': line.product_id.description,
+                    'description': line.name,
                     'project_id': project.id,
                     'partner_id': order.partner_id.id,
                 })
