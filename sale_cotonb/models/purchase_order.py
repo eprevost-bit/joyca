@@ -13,14 +13,8 @@ class PurchaseOrder(models.Model):
     ], ondelete={'intermediate': 'cascade'})
     
     def action_set_to_intermediate(self):
-        """
-        Cambia el estado del pedido de compra a 'Intermedio'.
-        Este método es llamado por el nuevo botón que agregamos en la vista XML.
-        """
-        # Usamos un bucle por si se ejecuta la acción en una vista de lista.
-        for order in self:
-            order.write({'state': 'intermediate'})
-        return True
+        return self.write({'state': 'intermediate'})
+
 
     def button_confirm_intermediate(self):
         """
