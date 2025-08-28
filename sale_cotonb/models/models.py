@@ -17,32 +17,68 @@ class SaleOrderLine(models.Model):
         store=False,  # No es necesario guardarlo en la base de datos
     )
 
-    @api.depends('order_id.name', 'order_id.purchase_order_count')
+    @api.depends('order_id.name', 'order_id.purchase_order_count', 'product_id')
     def _compute_provider_cost(self):
         """
-        Calcula el coste buscando el pedido de compra (PO) asociado
-        y muestra el TOTAL de ese PO en la línea de venta.
+        Calcula el coste de proveedor para CADA línea de venta.
+        Primero, encuentra las POs asociadas al pedido de venta.
+        Luego, dentro de esas POs, busca una línea de compra con el MISMO PRODUCTO.
         """
-        for line in self:
-            # Valor por defecto
-            line.provider_cost = "Pendiente"
+        # Buscamos los pedidos de venta de todas las líneas de una sola vez para optimizar
+        for order in self.mapped('order_id'):
+            # Encontramos todas las POs relacionadas a este pedido de venta
+            purchase_orders = self.env['purchase.order'].search([
+                ('origin', '=', order.name)
+            ])
 
-            # Solo necesitamos el nombre del pedido de venta
-            if not line.order_id.name:
+            # Si no hay órdenes de compra para este pedido, no hacemos nada más
+            if not purchase_orders:
                 continue
 
-            # CORRECTO: Buscamos en 'purchase.order' usando el campo 'origin'
-            # y la referencia 'line.order_id.name'
-            purchase_order = self.env['purchase.order'].search([
-                ('origin', '=', line.order_id.name),
-            ], limit=1)
+            # Ahora, para cada línea de este pedido de venta
+            for line in self.filtered(lambda l: l.order_id == order):
+                # Valor por defecto
+                line.provider_cost = "Pendiente"
 
-            if purchase_order:
-                # Si se encuentra la orden de compra, usamos su 'amount_total'.
-                cost = purchase_order.amount_total
-                currency = purchase_order.currency_id
-                # Formateamos el resultado
-                line.provider_cost = f"{cost:.2f} {currency.symbol or ''}".strip()
+                # Buscamos dentro de las POs encontradas una línea con el mismo producto
+                # Esto es más robusto que depender de un campo de enlace directo
+                purchase_line = self.env['purchase.order.line'].search([
+                    ('order_id', 'in', purchase_orders.ids),
+                    ('product_id', '=', line.product_id.id),
+                ], limit=1)  # Tomamos la primera que encontremos
+
+                if purchase_line:
+                    # ¡Encontrada! Usamos su subtotal y moneda
+                    cost = purchase_line.price_subtotal
+                    currency = purchase_line.currency_id
+                    line.provider_cost = f"{cost:.2f} {currency.symbol or ''}".strip()
+
+    # @api.depends('order_id.name', 'order_id.purchase_order_count')
+    # def _compute_provider_cost(self):
+    #     """
+    #     Calcula el coste buscando el pedido de compra (PO) asociado
+    #     y muestra el TOTAL de ese PO en la línea de venta.
+    #     """
+    #     for line in self:
+    #         # Valor por defecto
+    #         line.provider_cost = "Pendiente"
+    #
+    #         # Solo necesitamos el nombre del pedido de venta
+    #         if not line.order_id.name:
+    #             continue
+    #
+    #         # CORRECTO: Buscamos en 'purchase.order' usando el campo 'origin'
+    #         # y la referencia 'line.order_id.name'
+    #         purchase_order = self.env['purchase.order'].search([
+    #             ('origin', '=', line.order_id.name),
+    #         ], limit=1)
+    #
+    #         if purchase_order:
+    #             # Si se encuentra la orden de compra, usamos su 'amount_total'.
+    #             cost = purchase_order.amount_total
+    #             currency = purchase_order.currency_id
+    #             # Formateamos el resultado
+    #             line.provider_cost = f"{cost:.2f} {currency.symbol or ''}".strip()
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -265,8 +301,6 @@ class SaleOrder(models.Model):
                 # Si es así, cambia el estado de la SO.
                 order.action_ready_to_ship()
 
-    # Reemplaza tu función actual con esta versión corregida
-
     def action_update_purchase_orders(self):
         """
         Sincroniza las órdenes de compra y ACTUALIZA PRECIOS desde la venta.
@@ -281,11 +315,13 @@ class SaleOrder(models.Model):
 
         _logger.info(f"Iniciando sincronización completa para la venta: {self.name}")
 
+        # Obtenemos las órdenes de compra existentes al inicio
         purchase_orders = self.env['purchase.order'].search([('origin', '=', self.name)])
         if not purchase_orders:
             self.action_create_purchase_order()
+            # Después de crear, las volvemos a buscar para que el resto del código funcione
+            purchase_orders = self.env['purchase.order'].search([('origin', '=', self.name)])
             _logger.info("No se encontraron POs. Se crearon nuevas.")
-            return
 
         # PARTE 1 Y 2 (No cambian, se quedan como estaban)
         current_so_product_ids = {
@@ -305,22 +341,15 @@ class SaleOrder(models.Model):
             lines_to_unlink += po_line
 
         if lines_to_unlink:
-            # 1. Antes de borrar las líneas, guardamos una referencia a sus órdenes de compra.
-            #    Usamos .order_id para obtener un recordset de las órdenes de compra únicas afectadas.
             affected_purchase_orders = lines_to_unlink.order_id
-
-            # 2. Eliminamos las líneas como antes.
             lines_to_unlink.unlink()
             _logger.info(f"Se eliminaron {len(lines_to_unlink)} líneas de compra obsoletas.")
 
-            # 3. Ahora, buscamos qué órdenes de compra de las afectadas se quedaron sin líneas.
             purchase_orders_to_delete = self.env['purchase.order']
             for po in affected_purchase_orders:
-                # Si el campo 'order_line' está vacío, significa que la PO ya no tiene líneas.
                 if not po.order_line:
                     purchase_orders_to_delete += po
 
-            # 4. Si encontramos alguna orden de compra vacía, la eliminamos.
             if purchase_orders_to_delete:
                 po_names = ', '.join(purchase_orders_to_delete.mapped('name'))
                 purchase_orders_to_delete.button_cancel()
@@ -365,22 +394,21 @@ class SaleOrder(models.Model):
         # --------------------------------------------------------------------
         _logger.info("Iniciando actualización de precios en la Venta desde las Compras.")
         all_purchase_orders = self.env['purchase.order'].search([('origin', '=', self.name)])
+        # all_purchase_orders.refresh()
 
         for po_line in all_purchase_orders.order_line:
             product = po_line.product_id
             margin_percent = product.categ_id.margin or 0.0
             margin_decimal = margin_percent / 100.0
 
-            # Renombramos la variable para que sea más claro que pueden ser varias líneas
             sale_lines_to_update = self.order_line.filtered(
                 lambda sol: sol.product_id == product
             )
 
-            # Si encuentra una o más líneas, las recorremos con un bucle
             for sale_line in sale_lines_to_update:
                 new_price = po_line.price_unit * (1 + margin_decimal)
                 if sale_line.price_unit != new_price:
-                    sale_line.write({'price_unit': new_price})  # Actualizamos línea por línea
+                    sale_line.write({'price_unit': new_price})
                     _logger.info(
                         f"Precio actualizado para '{product.display_name}' en la línea de venta ID {sale_line.id}. "
                         f"Costo: {po_line.price_unit}, Nuevo Precio Venta: {new_price:.2f}"
@@ -397,3 +425,133 @@ class SaleOrder(models.Model):
                 'sticky': False,
             }
         }
+    # Reemplaza tu función actual con esta versión corregida
+
+    # def action_update_purchase_orders(self):
+    #     """
+    #     Sincroniza las órdenes de compra y ACTUALIZA PRECIOS desde la venta.
+    #     1. Elimina las líneas de compra de productos que ya no están en la venta.
+    #     2. Crea nuevas líneas de compra para productos añadidos a la venta.
+    #     3. Actualiza los precios en las líneas de venta basándose en los costes
+    #        actuales de las órdenes de compra.
+    #     """
+    #     self.ensure_one()
+    #
+    #     _logger.info(f"Iniciando sincronización completa para la venta: {self.name}")
+    #
+    #     purchase_orders = self.env['purchase.order'].search([('origin', '=', self.name)])
+    #     if not purchase_orders:
+    #         self.action_create_purchase_order()
+    #         _logger.info("No se encontraron POs. Se crearon nuevas.")
+    #         return
+    #
+    #     # PARTE 1 Y 2 (No cambian, se quedan como estaban)
+    #     current_so_product_ids = {
+    #         line.product_id.id for line in self.order_line.filtered(lambda l: l.product_id and l.product_id.purchase_ok)
+    #     }
+    #     po_lines_map = {line.product_id.id: line for line in purchase_orders.order_line}
+    #     product_ids_to_remove = set(po_lines_map.keys()) - current_so_product_ids
+    #
+    #     lines_to_unlink = self.env['purchase.order.line']
+    #     for product_id in product_ids_to_remove:
+    #         po_line = po_lines_map[product_id]
+    #         if po_line.order_id.state in ('purchase', 'done'):
+    #             raise UserError(
+    #                 _("No se puede eliminar la línea del producto '%s' porque la orden de compra %s ya ha sido confirmada.") %
+    #                 (po_line.product_id.display_name, po_line.order_id.name)
+    #             )
+    #         lines_to_unlink += po_line
+    #
+    #     if lines_to_unlink:
+    #         # 1. Antes de borrar las líneas, guardamos una referencia a sus órdenes de compra.
+    #         #    Usamos .order_id para obtener un recordset de las órdenes de compra únicas afectadas.
+    #         affected_purchase_orders = lines_to_unlink.order_id
+    #
+    #         # 2. Eliminamos las líneas como antes.
+    #         lines_to_unlink.unlink()
+    #         _logger.info(f"Se eliminaron {len(lines_to_unlink)} líneas de compra obsoletas.")
+    #
+    #         # 3. Ahora, buscamos qué órdenes de compra de las afectadas se quedaron sin líneas.
+    #         purchase_orders_to_delete = self.env['purchase.order']
+    #         for po in affected_purchase_orders:
+    #             # Si el campo 'order_line' está vacío, significa que la PO ya no tiene líneas.
+    #             if not po.order_line:
+    #                 purchase_orders_to_delete += po
+    #
+    #         # 4. Si encontramos alguna orden de compra vacía, la eliminamos.
+    #         if purchase_orders_to_delete:
+    #             po_names = ', '.join(purchase_orders_to_delete.mapped('name'))
+    #             purchase_orders_to_delete.button_cancel()
+    #             purchase_orders_to_delete.unlink()
+    #             _logger.info(f"Se eliminaron las órdenes de compra vacías: {po_names}")
+    #
+    #     product_ids_to_add = current_so_product_ids - set(po_lines_map.keys())
+    #     if product_ids_to_add:
+    #         new_lines_by_category = defaultdict(lambda: self.env['sale.order.line'])
+    #         for line in self.order_line:
+    #             if line.product_id.id in product_ids_to_add:
+    #                 category = line.product_id.categ_id
+    #                 new_lines_by_category[category] += line
+    #
+    #         default_supplier = self.env['res.partner'].search([('name', '=', 'Proveedor Reserva')], limit=1)
+    #         if not default_supplier:
+    #             raise UserError(_("No se pudo encontrar el proveedor por defecto 'Proveedor Reserva'."))
+    #
+    #         for category, so_lines in new_lines_by_category.items():
+    #             existing_po = purchase_orders.filtered(
+    #                 lambda p: p.partner_id == default_supplier and category.display_name in (p.notes or '')
+    #             )
+    #             po_lines_vals = [
+    #                 (0, 0, {
+    #                     'product_id': sol.product_id.id, 'product_qty': sol.product_uom_qty,
+    #                     'product_uom': sol.product_id.uom_po_id.id, 'price_unit': sol.product_id.standard_price,
+    #                     'date_planned': fields.Datetime.now(), 'name': sol.product_id.display_name,
+    #                 }) for sol in so_lines
+    #             ]
+    #             if existing_po:
+    #                 existing_po.write({'order_line': po_lines_vals})
+    #             else:
+    #                 self.env['purchase.order'].create({
+    #                     'partner_id': default_supplier.id, 'origin': self.name,
+    #                     'notes': _('Orden de compra para productos de la categoría: %s') % category.display_name,
+    #                     'order_line': po_lines_vals,
+    #                 })
+    #         _logger.info(f"Se añadieron líneas para {len(product_ids_to_add)} productos nuevos.")
+    #
+    #     # --------------------------------------------------------------------
+    #     # PARTE 3: ACTUALIZAR PRECIOS (¡AQUÍ ESTÁ LA CORRECCIÓN!)
+    #     # --------------------------------------------------------------------
+    #     _logger.info("Iniciando actualización de precios en la Venta desde las Compras.")
+    #     all_purchase_orders = self.env['purchase.order'].search([('origin', '=', self.name)])
+    #
+    #     for po_line in all_purchase_orders.order_line:
+    #         product = po_line.product_id
+    #         margin_percent = product.categ_id.margin or 0.0
+    #         margin_decimal = margin_percent / 100.0
+    #
+    #         # Renombramos la variable para que sea más claro que pueden ser varias líneas
+    #         sale_lines_to_update = self.order_line.filtered(
+    #             lambda sol: sol.product_id == product
+    #         )
+    #
+    #         # Si encuentra una o más líneas, las recorremos con un bucle
+    #         for sale_line in sale_lines_to_update:
+    #             new_price = po_line.price_unit * (1 + margin_decimal)
+    #             if sale_line.price_unit != new_price:
+    #                 sale_line.write({'price_unit': new_price})  # Actualizamos línea por línea
+    #                 _logger.info(
+    #                     f"Precio actualizado para '{product.display_name}' en la línea de venta ID {sale_line.id}. "
+    #                     f"Costo: {po_line.price_unit}, Nuevo Precio Venta: {new_price:.2f}"
+    #                 )
+    #
+    #     # Notificación final (sin cambios)
+    #     return {
+    #         'type': 'ir.actions.client',
+    #         'tag': 'display_notification',
+    #         'params': {
+    #             'title': _('Proceso Completado'),
+    #             'message': _('Las órdenes de compra y los precios han sido actualizados.'),
+    #             'type': 'success',
+    #             'sticky': False,
+    #         }
+    #     }
