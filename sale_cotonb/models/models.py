@@ -25,11 +25,50 @@ class SaleOrderLine(models.Model):
         help="Cálculo de margen basado en el costo del proveedor si está disponible; de lo contrario, usa el costo estimado."
     )
 
+
+
+    @api.depends('order_id.name', 'order_id.purchase_order_count', 'product_id')
+    def _compute_provider_cost(self):
+        """
+        Calcula el coste de proveedor para CADA línea de venta.
+        Primero, encuentra las POs asociadas al pedido de venta.
+        Luego, dentro de esas POs, busca una línea de compra con el MISMO PRODUCTO.
+        """
+        # Buscamos los pedidos de venta de todas las líneas de una sola vez para optimizar
+        for line in self:
+            line.provider_cost = "-"
+
+        for order in self.mapped('order_id'):
+
+            purchase_orders = self.env['purchase.order'].search([
+                ('origin', '=', order.name)
+            ])
+
+            # Si no hay órdenes de compra para este pedido, no hacemos nada más
+            if not purchase_orders:
+                continue
+
+            # Ahora, para cada línea de este pedido de venta
+            for line in self.filtered(lambda l: l.order_id == order):
+
+                # Buscamos dentro de las POs encontradas una línea con el mismo producto
+                # Esto es más robusto que depender de un campo de enlace directo
+                purchase_line = self.env['purchase.order.line'].search([
+                    ('order_id', 'in', purchase_orders.ids),
+                    ('product_id', '=', line.product_id.id),
+                ], limit=1)  # Tomamos la primera que encontremos
+
+                if purchase_line:
+                    # ¡Encontrada! Usamos su subtotal y moneda
+                    cost = purchase_line.price_subtotal
+                    currency = purchase_line.currency_id
+                    line.provider_cost = f"{cost:.2f} {currency.symbol or ''}".strip()
+
     @api.depends(
         'price_unit',
         'product_id.standard_price',
         'order_id.purchase_order_count',
-        'provider_cost'# Se recalcula si cambian las compras
+        'provider_cost'  # Se recalcula si cambian las compras
     )
     def _compute_margen(self):
         """
@@ -57,43 +96,6 @@ class SaleOrderLine(models.Model):
                 # Fórmula: ((Venta - Costo) / Costo) * 100
                 margen_calculado = ((precio_venta - costo_a_usar) / costo_a_usar) * 100
                 line.margen = margen_calculado
-
-    @api.depends('order_id.name', 'order_id.purchase_order_count', 'product_id')
-    def _compute_provider_cost(self):
-        """
-        Calcula el coste de proveedor para CADA línea de venta.
-        Primero, encuentra las POs asociadas al pedido de venta.
-        Luego, dentro de esas POs, busca una línea de compra con el MISMO PRODUCTO.
-        """
-        # Buscamos los pedidos de venta de todas las líneas de una sola vez para optimizar
-        for line in self:
-            line.provider_cost = "Pendiente"
-
-        for order in self.mapped('order_id'):
-
-            purchase_orders = self.env['purchase.order'].search([
-                ('origin', '=', order.name)
-            ])
-
-            # Si no hay órdenes de compra para este pedido, no hacemos nada más
-            if not purchase_orders:
-                continue
-
-            # Ahora, para cada línea de este pedido de venta
-            for line in self.filtered(lambda l: l.order_id == order):
-
-                # Buscamos dentro de las POs encontradas una línea con el mismo producto
-                # Esto es más robusto que depender de un campo de enlace directo
-                purchase_line = self.env['purchase.order.line'].search([
-                    ('order_id', 'in', purchase_orders.ids),
-                    ('product_id', '=', line.product_id.id),
-                ], limit=1)  # Tomamos la primera que encontremos
-
-                if purchase_line:
-                    # ¡Encontrada! Usamos su subtotal y moneda
-                    cost = purchase_line.price_subtotal
-                    currency = purchase_line.currency_id
-                    line.provider_cost = f"{cost:.2f} {currency.symbol or ''}".strip()
 
     # @api.depends('order_id.name', 'order_id.purchase_order_count')
     # def _compute_provider_cost(self):
