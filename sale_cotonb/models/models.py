@@ -2,11 +2,12 @@ from collections import defaultdict
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+import re
+
 
 import logging
 
 _logger = logging.getLogger(__name__)
-
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
@@ -14,8 +15,48 @@ class SaleOrderLine(models.Model):
     provider_cost = fields.Char(
         string="Coste Proveedor",
         compute='_compute_provider_cost',
-        store=False,
+        store=True,
     )
+    margen = fields.Float(
+        string="Margen %",
+        compute='_compute_margen',
+        store=True,
+        digits=(16, 2),
+        help="Cálculo de margen basado en el costo del proveedor si está disponible; de lo contrario, usa el costo estimado."
+    )
+
+    @api.depends(
+        'price_unit',
+        'product_id.standard_price',
+        'order_id.purchase_order_count',
+        'provider_cost'# Se recalcula si cambian las compras
+    )
+    def _compute_margen(self):
+        """
+        Calcula el margen usando una de dos fórmulas condicionales:
+        - Si hay Coste Proveedor: (Precio Venta - Coste Proveedor) / Coste Proveedor
+        - Si no hay Coste Proveedor: (Precio Venta - Coste Estimado) / Coste Estimado
+        """
+
+        for line in self:
+            line.margen = 0.0
+            if line.provider_cost == "Pendiente":
+                line.margen = 0.0
+                continue
+            costo_a_usar = float(line.provider_cost.split()[0])
+            if costo_a_usar > 0:
+
+                precio_venta = line.price_unit
+                # Fórmula: ((Venta - Costo) / Costo) * 100
+                margen_calculado = ((precio_venta - costo_a_usar) / costo_a_usar) * 100
+                line.margen = margen_calculado
+            else:
+                precio_venta = line.price_unit
+                costo_a_usar = line.product_id.list_price
+
+                # Fórmula: ((Venta - Costo) / Costo) * 100
+                margen_calculado = ((precio_venta - costo_a_usar) / costo_a_usar) * 100
+                line.margen = margen_calculado
 
     @api.depends('order_id.name', 'order_id.purchase_order_count', 'product_id')
     def _compute_provider_cost(self):
@@ -81,7 +122,6 @@ class SaleOrderLine(models.Model):
     #             # Formateamos el resultado
     #             line.provider_cost = f"{cost:.2f} {currency.symbol or ''}".strip()
 
-
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
@@ -93,26 +133,25 @@ class SaleOrder(models.Model):
         ('sent', 'Enviado'),
         ('confirmed', 'Confirmado'),
     ], string='Estado Personalizado', default='draft', readonly=True, copy=False, tracking=True)
-
+    
     purchase_order_count = fields.Integer(
         string="Órdenes de Compra",
         compute='_compute_purchase_order_count',
         readonly=True
     )
-
+    
     project_count = fields.Integer(
         string="Proyectos",
         compute='_compute_project_count',
         readonly=True
     )
-
+    
     def _compute_project_count(self):
         for order in self:
             # Busca en 'project.project' en lugar de 'purchase.order'
             order.project_count = self.env['project.project'].search_count(
                 [('name', '=', order.name)]
             )
-
     def action_view_projects(self):
         self.ensure_one()
         return {
@@ -120,10 +159,9 @@ class SaleOrder(models.Model):
             'name': 'Proyectos',
             'res_model': 'project.project',
             'view_mode': 'kanban,form,list',
-            'domain': [('name', '=', 'Proyecto_' + self.name)],
+            'domain': [('name', '=', 'Proyecto_'+self.name)],
             'target': 'current',
         }
-
     def _compute_purchase_order_count(self):
         """
         Calcula el número de órdenes de compra creadas a partir de esta venta.
@@ -135,7 +173,6 @@ class SaleOrder(models.Model):
             order.purchase_order_count = self.env['purchase.order'].search_count(
                 [('origin', '=', order.name)]
             )
-
     def action_view_purchase_orders(self):
         """
         Esta función es llamada por el botón inteligente.
@@ -148,9 +185,10 @@ class SaleOrder(models.Model):
             'name': _('Órdenes de Compra'),
             'res_model': 'purchase.order',
             'view_mode': 'list,form',
-            'domain': [('origin', '=', self.name)],  # Filtra para mostrar solo las PO de esta SO
+            'domain': [('origin', '=', self.name)], # Filtra para mostrar solo las PO de esta SO
             'target': 'current',
         }
+
 
     # 2. Funciones para los botones de nuestro flujo personalizado.
     def action_waiting_purchase(self):
@@ -183,8 +221,9 @@ class SaleOrder(models.Model):
         Cuando el estado nativo pasa a 'sent', actualizamos nuestro estado.
         """
         if self.env.context.get('mark_so_as_sent'):
-            self.write({'custom_state': 'sent'})
+             self.write({'custom_state': 'sent'})
         return super(SaleOrder, self.with_context(mail_post_autofollow=True)).message_post(**kwargs)
+
 
     def action_confirm(self):
         """
@@ -223,7 +262,7 @@ class SaleOrder(models.Model):
         #         })
 
         return res
-
+    
     def action_create_purchase_order(self):
         self.ensure_one()
 
@@ -231,8 +270,7 @@ class SaleOrder(models.Model):
         # Asegúrate de que este proveedor exista en tu sistema en "Contactos".
         default_supplier = self.env['res.partner'].search([('name', '=', 'Proveedor Reserva')], limit=1)
         if not default_supplier:
-            raise UserError(
-                _("No se pudo encontrar el proveedor por defecto 'Proveedor Reserva'. Por favor, créelo o verifique el nombre."))
+            raise UserError(_("No se pudo encontrar el proveedor por defecto 'Proveedor Reserva'. Por favor, créelo o verifique el nombre."))
 
         category_lines = {}
         # 2. Filtrar líneas con productos que se puedan comprar y agruparlas por categoría
@@ -241,29 +279,28 @@ class SaleOrder(models.Model):
             if not category:
                 # Opcional: Omitir productos sin categoría o asignar una por defecto
                 continue
-
+            
             if category not in category_lines:
                 category_lines[category] = []
             category_lines[category].append(line)
-
+            
         if not category_lines:
             raise UserError(_("No hay productos comprables en este presupuesto para generar órdenes de compra."))
 
         purchase_orders_created = self.env['purchase.order']
-
+        
         # 3. Crear un pedido de compra por cada categoría de producto
         for category, lines in category_lines.items():
             po_vals = {
-                'partner_id': default_supplier.id,  # Usar siempre el proveedor por defecto
-                'origin': self.name,  # Referencia al pedido de venta
-                'notes': _('Orden de compra para productos de la categoría: %s') % category.display_name,
-                # Opcional: Añadir nota
+                'partner_id': default_supplier.id, # Usar siempre el proveedor por defecto
+                'origin': self.name,              # Referencia al pedido de venta
+                'notes': _('Orden de compra para productos de la categoría: %s') % category.display_name, # Opcional: Añadir nota
                 'order_line': [
                     (0, 0, {
                         'product_id': sol.product_id.id,
                         'product_qty': sol.product_uom_qty,
-                        'product_uom': sol.product_id.uom_po_id.id,  # Usar la unidad de medida de compra
-                        'price_unit': sol.product_id.standard_price,  # Usar el costo del producto
+                        'product_uom': sol.product_id.uom_po_id.id, # Usar la unidad de medida de compra
+                        'price_unit': sol.product_id.standard_price, # Usar el costo del producto
                         'date_planned': fields.Datetime.now(),
                         'name': sol.product_id.display_name,
                     }) for sol in lines
@@ -279,11 +316,11 @@ class SaleOrder(models.Model):
             'params': {
                 'title': _('Proceso Completado'),
                 'message': _('Las órdenes de compra se han creado exitosamente.'),
-                'type': 'success',
+                'type': 'success',  
                 'sticky': False,
             }
         }
-
+    
     def _check_purchase_orders_status(self):
         """
         Método que verifica si TODAS las órdenes de compra asociadas a esta
