@@ -20,7 +20,7 @@
                 <xpath expr="//button[@name='button_confirm']" position="attributes">
                     <attribute name="invisible">state != 'intermediate'</attribute>
                 </xpath>
-                
+
 
             </field>
         </record>
@@ -28,3 +28,4 @@
 
     </data>
 </odoo>
+

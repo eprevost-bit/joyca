@@ -79,7 +79,7 @@ class SaleOrderLine(models.Model):
 
         for line in self:
             line.margen = 0.0
-            if line.provider_cost == "Pendiente":
+            if line.provider_cost == "-":
                 line.margen = 0.0
                 continue
             costo_a_usar = float(line.provider_cost.split()[0])
