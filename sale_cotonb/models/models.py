@@ -17,13 +17,24 @@ class SaleOrderLine(models.Model):
         compute='_compute_provider_cost',
         store=True,
     )
-    margen = fields.Float(
-        string="Margen %",
-        compute='_compute_margen',
+
+    coste_estimado = fields.Float(
+        string="Precio estimado",  # Sería mejor cambiar el nombre
+        related='product_id.list_price',
         store=True,
-        digits=(16, 2),
-        help="Cálculo de margen basado en el costo del proveedor si está disponible; de lo contrario, usa el costo estimado."
+        readonly=True,
     )
+
+    margen_estimado = fields.Float(
+        string="Margen %",
+        related='product_id.categ_id.margin',  # Esta es la ruta encadenada
+        store=True,
+        readonly=True,
+        help="Muestra el margen de beneficio definido en la categoría del producto."
+    )
+
+
+
 
 
 
@@ -63,66 +74,6 @@ class SaleOrderLine(models.Model):
                     cost = purchase_line.price_subtotal
                     currency = purchase_line.currency_id
                     line.provider_cost = f"{cost:.2f} {currency.symbol or ''}".strip()
-
-    @api.depends(
-        'price_unit',
-        'product_id.standard_price',
-        'order_id.purchase_order_count',
-        'provider_cost'  # Se recalcula si cambian las compras
-    )
-    def _compute_margen(self):
-        """
-        Calcula el margen usando una de dos fórmulas condicionales:
-        - Si hay Coste Proveedor: (Precio Venta - Coste Proveedor) / Coste Proveedor
-        - Si no hay Coste Proveedor: (Precio Venta - Coste Estimado) / Coste Estimado
-        """
-
-        for line in self:
-            line.margen = 0.0
-            if line.provider_cost == "-":
-                line.margen = 0.0
-                continue
-            costo_a_usar = float(line.provider_cost.split()[0])
-            if costo_a_usar > 0:
-
-                precio_venta = line.price_unit
-                # Fórmula: ((Venta - Costo) / Costo) * 100
-                margen_calculado = ((precio_venta - costo_a_usar) / costo_a_usar) * 100
-                line.margen = margen_calculado
-            else:
-                precio_venta = line.price_unit
-                costo_a_usar = line.product_id.list_price
-
-                # Fórmula: ((Venta - Costo) / Costo) * 100
-                margen_calculado = ((precio_venta - costo_a_usar) / costo_a_usar) * 100
-                line.margen = margen_calculado
-
-    # @api.depends('order_id.name', 'order_id.purchase_order_count')
-    # def _compute_provider_cost(self):
-    #     """
-    #     Calcula el coste buscando el pedido de compra (PO) asociado
-    #     y muestra el TOTAL de ese PO en la línea de venta.
-    #     """
-    #     for line in self:
-    #         # Valor por defecto
-    #         line.provider_cost = "Pendiente"
-    #
-    #         # Solo necesitamos el nombre del pedido de venta
-    #         if not line.order_id.name:
-    #             continue
-    #
-    #         # CORRECTO: Buscamos en 'purchase.order' usando el campo 'origin'
-    #         # y la referencia 'line.order_id.name'
-    #         purchase_order = self.env['purchase.order'].search([
-    #             ('origin', '=', line.order_id.name),
-    #         ], limit=1)
-    #
-    #         if purchase_order:
-    #             # Si se encuentra la orden de compra, usamos su 'amount_total'.
-    #             cost = purchase_order.amount_total
-    #             currency = purchase_order.currency_id
-    #             # Formateamos el resultado
-    #             line.provider_cost = f"{cost:.2f} {currency.symbol or ''}".strip()
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -240,28 +191,6 @@ class SaleOrder(models.Model):
 
         self.write({'custom_state': 'confirmed'})
 
-        # for order in self:
-        #     project = self.env['project.project'].create({
-        #         'name': 'Proyecto_'+order.name,
-        #         'partner_id': order.partner_id.id,
-        #     })
-        #
-        #     for line in order.order_line:
-        #         # Ignorar líneas que son secciones o notas.
-        #         if line.display_type:
-        #             continue
-        #
-        #         # **AÑADIR ESTA LÍNEA PARA SOLUCIONAR EL ERROR**
-        #         # Ignorar líneas que son gastos refacturados.
-        #         if line.is_expense:
-        #             continue
-        #
-        #         self.env['project.task'].create({
-        #             'name': line.name,
-        #             'project_id': project.id,
-        #             'partner_id': order.partner_id.id,
-        #             # 'sale_line_id': line.id
-        #         })
 
         return res
     
@@ -451,6 +380,8 @@ class SaleOrder(models.Model):
 
             for sale_line in sale_lines_to_update:
                 new_price = po_line.price_unit * (1 + margin_decimal)
+                provider_cost = po_line.price_subtotal
+                sale_line.write({'provider_cost': provider_cost})
                 if sale_line.price_unit != new_price:
                     sale_line.write({'price_unit': new_price})
                     _logger.info(
