@@ -40,9 +40,6 @@
                 <xpath expr="//header" position="inside">
                     <button name="action_waiting_purchase" string="Generar Presupuestos de Compra" type="object"
                             class="btn-primary" invisible="custom_state != 'draft'"/>
-                    <!-- <button name="action_ready_to_ship" string="Listo para Enviar" type="object" class="btn-primary" invisible="custom_state != 'waiting_purchase'"/>
-                    <button name="action_mark_as_sent" string="Marcar como Enviado" type="object" class="btn-primary" invisible="custom_state not in ('draft', 'ready')"/> -->
-
                     <button name="action_reset_to_draft" string="Regresar a Borrador" type="object"
                             groups="sales_team.group_sale_manager"
                             invisible="custom_state not in ('sent', 'confirmed')"/>
@@ -54,6 +51,15 @@
                 </xpath>
                 <xpath expr="//field[@name='state']" position="attributes">
                     <attribute name="invisible">1</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='tax_totals']" position="after">
+                    <div class="d-flex justify-content-between">
+                        <field name="total_margin_label" nolabel="1" class="fw-bold"/>
+                        <div>
+                            <field name="total_margin" class="oe_subtotal_footer_separator" nolabel="1" readonly="1"/>
+                        </div>
+                    </div>
                 </xpath>
 
 

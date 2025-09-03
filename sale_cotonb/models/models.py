@@ -131,6 +131,46 @@ class SaleOrder(models.Model):
         compute='_compute_project_count',
         readonly=True
     )
+
+    total_margin = fields.Float(
+        string="Margen Total %",  # El string base ya no es tan importante
+        compute='_compute_total_margin',
+        store=True,
+        readonly=True,
+    )
+
+    # 1. Añadimos el nuevo campo para la etiqueta dinámica
+    total_margin_label = fields.Char(
+        string="Etiqueta del Margen",
+        compute='_compute_total_margin',
+        store=True,
+    )
+
+    @api.depends('order_line.provider_cost', 'order_line.coste_estimado', 'amount_untaxed')
+    def _compute_total_margin(self):
+        for order in self:
+            if not order.order_line:
+                order.total_margin = 0.0
+                order.total_margin_label = _("Margen Total %")  # Etiqueta por defecto
+                continue
+
+            use_estimated_cost = any(line.provider_cost == 0.0 for line in order.order_line)
+
+            if use_estimated_cost:
+                # 2. Asignamos la etiqueta para el margen estimado
+                order.total_margin_label = _("Margen Estimado %")
+                total_cost = sum(line.coste_estimado * line.product_uom_qty for line in order.order_line)
+            else:
+                # 3. Asignamos la etiqueta para el margen real
+                order.total_margin_label = _("Margen Total %")
+                total_cost = sum(line.provider_cost * line.product_uom_qty for line in order.order_line)
+
+            if total_cost > 0:
+                profit = order.amount_untaxed - total_cost
+                margin = (profit / total_cost) * 100
+                order.total_margin = margin
+            else:
+                order.total_margin = 0.0
     
     def _compute_project_count(self):
         for order in self:
