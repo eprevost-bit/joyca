@@ -12,30 +12,64 @@ _logger = logging.getLogger(__name__)
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
-    provider_cost = fields.Char(
+    provider_cost = fields.Float(
         string="Coste Proveedor",
         compute='_compute_provider_cost',
+        currency_field='currency_id',  # Añade esto para el manejo de moneda
         store=True,
+        readonly=True,
     )
 
     coste_estimado = fields.Float(
-        string="Precio estimado",  # Sería mejor cambiar el nombre
-        related='product_id.standard_price',
+        string="Coste Estimado",
+        compute='_compute_coste_estimado',  # <-- CAMBIO AQUÍ
         store=True,
         readonly=True,
     )
+
+    @api.depends('product_id')
+    def _compute_coste_estimado(self):
+        """
+        Obtiene el precio estándar del producto usando el ORM.
+        """
+        for line in self:
+            # El ORM de Odoo se encarga de obtener el valor numérico correcto.
+            if line.product_id:
+                line.coste_estimado = line.product_id.standard_price
+            else:
+                line.coste_estimado = 0.0
 
     margen_estimado = fields.Float(
         string="Margen %",
-        related='product_id.categ_id.margin',  # Esta es la ruta encadenada
+        compute='_compute_margen_estimado',  # Asignamos la nueva función
         store=True,
         readonly=True,
-        help="Muestra el margen de beneficio definido en la categoría del producto."
+        help="Calcula el margen basado en el coste real (si existe) o el coste estándar del producto."
     )
 
+    @api.depends('price_unit', 'provider_cost', 'coste_estimado')
+    def _compute_margen_estimado(self):
+        """
+        Calcula el margen porcentual de la línea de venta.
+        - Si existe un 'provider_cost' (coste real), lo usa como base.
+        - Si no, usa el 'coste_estimado' (coste estándar del producto).
+        """
+        for line in self:
+            # Primero, decidimos qué coste vamos a usar
+            if line.provider_cost > 0:
+                costo = line.provider_cost
+            else:
+                costo = line.coste_estimado
 
-
-
+            # ¡Importante! Evitamos la división por cero si el coste es 0
+            if costo > 0:
+                beneficio = line.price_unit - costo
+                # Fórmula del margen: (Beneficio / Costo) * 100
+                margen = (beneficio / costo) * 100
+                line.margen_estimado = margen
+            else:
+                # Si no hay coste, no podemos calcular el margen.
+                line.margen_estimado = 0.0
 
 
     @api.depends('order_id.name', 'order_id.purchase_order_count', 'product_id')
@@ -47,7 +81,7 @@ class SaleOrderLine(models.Model):
         """
         # Buscamos los pedidos de venta de todas las líneas de una sola vez para optimizar
         for line in self:
-            line.provider_cost = "-"
+            line.provider_cost = 0.0
 
         for order in self.mapped('order_id'):
 
@@ -70,10 +104,9 @@ class SaleOrderLine(models.Model):
                 ], limit=1)  # Tomamos la primera que encontremos
 
                 if purchase_line:
-                    # ¡Encontrada! Usamos su subtotal y moneda
-                    cost = purchase_line.price_subtotal
-                    currency = purchase_line.currency_id
-                    line.provider_cost = f"{cost:.2f} {currency.symbol or ''}".strip()
+                    # ¡CORREGIDO! Asignamos el valor numérico (float) directamente.
+                    # Ya no formateamos el texto aquí.
+                    line.provider_cost = purchase_line.price_subtotal + purchase_line.price_tax
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -380,7 +413,7 @@ class SaleOrder(models.Model):
 
             for sale_line in sale_lines_to_update:
                 new_price = po_line.price_unit * (1 + margin_decimal)
-                provider_cost = po_line.price_subtotal
+                provider_cost = po_line.price_subtotal + po_line.price_tax
                 sale_line.write({'provider_cost': provider_cost})
                 if sale_line.price_unit != new_price:
                     sale_line.write({'price_unit': new_price})
@@ -388,8 +421,6 @@ class SaleOrder(models.Model):
                         f"Precio actualizado para '{product.display_name}' en la línea de venta ID {sale_line.id}. "
                         f"Costo: {po_line.price_unit}, Nuevo Precio Venta: {new_price:.2f}"
                     )
-
-        # Notificación final (sin cambios)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -398,135 +429,15 @@ class SaleOrder(models.Model):
                 'message': _('Las órdenes de compra y los precios han sido actualizados.'),
                 'type': 'success',
                 'sticky': False,
+
+                # La acción de refresco va anidada aquí.
+                'next': {
+                    'type': 'ir.actions.act_window',
+                    'res_model': self._name,
+                    'res_id': self.id,
+                    'views': [[False, 'form']],
+
+                    'target': 'current',
+                }
             }
         }
-    # Reemplaza tu función actual con esta versión corregida
-
-    # def action_update_purchase_orders(self):
-    #     """
-    #     Sincroniza las órdenes de compra y ACTUALIZA PRECIOS desde la venta.
-    #     1. Elimina las líneas de compra de productos que ya no están en la venta.
-    #     2. Crea nuevas líneas de compra para productos añadidos a la venta.
-    #     3. Actualiza los precios en las líneas de venta basándose en los costes
-    #        actuales de las órdenes de compra.
-    #     """
-    #     self.ensure_one()
-    #
-    #     _logger.info(f"Iniciando sincronización completa para la venta: {self.name}")
-    #
-    #     purchase_orders = self.env['purchase.order'].search([('origin', '=', self.name)])
-    #     if not purchase_orders:
-    #         self.action_create_purchase_order()
-    #         _logger.info("No se encontraron POs. Se crearon nuevas.")
-    #         return
-    #
-    #     # PARTE 1 Y 2 (No cambian, se quedan como estaban)
-    #     current_so_product_ids = {
-    #         line.product_id.id for line in self.order_line.filtered(lambda l: l.product_id and l.product_id.purchase_ok)
-    #     }
-    #     po_lines_map = {line.product_id.id: line for line in purchase_orders.order_line}
-    #     product_ids_to_remove = set(po_lines_map.keys()) - current_so_product_ids
-    #
-    #     lines_to_unlink = self.env['purchase.order.line']
-    #     for product_id in product_ids_to_remove:
-    #         po_line = po_lines_map[product_id]
-    #         if po_line.order_id.state in ('purchase', 'done'):
-    #             raise UserError(
-    #                 _("No se puede eliminar la línea del producto '%s' porque la orden de compra %s ya ha sido confirmada.") %
-    #                 (po_line.product_id.display_name, po_line.order_id.name)
-    #             )
-    #         lines_to_unlink += po_line
-    #
-    #     if lines_to_unlink:
-    #         # 1. Antes de borrar las líneas, guardamos una referencia a sus órdenes de compra.
-    #         #    Usamos .order_id para obtener un recordset de las órdenes de compra únicas afectadas.
-    #         affected_purchase_orders = lines_to_unlink.order_id
-    #
-    #         # 2. Eliminamos las líneas como antes.
-    #         lines_to_unlink.unlink()
-    #         _logger.info(f"Se eliminaron {len(lines_to_unlink)} líneas de compra obsoletas.")
-    #
-    #         # 3. Ahora, buscamos qué órdenes de compra de las afectadas se quedaron sin líneas.
-    #         purchase_orders_to_delete = self.env['purchase.order']
-    #         for po in affected_purchase_orders:
-    #             # Si el campo 'order_line' está vacío, significa que la PO ya no tiene líneas.
-    #             if not po.order_line:
-    #                 purchase_orders_to_delete += po
-    #
-    #         # 4. Si encontramos alguna orden de compra vacía, la eliminamos.
-    #         if purchase_orders_to_delete:
-    #             po_names = ', '.join(purchase_orders_to_delete.mapped('name'))
-    #             purchase_orders_to_delete.button_cancel()
-    #             purchase_orders_to_delete.unlink()
-    #             _logger.info(f"Se eliminaron las órdenes de compra vacías: {po_names}")
-    #
-    #     product_ids_to_add = current_so_product_ids - set(po_lines_map.keys())
-    #     if product_ids_to_add:
-    #         new_lines_by_category = defaultdict(lambda: self.env['sale.order.line'])
-    #         for line in self.order_line:
-    #             if line.product_id.id in product_ids_to_add:
-    #                 category = line.product_id.categ_id
-    #                 new_lines_by_category[category] += line
-    #
-    #         default_supplier = self.env['res.partner'].search([('name', '=', 'Proveedor Reserva')], limit=1)
-    #         if not default_supplier:
-    #             raise UserError(_("No se pudo encontrar el proveedor por defecto 'Proveedor Reserva'."))
-    #
-    #         for category, so_lines in new_lines_by_category.items():
-    #             existing_po = purchase_orders.filtered(
-    #                 lambda p: p.partner_id == default_supplier and category.display_name in (p.notes or '')
-    #             )
-    #             po_lines_vals = [
-    #                 (0, 0, {
-    #                     'product_id': sol.product_id.id, 'product_qty': sol.product_uom_qty,
-    #                     'product_uom': sol.product_id.uom_po_id.id, 'price_unit': sol.product_id.standard_price,
-    #                     'date_planned': fields.Datetime.now(), 'name': sol.product_id.display_name,
-    #                 }) for sol in so_lines
-    #             ]
-    #             if existing_po:
-    #                 existing_po.write({'order_line': po_lines_vals})
-    #             else:
-    #                 self.env['purchase.order'].create({
-    #                     'partner_id': default_supplier.id, 'origin': self.name,
-    #                     'notes': _('Orden de compra para productos de la categoría: %s') % category.display_name,
-    #                     'order_line': po_lines_vals,
-    #                 })
-    #         _logger.info(f"Se añadieron líneas para {len(product_ids_to_add)} productos nuevos.")
-    #
-    #     # --------------------------------------------------------------------
-    #     # PARTE 3: ACTUALIZAR PRECIOS (¡AQUÍ ESTÁ LA CORRECCIÓN!)
-    #     # --------------------------------------------------------------------
-    #     _logger.info("Iniciando actualización de precios en la Venta desde las Compras.")
-    #     all_purchase_orders = self.env['purchase.order'].search([('origin', '=', self.name)])
-    #
-    #     for po_line in all_purchase_orders.order_line:
-    #         product = po_line.product_id
-    #         margin_percent = product.categ_id.margin or 0.0
-    #         margin_decimal = margin_percent / 100.0
-    #
-    #         # Renombramos la variable para que sea más claro que pueden ser varias líneas
-    #         sale_lines_to_update = self.order_line.filtered(
-    #             lambda sol: sol.product_id == product
-    #         )
-    #
-    #         # Si encuentra una o más líneas, las recorremos con un bucle
-    #         for sale_line in sale_lines_to_update:
-    #             new_price = po_line.price_unit * (1 + margin_decimal)
-    #             if sale_line.price_unit != new_price:
-    #                 sale_line.write({'price_unit': new_price})  # Actualizamos línea por línea
-    #                 _logger.info(
-    #                     f"Precio actualizado para '{product.display_name}' en la línea de venta ID {sale_line.id}. "
-    #                     f"Costo: {po_line.price_unit}, Nuevo Precio Venta: {new_price:.2f}"
-    #                 )
-    #
-    #     # Notificación final (sin cambios)
-    #     return {
-    #         'type': 'ir.actions.client',
-    #         'tag': 'display_notification',
-    #         'params': {
-    #             'title': _('Proceso Completado'),
-    #             'message': _('Las órdenes de compra y los precios han sido actualizados.'),
-    #             'type': 'success',
-    #             'sticky': False,
-    #         }
-    #     }

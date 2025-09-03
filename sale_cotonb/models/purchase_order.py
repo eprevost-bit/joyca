@@ -51,6 +51,8 @@ class PurchaseOrder(models.Model):
                 if sale_line_to_update:
                     new_price = line.price_unit * (1 + margin_decimal)
                     sale_line_to_update.write({'price_unit': new_price})
+                    sale_line_to_update.write({'provider_cost': line.price_unit + line.price_tax})
+
                     _logger.info(
                         f"Precio actualizado para '{product.display_name}' en el pedido '{sale_order.name}'. "
                         f"Nuevo precio: {new_price:.2f}"
