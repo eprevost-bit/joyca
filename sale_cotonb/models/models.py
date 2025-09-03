@@ -20,7 +20,7 @@ class SaleOrderLine(models.Model):
 
     coste_estimado = fields.Float(
         string="Precio estimado",  # Sería mejor cambiar el nombre
-        related='product_id.list_price',
+        related='product_id.standard_price',
         store=True,
         readonly=True,
     )
