@@ -46,12 +46,6 @@ class SaleOrder(models.Model):
             'state': 'version',
             'origin': self.name,  # Guardar referencia al documento del que se origina
         })
-
-        # 4. Cambiar el estado del presupuesto ACTUAL a 'version' para archivarlo.
-        # El nombre no se toca, cumpliendo con tu requisito.
-        # self.write({'state': 'version'})
-
-        # 5. Devolver una acción para abrir el formulario de la nueva versión creada.
         return {
             'type': 'ir.actions.act_window',
             'name': _('Nueva Versión'),
