@@ -106,7 +106,7 @@ class SaleOrderLine(models.Model):
                 if purchase_line:
                     # ¡CORREGIDO! Asignamos el valor numérico (float) directamente.
                     # Ya no formateamos el texto aquí.
-                    line.provider_cost = purchase_line.price_subtotal + purchase_line.price_tax
+                    line.provider_cost = purchase_line.price_subtotal
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -468,7 +468,7 @@ class SaleOrder(models.Model):
 
             for sale_line in sale_lines_to_update:
                 new_price = po_line.price_unit * (1 + margin_decimal)
-                provider_cost = po_line.price_subtotal + po_line.price_tax
+                provider_cost = po_line.price_subtotal
                 sale_line.write({'provider_cost': provider_cost})
                 if sale_line.price_unit != new_price:
                     sale_line.write({'price_unit': new_price})
