@@ -23,7 +23,7 @@ class PurchaseOrder(models.Model):
 
     def run_custom_logic_before_confirm(self):
 
-        # res = self.action_set_to_intermediate()
+        res = self.action_set_to_intermediate()
 
         # 2. Iniciar nuestra lógica personalizada.
         # 2. Iniciar nuestra lógica personalizada.
@@ -51,7 +51,7 @@ class PurchaseOrder(models.Model):
                 if sale_line_to_update:
                     new_price = line.price_unit * (1 + margin_decimal)
                     sale_line_to_update.write({'price_unit': new_price})
-                    sale_line_to_update.write({'provider_cost': line.price_unit + line.price_tax})
+                    sale_line_to_update.write({'provider_cost': line.price_unit})
 
                     _logger.info(
                         f"Precio actualizado para '{product.display_name}' en el pedido '{sale_order.name}'. "
@@ -63,4 +63,4 @@ class PurchaseOrder(models.Model):
             if sale_order.custom_state == 'waiting_purchase':
                 sale_order._check_purchase_orders_status()
                 
-        return self.action_set_to_intermediate()
+        return res
