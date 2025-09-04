@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 import re
-from odoo import models, fields, _
+from odoo import models, fields, api, _
+
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -10,20 +10,18 @@ class SaleOrder(models.Model):
         selection_add=[
             ('version', 'Versión'),
             ('sent',)
-        ], 
+        ],
         ondelete={'version': 'cascade'}
     )
-    
+
     name_presupuesto = fields.Char(string='Nombre del Presupuesto')
-    
+
     def action_create_new_version(self):
         self.ensure_one()
 
-        # 1. Determinar el nombre base del presupuesto (ej: 'S00040' de 'S00040-V2')
         base_name_match = re.match(r'^(.*?)(?:-V(\d+))?$', self.name)
         base_name = base_name_match.groups()[0] if base_name_match else self.name
 
-        # 2. Buscar todos los presupuestos relacionados para encontrar el número de versión más alto
         related_orders = self.env['sale.order'].search([
             '|',
             ('name', '=', base_name),
@@ -35,17 +33,24 @@ class SaleOrder(models.Model):
             version_match = re.search(r'-V(\d+)$', order.name)
             if version_match:
                 max_version = max(max_version, int(version_match.group(1)))
-        
-        # El número para la nueva versión es el máximo encontrado + 1
+
         new_version_number = max_version + 1
 
-        # 3. Crear la nueva versión como una copia del presupuesto actual.
-        # Esta nueva versión será el borrador activo.
+        # Al copiar, reseteamos los campos que lo marcan como un pedido confirmado.
         new_quotation = self.copy(default={
             'name': f"{base_name}-V{new_version_number}",
-            'state': 'version',
-            'origin': self.name,  # Guardar referencia al documento del que se origina
+            'origin': self.name,
+            # --- CAMBIOS CLAVE AQUÍ ---
+            # 1. Usamos el estado 'draft' para que se comporte como un presupuesto nuevo.
+            'state': 'draft',
+            # 2. Esta es la corrección principal: borramos la fecha de confirmación.
+            'date_order': False,
         })
+
+        # (Opcional pero recomendado) Cambiar el estado del presupuesto antiguo
+        # para que quede claro que ha sido reemplazado por una nueva versión.
+        self.write({'state': 'cancel'})
+
         return {
             'type': 'ir.actions.act_window',
             'name': _('Nueva Versión'),
