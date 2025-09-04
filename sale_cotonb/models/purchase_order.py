@@ -6,7 +6,7 @@ _logger = logging.getLogger(__name__)
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
-    
+
     state = fields.Selection(selection_add=[
         ('intermediate', 'Pendiente Aprobación'),
         ('purchase',),  # Esto reutiliza la definición del estado 'purchase' existente
@@ -15,15 +15,15 @@ class PurchaseOrder(models.Model):
     def action_set_to_intermediate(self):
         return self.write({'state': 'intermediate'})
 
+    def button_confirm(self):
+        res = super(PurchaseOrder, self).button_confirm()
+        self.write({'state': 'purchase'})
+        return res
 
-    def button_confirm_intermediate(self):
-        """
-        Heredamos el método de confirmación de la compra.
-        Después de ejecutar la lógica estándar, actualizamos el precio
-        en el pedido de venta de origen.
-        """
-        # 1. Ejecutar la lógica original del botón.
-        res = self.action_set_to_intermediate()
+
+    def run_custom_logic_before_confirm(self):
+
+        # res = self.action_set_to_intermediate()
 
         # 2. Iniciar nuestra lógica personalizada.
         # 2. Iniciar nuestra lógica personalizada.
@@ -63,4 +63,4 @@ class PurchaseOrder(models.Model):
             if sale_order.custom_state == 'waiting_purchase':
                 sale_order._check_purchase_orders_status()
                 
-        return res
+        return self.action_set_to_intermediate()

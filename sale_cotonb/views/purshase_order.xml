@@ -10,7 +10,7 @@
                     <attribute name="statusbar_visible">draft,sent,intermediate,purchase</attribute>
                 </xpath>
                 <xpath expr="//button[@name='button_confirm']" position="before">
-                    <button name="button_confirm_intermediate"
+                    <button name="run_custom_logic_before_confirm"
                             string="Pasar a Pendiente"
                             class="oe_highlight"
                             type="object"
