@@ -263,6 +263,21 @@ class SaleOrder(models.Model):
         res = super(SaleOrder, self).action_confirm()
 
         self.write({'custom_state': 'confirmed'})
+        project = self.order_line.mapped('project_id')
+        if project:
+            # 3. Si se encontró un proyecto, abrimos nuestro asistente
+            return {
+                'name': _('Asignar Nombre al Proyecto'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'rename.project.wizard',
+                'view_mode': 'form',
+                'target': 'new',  # Para que se abra como una ventana emergente
+                'context': {
+                    # Le pasamos los datos al asistente
+                    'default_project_id': project[0].id,
+                    'default_name': project[0].name,
+                }
+            }
 
 
         return res

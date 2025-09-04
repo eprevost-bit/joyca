@@ -17,11 +17,12 @@
         'purchase'
     ],
     'data': [
-        # 'security/ir.model.access.csv', # No es necesario para este ejemplo
+        'security/ir.model.access.csv',
         'views/sale_order_view.xml',  # Cargamos nuestro archivo de vista
         'data/cron_data.xml',  # Cargamos nuestro archivo de vista
         'views/product_category_views.xml',
         'views/purshase_order.xml',
+        'views/rename_project_wizard_views.xml',
     ],
     'installable': True,
     'application': False,
