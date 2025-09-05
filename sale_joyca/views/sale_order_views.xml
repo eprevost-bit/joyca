@@ -2,28 +2,46 @@
 <odoo>
     <data>
 
-        <record id="sale.action_quotations_with_onboarding" model="ir.actions.act_window">
-            <field name="domain">[('state', 'in', ['draft', 'sent'])]</field>
-        </record>
-
-
+        <!--        <record id="sale.action_quotations_with_onboarding" model="ir.actions.act_window">-->
+        <!--            <field name="domain">[('state', 'in', ['draft', 'sent'])]</field>-->
+        <!--        </record>-->
         <record id="view_order_form_custom_version_button" model="ir.ui.view">
             <field name="name">sale.order.form.custom.version</field>
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//header" position="inside">
-                    <button name="action_create_new_version" string="Crear Versión" type="object" class="oe_highlight" />
+                <xpath expr="//field[@name='state']" position="attributes">
+                    <attribute name="statusbar_visible">draft,version,sent,confirmed</attribute>
                 </xpath>
                 <xpath expr="//button[@name='action_confirm']" position="attributes">
                     <attribute name="string">Aceptado por Cliente</attribute>
                 </xpath>
-                
-                <xpath expr="//field[@name='partner_id']" position="after">
-                    <field name="name_presupuesto"/>
+                <xpath expr="//header" position="inside">
+                    <button name="action_create_new_version" string="Crear Versión" type="object" class="oe_highlight"/>
                 </xpath>
-                
+                <xpath expr="//button[@name='action_create_new_version']" position="attributes">
+                    <attribute name="invisible">state == "version"</attribute>
+                </xpath>
+                <xpath expr="//field[@name='order_line']" position="attributes">
+                    <attribute name="force_save">1</attribute>
+                    <attribute name="readonly">state == "cancel" or state == "version" or locked</attribute>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='order_lines']/field[@name='order_line']/list[1]/field[@name='price_unit']"
+                       position="after">
+                    <field name="manufacturing_hours" optional="show"/>
+                    <field name="assembly_hours" optional="show"/>
+                </xpath>
 
+                 <xpath expr="//field[@name='tax_totals']" position="after">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Total Horas Fabricación</span>
+                        <field name="total_manufacturing_hours" nolabel="1"/>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Total Horas Montaje</span>
+                        <field name="total_assembly_hours" nolabel="1"/>
+                    </div>
+                </xpath>
             </field>
         </record>
 

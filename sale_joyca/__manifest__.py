@@ -22,6 +22,7 @@
     # always loaded
     'data': [
         'views/sale_order_views.xml',
+        'views/project_form_view.xml',
     ],
     'installable': True,
     'application': False,
