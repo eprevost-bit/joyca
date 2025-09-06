@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 import re
 
 
@@ -273,6 +273,29 @@ class SaleOrder(models.Model):
         4. Se crea una tarea en ese proyecto por cada línea del presupuesto,
         EXCLUYENDO las que son gastos refacturados.
         """
+        products_without_cost = []
+
+        # Recorremos cada línea del presupuesto de venta (self.order_line)
+        for line in self.order_line:
+            # Condición 1: El producto se puede comprar (es un producto de compra)
+            # Condición 2: El coste del proveedor es 0 (no se ha asignado)
+            # Condición 3: El producto NO es el de honorarios (excepción)
+            if line.product_id.purchase_ok and line.provider_cost == 0 and line.product_id.default_code != 'honorario':
+                # Si se cumplen las tres condiciones, añadimos el nombre del producto a la lista.
+                products_without_cost.append(line.product_id.name)
+
+        # Si la lista NO está vacía, significa que encontramos productos que bloquean la confirmación.
+        if products_without_cost:
+            # Creamos un mensaje de error claro para el usuario.
+            error_message = (
+                "No se puede confirmar el pedido. \n\n"
+                "Los siguientes productos son de compra y no tienen un coste de proveedor asignado:\n"
+                f"- {', '.join(products_without_cost)}\n\n"
+                "Por favor, actualiza los precios desde los presupuestos de compra o asigna un proveedor en la ficha del producto."
+            )
+            # Lanzamos una excepción ValidationError que mostrará el mensaje en un diálogo.
+            raise ValidationError(error_message)
+
         res = super(SaleOrder, self).action_confirm()
 
         self.write({'custom_state': 'confirmed'})

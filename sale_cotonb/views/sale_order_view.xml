@@ -12,7 +12,7 @@
                     <attribute name="readonly">custom_state == 'confirmed'</attribute>
                 </xpath>
 
-               <xpath expr="//field[@name='validity_date']" position="before">
+                <xpath expr="//field[@name='validity_date']" position="before">
                     <button name="action_update_purchase_orders"
                             string="Actualizar"
                             type="object"
@@ -38,12 +38,12 @@
                 </xpath>
 
                 <xpath expr="//header" position="inside">
-                   <button name="action_waiting_purchase" string="Generar Presupuestos de Compra" type="object"
-        class="btn-primary"
-        invisible="['|', ('custom_state', '!=', 'draft'), ('has_purchasable_products', '=', False)]"/>
+                    <button name="action_waiting_purchase" string="Generar Presupuestos de Compra" type="object"
+                            class="btn-primary"
+                            invisible="custom_state not in ('sent', 'confirmed')"/>
                     <button name="action_reset_to_draft" string="Regresar a Borrador" type="object"
                             groups="sales_team.group_sale_manager"
-                            invisible="custom_state not in ('sent', 'confirmed')"/>
+                            invisible="not has_purchasable_products"/>
                 </xpath>
 
                 <xpath expr="//field[@name='state']" position="after">
@@ -61,6 +61,10 @@
                             <field name="total_margin" class="oe_subtotal_footer_separator" nolabel="1" readonly="1"/>
                         </div>
                     </div>
+                </xpath>
+
+                <xpath expr="//button[@name='action_waiting_purchase']" position="attributes">
+                    <attribute name="invisible">not has_purchasable_products</attribute>
                 </xpath>
             </field>
         </record>
