@@ -29,15 +29,12 @@ class SaleOrderLine(models.Model):
 
     has_purchasable_products = fields.Boolean(
         string="Tiene productos para comprar",
-        compute='_compute_has_purchasable_products',
-        help="Es verdadero si al menos una línea de pedido contiene un producto que se puede comprar."
+        compute='_compute_has_purchasable_products'
     )
-
     @api.depends('order_line.product_id.purchase_ok')
     def _compute_has_purchasable_products(self):
+        # El 'self' aquí es un registro de sale.order, que SÍ tiene 'order_line'
         for order in self:
-            # Usamos any() para eficiencia: se detiene en cuanto encuentra el primer producto comprable.
-            # Recorre cada 'line' en 'order.order_line' y verifica si 'line.product_id.purchase_ok' es True.
             order.has_purchasable_products = any(line.product_id.purchase_ok for line in order.order_line)
 
     @api.depends('product_id')
