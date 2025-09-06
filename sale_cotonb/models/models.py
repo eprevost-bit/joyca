@@ -27,15 +27,7 @@ class SaleOrderLine(models.Model):
         readonly=True,
     )
 
-    has_purchasable_products = fields.Boolean(
-        string="Tiene productos para comprar",
-        compute='_compute_has_purchasable_products'
-    )
-    @api.depends('order_line.product_id.purchase_ok')
-    def _compute_has_purchasable_products(self):
-        # El 'self' aquí es un registro de sale.order, que SÍ tiene 'order_line'
-        for order in self:
-            order.has_purchasable_products = any(line.product_id.purchase_ok for line in order.order_line)
+
 
     @api.depends('product_id')
     def _compute_coste_estimado(self):
@@ -155,6 +147,17 @@ class SaleOrder(models.Model):
         compute='_compute_total_margin',
         store=True,
     )
+
+    has_purchasable_products = fields.Boolean(
+        string="Tiene productos para comprar",
+        compute='_compute_has_purchasable_products'
+    )
+
+    @api.depends('order_line.product_id.purchase_ok')
+    def _compute_has_purchasable_products(self):
+        # El 'self' aquí es un registro de sale.order, que SÍ tiene 'order_line'
+        for order in self:
+            order.has_purchasable_products = any(line.product_id.purchase_ok for line in order.order_line)
 
     @api.depends('order_line.provider_cost', 'order_line.coste_estimado', 'amount_untaxed')
     def _compute_total_margin(self):
