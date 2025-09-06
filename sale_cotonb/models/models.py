@@ -33,8 +33,6 @@ class SaleOrderLine(models.Model):
         help="Es verdadero si al menos una línea de pedido contiene un producto que se puede comprar."
     )
 
-    # 2. Definimos el método de cómputo
-    # Se ejecutará cada vez que cambien las líneas del pedido.
     @api.depends('order_line.product_id.purchase_ok')
     def _compute_has_purchasable_products(self):
         for order in self:
