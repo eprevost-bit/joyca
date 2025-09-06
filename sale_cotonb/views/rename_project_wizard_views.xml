@@ -6,11 +6,21 @@
         <field name="arch" type="xml">
             <form>
                 <group>
-                    <field name="project_id" invisible="1"/>
-                    <field name="name"/>
+                    <!-- Mantenemos el ID del proyecto oculto, ya que es solo para referencia interna -->
+                    <field name="project_id" invisible="0"/>
+
+                    <!-- Campo para el nuevo nombre del proyecto -->
+                    <field name="name_corto"/>
+
+                    <!-- Nuevo campo para seleccionar la ciudad -->
+                    <field name="city"/>
+
+                    <!-- Nuevo campo para previsualizar el formato del código -->
+                    <field name="project_code_preview"/>
                 </group>
                 <footer>
-                    <button name="action_confirm_project_name" string="Confirmar Nombre" type="object" class="btn-primary"/>
+                    <!-- Cambiamos el texto del botón para que sea más genérico -->
+                    <button name="action_confirm_project_name" string="Confirmar" type="object" class="btn-primary"/>
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
