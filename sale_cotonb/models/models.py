@@ -49,6 +49,29 @@ class SaleOrderLine(models.Model):
         help="Calcula el margen basado en el coste real (si existe) o el coste estándar del producto."
     )
 
+    # def _prepare_invoice_line(self, **optional_values):
+    #     """
+    #     Este método prepara el diccionario de valores para crear la línea de factura.
+    #     Lo heredamos para añadir nuestra lógica de cuenta analítica.
+    #     """
+    #     # 1. Obtenemos los valores por defecto de la función original.
+    #     res = super(SaleOrderLine, self)._prepare_invoice_line(**optional_values)
+    #
+    #     # 2. Buscamos la cuenta analítica en la cabecera del pedido de venta,
+    #     #    a través del campo 'project_id' como solicitaste.
+    #     #    El campo correcto que contiene la cuenta es 'analytic_account_id' dentro del proyecto.
+    #     analytic_account = self.order_id.project_id.analytic_account_id
+    #
+    #     # 3. Si el pedido tiene una cuenta analítica, la preparamos y la añadimos.
+    #     if analytic_account:
+    #         # El campo 'analytic_distribution' es un JSON.
+    #         # El formato para asignar el 100% a una sola cuenta es: {'id_de_la_cuenta': 100.0}
+    #         # Es importante convertir el ID a un string para que sea una clave JSON válida.
+    #         res['analytic_distribution'] = {str(analytic_account.id): 100.0}
+    #
+    #     # 4. Devolvemos el diccionario con nuestros valores añadidos.
+    #     return res
+
     @api.depends('price_unit', 'provider_cost', 'coste_estimado')
     def _compute_margen_estimado(self):
         """

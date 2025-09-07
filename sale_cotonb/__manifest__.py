@@ -23,6 +23,7 @@
         'views/product_category_views.xml',
         'views/purshase_order.xml',
         'views/rename_project_wizard_views.xml',
+        'views/sale_advance_payment_inv_view.xml',
     ],
     'installable': True,
     'application': False,

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_custom_invoice_progress" model="ir.ui.view">
+        <field name="name">sale.order.form.invoice.progress</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <button id="create_invoice" position="after">
+                <button name="action_open_invoice_wizard" string="Crear Factura Parcial"
+                        class="btn-primary" type="object"
+                        help="Crea una factura parcial para el pedido seleccionado."/>
+            </button>
+
+            <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="amount_invoiced_custom" readonly="1"/>
+                <field name="invoice_progress" widget="progressbar" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sale_line_invoice_wizard_form" model="ir.ui.view">
+        <field name="name">sale.line.invoice.wizard.form</field>
+        <field name="model">sale.line.invoice.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <p>
+                    Introduce el porcentaje que deseas facturar para cada línea del pedido.
+                    El sistema calculará la cantidad correspondiente.
+                </p>
+                <field name="wizard_line_ids" nolabel="1">
+                    <list editable="bottom">
+                        <field name="product_id" readonly="1"/>
+                        <field name="product_uom_qty" readonly="1"/>
+                        <field name="qty_invoiced" readonly="1"/>
+                        <field name="percentage_to_invoice" class="oe_highlight"/>
+                        <field name="price_subtotal" readonly="1" sum="Total"/>
+                        <field name="currency_id" invisible="1"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_create_invoices_from_wizard" string="Crear Factura" type="object" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

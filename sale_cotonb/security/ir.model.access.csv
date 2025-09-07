@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_rename_project_wizard_manager,rename_project_wizard_manager,model_rename_project_wizard,,1,1,1,1
+access_sale_line_invoice_wizard_manager,sale_line_invoice_wizard_manager,model_sale_line_invoice_wizard,,1,1,1,1
+access_sale_line_invoice_wizard_line_manager,sale_line_invoice_wizard_line_manager,model_sale_line_invoice_wizard_line,,1,1,1,1
