@@ -58,7 +58,8 @@ class SaleLineInvoiceWizard(models.TransientModel):
             if line.percentage_to_invoice < 0 or line.percentage_to_invoice > 100:
                 raise UserError("El porcentaje debe estar entre 0 y 100.")
 
-            qty_to_invoice = line.sale_order_line_id.product_uom_qty * (line.percentage_to_invoice / 100.0)
+            # qty_to_invoice = line.sale_order_line_id.product_uom_qty * (line.percentage_to_invoice / 100.0)
+            qty_to_invoice = line.sale_order_line_id.product_uom_qty * line.percentage_to_invoice
 
             # Validamos no facturar más de lo permitido
             if qty_to_invoice > (line.sale_order_line_id.product_uom_qty - line.sale_order_line_id.qty_invoiced):
