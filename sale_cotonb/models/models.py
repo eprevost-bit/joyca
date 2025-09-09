@@ -379,11 +379,7 @@ class SaleOrder(models.Model):
         }
     
     def _check_purchase_orders_status(self):
-        """
-        Método que verifica si TODAS las órdenes de compra asociadas a esta
-        orden de venta ('self') han sido confirmadas. Si es así, avanza el estado.
-        Ahora es más eficiente y se llama desde la PO.
-        """
+
         for order in self:
             if order.custom_state != 'waiting_purchase':
                 continue

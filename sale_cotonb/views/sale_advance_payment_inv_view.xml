@@ -32,7 +32,7 @@
                         <field name="product_id" readonly="1"/>
                         <field name="product_uom_qty" readonly="1"/>
                         <field name="qty_invoiced" readonly="1"/>
-                        <field name="percentage_to_invoice" class="oe_highlight"/>
+                        <field name="percentage_to_invoice" widget="percentage" class="oe_highlight"/>
                         <field name="price_subtotal" readonly="1" sum="Total"/>
                         <field name="currency_id" invisible="1"/>
                     </list>

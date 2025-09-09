@@ -80,7 +80,7 @@ class RenameProjectWizard(models.TransientModel):
             # --- LA CORRECCIÓN ESTÁ AQUÍ ---
             # Ahora usamos la variable 'new_code' para componer el nombre final
             # y no el campo de previsualización.
-            final_project_name = f"{self.name_corto} - {new_code}"
+            final_project_name = f"{new_code} - {self.name_corto}"
 
             self.project_id.write({
                 'name': final_project_name,
