@@ -4,6 +4,24 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+class PurchaseOrderLine(models.Model):
+    _inherit = 'purchase.order.line'
+
+    x_source_sale_line_id = fields.Many2one(
+        'sale.order.line',
+        string='Línea de Venta Origen',
+        readonly=True,
+        index=True, # Buen rendimiento para búsquedas
+        copy=False  # No copiar este enlace al duplicar una OC
+    )
+
+    x_sale_invoiced_percentage = fields.Float(
+        related='x_source_sale_line_id.percentage_invoiced_total',
+        string='% Facturado (Venta)',
+        readonly=True,
+        store=True
+    )
+
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
@@ -11,7 +29,9 @@ class PurchaseOrder(models.Model):
         ('intermediate', 'Pendiente Aprobación'),
         ('purchase',),  # Esto reutiliza la definición del estado 'purchase' existente
     ], ondelete={'intermediate': 'cascade'})
-    
+
+
+
     def action_set_to_intermediate(self):
         return self.write({'state': 'intermediate'})
 

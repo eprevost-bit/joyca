@@ -49,7 +49,61 @@ class SaleOrderLine(models.Model):
         help="Calcula el margen basado en el coste real (si existe) o el coste estándar del producto."
     )
 
+    line_number_display = fields.Char(
+        string="N° Línea",
+        compute='_compute_line_number_display',
+        store=True,
+        readonly=True
+    )
 
+    percentage_invoiced_total = fields.Float(
+        string="Facturado",
+        compute='_compute_percentage_invoiced_total',
+        store=True,
+        readonly=True,
+        )
+
+    # models/sale_order_line_add_field.py
+
+    @api.depends('qty_invoiced', 'product_uom_qty')
+    def _compute_percentage_invoiced_total(self):
+        """
+        Calcula la PROPORCIÓN (0.0 a 1.0) que ha sido facturada.
+        El widget en la vista se encargará de mostrarlo como porcentaje.
+        """
+        for line in self:
+            if line.product_uom_qty > 0:
+                # CORRECCIÓN: Guardamos el valor como una fracción (ej: 0.5 para 50%)
+                line.percentage_invoiced_total = line.qty_invoiced / line.product_uom_qty
+            else:
+                line.percentage_invoiced_total = 0.0
+
+
+
+
+    @api.depends('order_id.order_line', 'order_id.order_line.display_type', 'order_id.order_line.sequence')
+    def _compute_line_number_display(self):
+        """
+        Calcula y asigna la numeración jerárquica a las líneas de una orden de venta.
+        """
+        # Agrupamos las líneas por su orden de venta para procesarlas en bloque.
+        for order in self.mapped('order_id'):
+            main_counter = 0
+            sub_counter = 1
+            # Es crucial obtener las líneas ordenadas por su secuencia.
+            for line in order.order_line.sorted('sequence'):
+                # Si la línea es una SECCIÓN (ej: "Obra")
+                if line.display_type == 'line_section':
+                    main_counter += 1
+                    sub_counter = 1  # Reiniciamos el contador de sub-líneas
+                    line.line_number_display = str(main_counter)
+                # Si es una línea de producto normal y ya hemos pasado por una sección
+                elif line.display_type is False and main_counter > 0:
+                    line.line_number_display = f"{main_counter}.{sub_counter}"
+                    sub_counter += 1
+                # Para cualquier otro caso (notas, o líneas antes de la primera sección)
+                else:
+                    line.line_number_display = ''
 
     @api.depends('price_unit', 'provider_cost', 'coste_estimado')
     def _compute_margen_estimado(self):
@@ -360,6 +414,7 @@ class SaleOrder(models.Model):
                         'price_unit': sol.product_id.standard_price, # Usar el costo del producto
                         'date_planned': fields.Datetime.now(),
                         'name': sol.product_id.display_name,
+                        'x_source_sale_line_id': sol.id,
                     }) for sol in lines
                 ]
             }

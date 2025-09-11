@@ -12,8 +12,14 @@ class SaleLineInvoiceWizardLine(models.TransientModel):
     product_id = fields.Many2one(related='sale_order_line_id.product_id', readonly=True)
     product_uom_qty = fields.Float(related='sale_order_line_id.product_uom_qty', string="Cantidad Pedida",
                                    readonly=True)
-    qty_invoiced = fields.Float(related='sale_order_line_id.qty_invoiced', string="Cantidad ya Facturada",
-                                readonly=True)
+    # qty_invoiced = fields.Float(related='sale_order_line_id.qty_invoiced', string="Cantidad ya Facturada",
+    #                             readonly=True)
+    percentage_invoiced = fields.Float(
+        string="Porcentaje ya Facturado (%)",
+        compute='_compute_percentage_invoiced',
+        readonly=True
+    )
+
     price_subtotal = fields.Monetary(related='sale_order_line_id.price_subtotal', readonly=True)
     currency_id = fields.Many2one(related='sale_order_line_id.currency_id', readonly=True)
 
@@ -23,6 +29,19 @@ class SaleLineInvoiceWizardLine(models.TransientModel):
     def _check_fields_exist(self):
         # Esto forzará a Odoo a reconocer los campos relacionados
         return True
+
+    @api.depends('sale_order_line_id.qty_invoiced', 'sale_order_line_id.product_uom_qty')
+    def _compute_percentage_invoiced(self):
+        """
+        Calcula el porcentaje de la línea que ya ha sido facturado.
+        """
+        for line in self:
+            sol = line.sale_order_line_id
+            # Evitar división por cero si la cantidad pedida es 0
+            if sol.product_uom_qty > 0:
+                line.percentage_invoiced = (sol.qty_invoiced / sol.product_uom_qty) * 100.0
+            else:
+                line.percentage_invoiced = 0.0
 
 class SaleLineInvoiceWizard(models.TransientModel):
     _name = 'sale.line.invoice.wizard'

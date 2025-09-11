@@ -12,15 +12,6 @@
                     <attribute name="readonly">custom_state == 'confirmed'</attribute>
                 </xpath>
 
-                <xpath expr="//field[@name='validity_date']" position="before">
-                    <button name="action_update_purchase_orders"
-                            string="Actualizar"
-                            type="object"
-                            class="oe_highlight"
-                            help="Sincroniza las líneas de venta con las órdenes de compra. Elimina, añade o actualiza las líneas de compra según los cambios en la venta."/>
-                </xpath>
-
-
                 <xpath expr="//div[@name='button_box']" position="inside">
 
                     <button class="oe_stat_button" type="object" name="action_view_purchase_orders"
@@ -41,6 +32,11 @@
                     <button name="action_waiting_purchase" string="Generar Presupuestos de Compra" type="object"
                             class="btn-primary"
                             invisible="custom_state not in ('sent', 'confirmed')"/>
+                     <button name="action_update_purchase_orders"
+                            string="Actualizar"
+                            type="object"
+                            class="oe_highlight"
+                            help="Sincroniza las líneas de venta con las órdenes de compra. Elimina, añade o actualiza las líneas de compra según los cambios en la venta."/>
                     <button name="action_reset_to_draft" string="Regresar a Borrador" type="object"
                             groups="sales_team.group_sale_manager"
                             invisible="not has_purchasable_products"/>
