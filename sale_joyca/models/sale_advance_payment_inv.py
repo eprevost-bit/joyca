@@ -30,11 +30,7 @@ class SaleAdvancePaymentInv(models.TransientModel):
         return False
 
     def create_invoices(self):
-        """
-        Heredamos el método principal. Primero creamos las facturas con la lógica estándar
-        y LUEGO modificamos la descripción de la línea de anticipo.
-        """
-        # Dejamos que Odoo cree la factura y nos devuelva la acción para abrirla.
+
         action = super().create_invoices()
 
         # Si se seleccionó un concepto, procedemos a modificar la factura recién creada.
