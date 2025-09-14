@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_downpayment_concept_form" model="ir.ui.view">
+        <field name="name">downpayment.concept.form</field>
+        <field name="model">downpayment.concept</field>
+        <field name="arch" type="xml">
+            <form string="Concepto de Anticipo">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="invoice_description"/>
+                        <field name="sequence" invisible="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_downpayment_concept_tree" model="ir.ui.view">
+        <field name="name">downpayment.concept.tree</field>
+        <field name="model">downpayment.concept</field>
+        <field name="arch" type="xml">
+            <list string="Conceptos de Anticipo" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="invoice_description"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_downpayment_concept" model="ir.actions.act_window">
+        <field name="name">Conceptos de Anticipo</field>
+        <field name="res_model">downpayment.concept</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="menu_downpayment_concept"
+        name="Conceptos de Anticipo"
+        action="action_downpayment_concept"
+        parent="sale.menu_sale_config"
+        sequence="20"/>
+
+</odoo>

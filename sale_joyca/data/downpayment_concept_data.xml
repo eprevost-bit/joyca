@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1"> <record id="dp_concept_first" model="downpayment.concept">
+            <field name="name">Primer Pago (Aceptación)</field>
+            <field name="sequence">1</field>
+            <field name="invoice_description">Primer pago correspondiente a la aceptación del presupuesto {order_name} de la fecha {order_date}</field>
+        </record>
+
+        <record id="dp_concept_second" model="downpayment.concept">
+            <field name="name">Segundo Pago (Inicio Montaje)</field>
+            <field name="sequence">2</field>
+            <field name="invoice_description">Segundo pago correspondiente al inicio del montaje de nuestro presupuesto {order_name} de la fecha {order_date}</field>
+        </record>
+
+    </data>
+</odoo>

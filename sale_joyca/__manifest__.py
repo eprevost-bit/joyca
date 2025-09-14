@@ -23,6 +23,8 @@
     'data': [
         'views/sale_order_views.xml',
         'views/project_form_view.xml',
+        'views/downpayment_concept_views.xml',
+        'views/sale_advance_payment_inv_view.xml',
     ],
     'installable': True,
     'application': False,

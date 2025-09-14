@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+import logging
+from odoo import models, fields, api
+_logger = logging.getLogger(__name__)
 
-from odoo import models, fields
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
@@ -17,3 +19,5 @@ class SaleOrderLine(models.Model):
         string="Horas de Montaje",
         help="Tiempo estimado de montaje para la cantidad de esta línea."
     )
+
+

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 from odoo import models, fields, _, api
 from odoo.exceptions import ValidationError
@@ -43,11 +42,13 @@ class SaleOrder(models.Model):
     def action_create_new_version(self):
         self.ensure_one()
 
-        # 1. Determinar el nombre base del presupuesto (ej: 'S00040' de 'S00040-V2')
+        # 1. Determinar el nombre base del presupuesto (ej: 'S00025' de 'S00025-V2')
+        # ESTA PARTE ESTÁ PERFECTA
         base_name_match = re.match(r'^(.*?)(?:-V(\d+))?$', self.name)
         base_name = base_name_match.groups()[0] if base_name_match else self.name
 
         # 2. Buscar todos los presupuestos relacionados para encontrar el número de versión más alto
+        # ESTA PARTE TAMBIÉN ESTÁ PERFECTA
         related_orders = self.env['sale.order'].search([
             '|',
             ('name', '=', base_name),
@@ -60,17 +61,33 @@ class SaleOrder(models.Model):
             if version_match:
                 max_version = max(max_version, int(version_match.group(1)))
 
-        # El número para la nueva versión es el máximo encontrado + 1
         new_version_number = max_version + 1
 
         # 3. Crear la nueva versión como una copia del presupuesto actual.
-        # Esta nueva versión será el borrador activo.
         new_quotation = self.copy(default={
             'name': f"{base_name}-V{new_version_number}",
             'state': 'draft',
             'origin': self.name,
         })
-        self.write({'state': 'version'})
+
+        # --- INICIO DE LA MODIFICACIÓN ---
+
+        # 4. En lugar de cambiar el estado de la versión actual ('self'),
+        #    buscamos y cambiamos el estado del documento RAÍZ.
+
+        # El 'base_name' que calculamos en el paso 1 nos sirve para encontrar el original.
+        original_order = self.env['sale.order'].search([('name', '=', base_name)], limit=1)
+
+        # Si encontramos el documento original, lo pasamos a estado 'version'.
+        # Esto asegura que solo se modifique el presupuesto raíz.
+        if original_order:
+            original_order.write({'state': 'version'})
+
+        # La línea original que causaba el problema se elimina.
+        # self.write({'state': 'version'}) # <- LÍNEA ELIMINADA
+
+        # --- FIN DE LA MODIFICACIÓN ---
+
         return {
             'type': 'ir.actions.act_window',
             'name': _('Nueva Versión'),
@@ -79,6 +96,46 @@ class SaleOrder(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+    # def action_create_new_version(self):
+    #     self.ensure_one()
+    #
+    #     # 1. Determinar el nombre base del presupuesto (ej: 'S00040' de 'S00040-V2')
+    #     base_name_match = re.match(r'^(.*?)(?:-V(\d+))?$', self.name)
+    #     base_name = base_name_match.groups()[0] if base_name_match else self.name
+    #
+    #     # 2. Buscar todos los presupuestos relacionados para encontrar el número de versión más alto
+    #     related_orders = self.env['sale.order'].search([
+    #         '|',
+    #         ('name', '=', base_name),
+    #         ('name', '=like', f"{base_name}-V%")
+    #     ])
+    #
+    #     max_version = 0
+    #     for order in related_orders:
+    #         version_match = re.search(r'-V(\d+)$', order.name)
+    #         if version_match:
+    #             max_version = max(max_version, int(version_match.group(1)))
+    #
+    #     # El número para la nueva versión es el máximo encontrado + 1
+    #     new_version_number = max_version + 1
+    #
+    #     # 3. Crear la nueva versión como una copia del presupuesto actual.
+    #     # Esta nueva versión será el borrador activo.
+    #     new_quotation = self.copy(default={
+    #         'name': f"{base_name}-V{new_version_number}",
+    #         'state': 'draft',
+    #         'origin': self.name,
+    #     })
+    #
+    #     self.write({'state': 'version'})
+    #     return {
+    #         'type': 'ir.actions.act_window',
+    #         'name': _('Nueva Versión'),
+    #         'res_model': 'sale.order',
+    #         'res_id': new_quotation.id,
+    #         'view_mode': 'form',
+    #         'target': 'current',
+    #     }
 
     def action_confirm(self):
         res = super(SaleOrder, self).action_confirm()
@@ -164,61 +221,3 @@ class SaleOrder(models.Model):
                 })
 
         return res
-
-    # def action_confirm(self):
-    #
-    #     res = super(SaleOrder, self).action_confirm()
-    #     for order in self:
-    #         if not order.project_id:
-    #             raise ValidationError(_(
-    #
-    #             "No se puede confirmar el pedido '%s'.\n\nPor favor, seleccione un proyecto antes de continuar.",
-    #
-    #             order.name
-    #
-    #             ))
-    #
-    #         for line in order.order_line:
-    #             if line.is_expense:
-    #                 continue
-    #     for order in self:
-    #         # Verificamos si la orden tiene un proyecto asociado.
-    #         # El campo project_id es el estándar que vincula una venta a un proyecto.
-    #         if order.project_id:
-    #
-    #             # Inicializamos las variables para sumar las horas de esta venta específica
-    #             total_manufacturing_hours = 0.0
-    #             total_assembly_hours = 0.0
-    #
-    #             # Recorremos cada línea de la orden de venta
-    #             for line in order.order_line:
-    #                 total_manufacturing_hours += line.manufacturing_hours
-    #                 total_assembly_hours += line.assembly_hours
-    #
-    #             # Si hemos acumulado horas, las sumamos al proyecto.
-    #             # Usamos una escritura directa para asegurar la atomicidad y evitar problemas de concurrencia.
-    #             if total_manufacturing_hours > 0 or total_assembly_hours > 0:
-    #                 # Obtenemos los valores actuales del proyecto
-    #                 current_manufacturing = order.project_id.manufacturing_hours
-    #                 current_assembly = order.project_id.assembly_hours
-    #
-    #                 # Sumamos los nuevos valores y actualizamos el proyecto
-    #                 order.project_id.write({
-    #                     'manufacturing_hours': current_manufacturing + total_manufacturing_hours,
-    #                     'assembly_hours': current_assembly + total_assembly_hours,
-    #                 })
-    #
-    #             task_values = {
-    #                 'name': f"{order.name}: {line.name}",  # Nombre de la tarea (ej: "S00123: Producto A")
-    #                 'project_id': order.project_id.id,
-    #                 'partner_id': order.partner_id.id,  # Asignamos el cliente de la venta a la tarea
-    #                 'sale_line_id': line.id,  # Vinculamos la tarea a la línea de venta
-    #                 'planned_hours': line.manufacturing_hours + line.assembly_hours,  # Horas planificadas
-    #                 'description': line.name,  # Puedes añadir más detalles a la descripción si lo necesitas
-    #             }
-    #
-    #             # Creamos la tarea en la base de datos.
-    #             self.env['project.task'].create(task_values)
-    #         # --- Fin de la lógica para crear tareas ---
-    #
-    #     return res
