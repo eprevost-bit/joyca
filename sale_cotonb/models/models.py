@@ -557,7 +557,7 @@ class SaleOrder(models.Model):
 
             for sale_line in sale_lines_to_update:
                 new_price = po_line.price_unit * (1 + margin_decimal)
-                provider_cost = po_line.price_subtotal
+                provider_cost = po_line.price_unit
                 sale_line.write({'provider_cost': provider_cost})
                 if sale_line.price_unit != new_price:
                     sale_line.write({'price_unit': new_price})
