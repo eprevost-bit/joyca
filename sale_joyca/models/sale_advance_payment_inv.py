@@ -15,7 +15,9 @@ class SaleAdvancePaymentInv(models.TransientModel):
 
     @api.model
     def _default_downpayment_concept(self):
-        """ Asigna un concepto por defecto basado en si ya existen facturas de anticipo. """
+         #seguimos""" Asigna un concepto por defecto basado en si ya existen facturas de anticipo. """
+
+
         active_id = self.env.context.get('active_id')
         if self.env.context.get('active_model') == 'sale.order' and active_id:
             sale_order = self.env['sale.order'].browse(active_id)
