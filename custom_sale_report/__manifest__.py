@@ -26,7 +26,16 @@
         # 'report/sale_report_layout.xml',
         'report/sale_report_template.xml',
         'report/sale_report_actions.xml',
+        'report/report_sale_order_aclaraciones.xml',
     ],
+
+    'assets': {
+        'web.report_assets_pdf': [
+            'custom_sale_report/static/src/scss/custom_fonts.scss',
+            'custom_sale_report/static/src/scss/custom_sale_report.scss',
+        ],
+    },
+
     'installable': True,
     'application': False,
     'auto_install': False,

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<template id="report_sale_order_aclaraciones">
+    <div style="white-space: pre-line;">
+        Términos y condiciones presupuestos OBRA:
+
+        Este presupuesto tiene una validez de 30 días.
+        Para la confirmación de oferta/pedido se deberá depositar una cantidad a cuenta del 50% del total,
+        como mínimo una semana antes de empezar la obra. Al certificar la mitad de la obra se pagará el
+        45% y 5% al finalizar los trabajos. Cualquier ampliación y/o modificación del presupuesto formalizado
+        deberán abonarse al 50% a la aceptación, en caso de no haber sido empezados los trabajos, y al
+        95% en caso de haber certificado mitad de obra; el 5% al finalizar. Todas las transferencias deben
+        ser identificadas en el concepto con el número de presupuesto.
+
+        Coton et Bois Iberica SL no se hace cargo de instalaciones de terceros contratados por el Cliente ni
+        de material o mercancía que haya sido suministrada por éste.
+        Cualquier demora en el pago puede repercutir en los tiempos de ejecución de la obra. Este
+        presupuesto se considera independiente a cualquier otro, las condiciones de pago también son
+        independientes y no se verán afectadas por trabajos diferentes a los descritos en este documento.
+
+        El pago sobre el presente documento conlleva la aceptación de las condiciones aquí descritas y
+        expresa la relación contractual entre el Cliente y Coton et Bois Iberica SL. Las partes se someten a
+        la jurisdicción y competencia de Barcelona para cualquier cuestión de cumplimiento o interpretación
+        del presente contrato.
+
+        ES81 0081 1923 8500 0112 5223 BANCO SABADELL
+        Calle Lagasca 104, Bajo Izquierda 28006 Madrid
+        Calle Brusi 15, Local 08006 Barcelona
+
+        Términos y condiciones presupuesto MOBILIARIO:
+
+        Para que podamos proceder con tu pedido, te solicitamos que realices el pago completo del
+        presupuesto.
+        Recuerda identificar todas las transferencias con el número de presupuesto para un procesamiento
+        ágil. Una vez que hayas aceptado nuestra oferta y realizado el pedido, te garantizamos que todos
+        nuestros muebles tienen una garantía de dos años. Queremos asegurarnos de que disfrutes de
+        productos de calidad y duraderos.
+
+        Recuerda que, en caso de productos defectuosos, estaremos encantados de cubrirlos bajo
+        nuestra garantía. Sin embargo, debido a la naturaleza de nuestros productos, no podemos aceptar
+        cancelaciones ni devoluciones en general. Queremos que te sientas seguro al realizar tu compra y
+        confíes en la calidad de nuestros muebles.
+        Si tienes alguna pregunta sobre nuestra garantía de dos años, no dudes en comunicarte con nuestro
+        equipo. Estaremos encantados de brindarte la asistencia necesaria.
+
+        Te recomendamos revisar minuciosamente el material en el momento de la entrega. Si encuentras
+        alguna incidencia, por favor, avísale al transportista de inmediato para que podamos resolverlo rápidamente. Tu satisfacción es nuestra prioridad.
+
+        Si has contratado mobiliario con instalación, nos esforzaremos por entregarlo directamente en tu
+        domicilio a través de medios naturales. Sin embargo, en caso de que se requieran medios auxiliares
+        como grúas, poleas, andamios, etc., estos costes serán exclusivamente responsabilidad tuya. Antes
+        de proceder, te proporcionaremos un presupuesto detallado para tu aprobación.
+
+        Al realizar el pago de la oferta y el pedido, estás aceptando nuestras condiciones de venta descritas
+        aquí.
+        Queremos establecer una relación contractual sólida entre tú y Coton et Bois Ibérica SL. En caso de
+        cualquier asunto relacionado con el cumplimiento o interpretación de este contrato, ambas partes
+        nos sometemos a la jurisdicción y competencia de Barcelona.
+
+        ES81 0081 1923 8500 0112 5223 BANCO SABADELL
+        Calle Velázquez 71, Bajo derecha 28006 Madrid
+        Calle Brusi 15, Local 08006 Barcelona
+
+        <div style="font-size: 12px; margin-top: 10px;">
+            Protección de datos:
+            Sus datos personales están incluidos en el fichero propiedad de Coton et Bois Ibérica SL y serán tratados con la única finalidad de
+            hacer posible la gestión administrativa de nuestras relaciones comerciales.
+            C/ Velázquez 71, Bajo Derecha, Madrid C/ Brusi 15, local, Barcelona
+            https://www.cotonetbois.com/ T. 914 183 574 javierbaldrich@
+        </div>
+    </div>
+</template>
+
+</odoo>
