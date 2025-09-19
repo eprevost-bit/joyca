@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_saleorder_document_custom_main">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="company" t-value="doc.company_id"/>
+
+                <style type="text/css">
+                    /* Quitar todos los bordes */
+                    table, th, td {
+                    border: none !important;
+                    }
+                    .summary-table, .summary-table th, .summary-table td {
+                    border: none !important;
+                    }
+                    #totals_summary_table table, #totals_summary_table td {
+                    border: none !important;
+                    }
+                    .table { border: none !important; }
+                    .table thead th { border: none !important; }
+
+                    /* Ocultar header/footer solo en la primera página */
+                    .first_page .header,
+                    .first_page .footer {
+                    display: none !important;
+                    }
+
+                    /* Ocultar portada en el resto de páginas */
+                    .other_page .cover_page {
+                    display: none !important;
+                    }
+
+                    .summary-table th {
+                    color: #555;
+                    font-weight: normal;
+                    }
+                    #totals_summary_table td {
+                    color: #004a8b !important;
+                    }
+                    #totals_summary_table strong {
+                    font-weight: bold !important;
+                    }
+                </style>
+
+                <!-- Encabezado -->
+
+                <div class="header">
+                    <div class="d-flex justify-content-between align-items-start"
+                         style="padding-bottom: 15px; font-size: 12px;">
+                        <div class="col-6">
+                            <img t-if="doc.company_id.logo" t-att-src="image_data_uri(doc.company_id.logo)"
+                                 style="max-height: 40px;"/>
+                        </div>
+                        <div class="col-6 text-end">
+                            <ul class="list-unstyled">
+                                <li>
+                                    <strong>Referencia:</strong>
+                                    <span t-field="doc.name"/>_
+                                    <span t-field="doc.partner_id.name"/>
+                                </li>
+                                <li>
+                                    <span t-field="doc.date_order"
+                                          t-options='{"widget": "date", "format": "d MMMM yyyy"}'/>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer">
+                    <div class="text-center text-muted" style="font-size: 10px;">Página
+                        <span class="page"/>
+                        /
+                        <span class="topage"/>
+                    </div>
+                </div>
+
+                <!-- Portada -->
+                <div class="article o_report_layout_standard">
+                    <div class="page cover_page"
+                         style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 95vh; page-break-after: always;">
+                        <div style="font-family: serif; font-size: 56px; font-weight: 500; letter-spacing: 5px; margin-bottom: 20px;">
+                            <span t-field="doc.company_id.name"/>
+                        </div>
+                        <img t-if="doc.company_id.logo" t-att-src="image_data_uri(doc.company_id.logo)"
+                             style="max-height: 80px; margin-bottom: 60px;"/>
+                        <h2 style="font-size: 24px; color: #004a8b; font-weight: bold; margin-bottom: 40px; letter-spacing: 2px;">
+                            PRESUPUESTO
+                        </h2>
+                        <div style="font-size: 14px;">
+                            <p>
+                                <strong>Concepto:</strong>
+                                <span t-field="doc.name"/>_
+                                <span t-field="doc.partner_id.name"/>
+                            </p>
+                            <p>
+                                <span t-field="doc.date_order" t-options='{"widget": "date", "format": "d MMMM yyyy"}'/>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Resumen de presupuesto -->
+                    <div class="page" style="page-break-after: always;">
+                        <div class="d-flex justify-content-between align-items-center" style="margin-top: 40px;">
+                            <h3 style="margin: 0;">RESUMEN DE PRESUPUESTO</h3>
+                            <span style="font-size: 12px;" t-esc="doc.name + '_' + doc.partner_id.name"/>
+                        </div>
+
+                        <table class="summary-table" style="width: 100%; margin-top: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="width:10%;">CAPÍTULO</th>
+                                    <th>RESUMEN</th>
+                                    <th class="text-end" style="width:20%;">IMPORTE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="current_section_line" t-value="None"/>
+                                <t t-set="current_subtotal" t-value="0.0"/>
+                                <t t-set="section_index" t-value="1"/>
+
+                                <t t-foreach="doc.order_line" t-as="line">
+                                    <t t-if="line.display_type == 'line_section'">
+                                        <t t-if="current_section_line">
+                                            <tr>
+                                                <td>
+                                                    <span t-esc="'%02d' % (section_index - 1)"/>
+                                                </td>
+                                                <td>
+                                                    <strong t-field="current_section_line.name"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-esc="current_subtotal"
+                                                          t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-set="current_section_line" t-value="line"/>
+                                        <t t-set="current_subtotal" t-value="0.0"/>
+                                        <t t-set="section_index" t-value="section_index + 1"/>
+                                    </t>
+                                    <t t-else="">
+                                        <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
+                                    </t>
+                                </t>
+
+                                <t t-if="current_section_line">
+                                    <tr>
+                                        <td>
+                                            <span t-esc="'%02d' % (section_index - 1)"/>
+                                        </td>
+                                        <td>
+                                            <strong t-field="current_section_line.name"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="current_subtotal"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Totales -->
+                        <div id="totals_summary_table" class="row justify-content-end" style="margin-top: 40px;">
+                            <div class="col-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td>PRESUPUESTO DE EJECUCIÓN POR CONTRATA</td>
+                                        <td class="text-end">
+                                            <span t-esc="doc.amount_untaxed"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Base Imponible</td>
+                                        <td class="text-end">
+                                            <span t-esc="doc.amount_untaxed"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>21% I.V.A. General</td>
+                                        <td class="text-end">
+                                            <span t-esc="doc.amount_tax"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <strong>PRESUPUESTO DE EJECUCIÓN TOTAL</strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>
+                                                <span t-esc="doc.amount_total"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Aclaraciones -->
+                    <div class="page" style="page-break-after: always;">
+                        <h3 style="margin-top: 40px; text-decoration: underline;">ACLARACIONES AL PRESUPUESTO</h3>
+                        <p t-field="doc.note"/>
+                    </div>
+
+                    <!-- Detalle de productos -->
+                    <div class="page">
+                        <table class="table table-sm" name="sale_order_table" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th class="text-start">Código</th>
+                                    <th class="text-start">Resumen</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.order_line" t-as="line">
+                                    <t t-if="line.display_type == 'line_section'">
+                                        <tr class="bg-light">
+                                            <td colspan="5">
+                                                <strong>
+                                                    <span t-field="line.name"/>
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="not line.display_type">
+                                        <tr>
+                                            <td>
+                                                <span t-field="line.product_id.default_code"/>
+                                            </td>
+                                            <td>
+                                                <span t-field="line.name"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.product_uom_qty"/>
+                                                <span t-field="line.product_uom" groups="uom.group_uom"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.price_unit"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.price_subtotal"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </t>
+        </t>
+
+        <script>
+            function subst() {
+            var vars = {};
+            var x = document.location.search.substring(1).split('&amp;');
+            for (var i in x) {
+            var z = x[i].split('=', 2);
+            vars[z[0]] = unescape(z[1]);
+            }
+            if (vars['page'] == 1) {
+            document.body.classList.add('first_page');
+            } else {
+            document.body.classList.add('other_page');
+            }
+            return vars;
+            }
+        </script>
+    </template>
+</odoo>
+
+        <!--<?xml version="1.0" encoding="utf-8"?>-->
+        <!--<odoo>-->
+        <!--    <template id="report_saleorder_document_custom_main">-->
+        <!--        <t t-call="web.html_container">-->
+        <!--            <t t-foreach="docs" t-as="doc">-->
+        <!--                <t t-set="o" t-value="doc"/>-->
+        <!--                <t t-set="company" t-value="doc.company_id"/>-->
+
+        <!--                <style type="text/css">-->
+        <!--                    .first_page .header, .first_page .footer { display: none !important; }-->
+        <!--                    .other_page .cover_page { display: none !important; }-->
+
+        <!--                    .summary-table, .summary-table th, .summary-table td {-->
+        <!--                        border: none !important;-->
+        <!--                    }-->
+        <!--                    .summary-table th {-->
+        <!--                        color: #555;-->
+        <!--                        font-weight: normal;-->
+        <!--                        border-bottom: 1px solid #ccc !important;-->
+        <!--                    }-->
+        <!--                    #totals_summary_table table, #totals_summary_table td {-->
+        <!--                        border: none !important;-->
+        <!--                    }-->
+        <!--                    #totals_summary_table td { color: #004a8b !important; }-->
+        <!--                    #totals_summary_table strong { font-weight: bold !important; }-->
+
+        <!--                    .product-table {-->
+        <!--                        width: 100%;-->
+        <!--                        margin-top: 20px;-->
+        <!--                    }-->
+        <!--                    .product-table th, .product-table td {-->
+        <!--                        padding: 8px;-->
+        <!--                        vertical-align: top;-->
+        <!--                    }-->
+        <!--                    .product-table thead th {-->
+        <!--                        border-bottom: 1px solid black;-->
+        <!--                        font-weight: normal;-->
+        <!--                    }-->
+        <!--                    .product-table .section-row td {-->
+        <!--                        background-color: #f2f2f2;-->
+        <!--                        font-weight: bold;-->
+        <!--                        border-top: 1px solid #dee2e6;-->
+        <!--                        border-bottom: 1px solid #dee2e6;-->
+        <!--                    }-->
+        <!--                    .product-table tbody tr:not(.section-row) {-->
+        <!--                        border-bottom: 1px solid #eee;-->
+        <!--                    }-->
+        <!--                </style>-->
+
+        <!--                <div class="header">-->
+        <!--                    <div class="d-flex justify-content-between align-items-start" style="padding-bottom: 15px; font-size: 12px;">-->
+        <!--                        <div class="col-6"><img t-if="doc.company_id.logo" t-att-src="image_data_uri(doc.company_id.logo)" style="max-height: 40px;"/></div>-->
+        <!--                        <div class="col-6 text-end">-->
+        <!--                            <ul class="list-unstyled">-->
+        <!--                                <li><strong>Referencia:</strong> <span t-field="doc.name"/>_<span t-field="doc.partner_id.name"/></li>-->
+        <!--                                <li><span t-field="doc.date_order" t-options='{"widget": "date", "format": "d MMMM yyyy"}'/></li>-->
+        <!--                            </ul>-->
+        <!--                        </div>-->
+        <!--                    </div>-->
+        <!--                </div>-->
+        <!--                <div class="footer"><div class="text-center text-muted" style="font-size: 10px;">Página <span class="page"/> / <span class="topage"/></div></div>-->
+
+        <!--                <div class="article o_report_layout_standard">-->
+        <!--                    <div class="page cover_page" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 95vh; page-break-after: always;">-->
+        <!--                        <div style="font-family: serif; font-size: 56px; font-weight: 500; letter-spacing: 5px; margin-bottom: 20px;"><span t-field="doc.company_id.name"/></div>-->
+        <!--                        <img t-if="doc.company_id.logo" t-att-src="image_data_uri(doc.company_id.logo)" style="max-height: 80px; margin-bottom: 60px;"/>-->
+        <!--                        <h2 style="font-size: 24px; color: #004a8b; font-weight: bold; margin-bottom: 40px; letter-spacing: 2px;">PRESUPUESTO</h2>-->
+        <!--                        <div style="font-size: 14px;"><p><strong>Concepto:</strong> <span t-field="doc.name"/>_<span t-field="doc.partner_id.name"/></p><p><span t-field="doc.date_order" t-options='{"widget": "date", "format": "eeee, d de MMMM de yyyy"}'/></p></div>-->
+        <!--                    </div>-->
+
+        <!--                    <div class="page" style="page-break-after: always;">-->
+        <!--                        <div class="d-flex justify-content-between align-items-center" style="margin-top: 40px;">-->
+        <!--                            <h3 style="margin: 0;">RESUMEN DE PRESUPUESTO</h3>-->
+        <!--                            <span style="font-size: 12px;" t-esc="doc.name + '_' + doc.partner_id.name"/>-->
+        <!--                        </div>-->
+        <!--                        <table class="summary-table">-->
+        <!--                             <thead><tr><th style="width:10%;">CAPÍTULO</th><th>RESUMEN</th><th class="text-end" style="width:20%;">IMPORTE</th></tr></thead>-->
+        <!--                            <tbody>-->
+        <!--                                <t t-set="current_section_line" t-value="None"/><t t-set="current_subtotal" t-value="0.0"/><t t-set="section_index" t-value="1"/>-->
+        <!--                                <t t-foreach="doc.order_line" t-as="line">-->
+        <!--                                    <t t-if="line.display_type == 'line_section'">-->
+        <!--                                        <t t-if="current_section_line">-->
+        <!--                                            <tr><td><span t-esc="'%02d' % (section_index - 1)"/></td><td><strong t-field="current_section_line.name"/></td><td class="text-end"><span t-esc="current_subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>-->
+        <!--                                        </t>-->
+        <!--                                        <t t-set="current_section_line" t-value="line"/><t t-set="current_subtotal" t-value="0.0"/><t t-set="section_index" t-value="section_index + 1"/>-->
+        <!--                                    </t>-->
+        <!--                                    <t t-else=""><t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/></t>-->
+        <!--                                </t>-->
+        <!--                                <t t-if="current_section_line">-->
+        <!--                                    <tr><td><span t-esc="'%02d' % (section_index - 1)"/></td><td><strong t-field="current_section_line.name"/></td><td class="text-end"><span t-esc="current_subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>-->
+        <!--                                </t>-->
+        <!--                            </tbody>-->
+        <!--                        </table>-->
+        <!--                        <div id="totals_summary_table" class="row justify-content-end" style="margin-top: 40px;">-->
+        <!--                            <div class="col-6">-->
+        <!--                                <table class="table table-sm">-->
+        <!--                                     <t t-call="sale.document_tax_totals"><t t-set="tax_totals" t-value="doc.tax_totals"/><t t-set="currency" t-value="doc.currency_id"/></t>-->
+        <!--                                </table>-->
+        <!--                            </div>-->
+        <!--                        </div>-->
+        <!--                    </div>-->
+
+        <!--                    <div class="page" style="page-break-after: always;">-->
+        <!--                        <h3 style="margin-top: 40px; text-decoration: underline;">ACLARACIONES AL PRESUPUESTO</h3>-->
+        <!--                        <p t-field="doc.note"/>-->
+        <!--                    </div>-->
+
+        <!--                    <div class="page">-->
+        <!--                         <table class="product-table">-->
+        <!--                           <thead>-->
+        <!--                               <tr>-->
+        <!--                                   <th class="text-start" style="width: 10%;">Código</th>-->
+        <!--                                   <th class="text-start" style="width: 45%;">Resumen</th>-->
+        <!--                                   <th class="text-end" style="width: 10%;">Cantidad</th>-->
+        <!--                                   <th class="text-end" style="width: 15%;">Precio</th>-->
+        <!--                                   <th class="text-end" style="width: 20%;">Importe</th>-->
+        <!--                               </tr>-->
+        <!--                           </thead>-->
+        <!--                            <tbody>-->
+        <!--                                <t t-foreach="doc.order_line" t-as="line">-->
+        <!--                                    <t t-if="line.display_type == 'line_section'">-->
+        <!--                                        <tr class="section-row">-->
+        <!--                                            <td colspan="5">-->
+        <!--                                                <strong t-field="line.name"/>-->
+        <!--                                            </td>-->
+        <!--                                        </tr>-->
+        <!--                                    </t>-->
+        <!--                                    <t t-if="not line.display_type">-->
+        <!--                                        <tr>-->
+        <!--                                            <td><span t-field="line.product_id.default_code"/></td>-->
+        <!--                                            <td><span t-field="line.name"/></td>-->
+        <!--                                            <td class="text-end"><span t-field="line.product_uom_qty"/> <span t-field="line.product_uom" groups="uom.group_uom"/></td>-->
+        <!--                                            <td class="text-end"><span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>-->
+        <!--                                            <td class="text-end"><span t-field="line.price_subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>-->
+        <!--                                        </tr>-->
+        <!--                                    </t>-->
+        <!--                                </t>-->
+        <!--                            </tbody>-->
+        <!--                        </table>-->
+        <!--                    </div>-->
+        <!--                </div>-->
+        <!--            </t>-->
+        <!--        </t>-->
+        <!--        <script>-->
+        <!--            function subst() {-->
+        <!--                var vars = {};-->
+        <!--                var x = document.location.search.substring(1).split('&amp;');-->
+        <!--                for (var i in x) { var z = x[i].split('=', 2); vars[z[0]] = unescape(z[1]); }-->
+        <!--                if (vars['page'] == 1) { document.body.classList.add('first_page'); }-->
+        <!--                else { document.body.classList.add('other_page'); }-->
+        <!--                return vars;-->
+        <!--            }-->
+        <!--        </script>-->
+        <!--    </template>-->
+        <!--</odoo>-->
