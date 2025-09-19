@@ -1,4 +1,4 @@
-# in ibec_portal_empleado/__manifest__.py
+# in ibec_portal_empleado_instalacion/__manifest__.py
 
 {
     'name': "IBEC Portal del Empleado",

@@ -92,7 +92,7 @@ class EmployeePortal(CustomerPortal):
             'total_recent_pages': total_recent_pages,
             'total_recent': total_recent,
         }
-        return request.render("ibec_portal_empleado.portal_attendances_template", values)
+        return request.render("ibec_portal_empleado_instalacion.portal_attendances_template", values)
 
     @http.route('/my/attendance/clock', type='json', auth="user", website=True)
     def portal_attendance_clock(self, **kw):
