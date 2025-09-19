@@ -32,7 +32,7 @@ class MrpProduction(models.Model):
                 order.state = 'medicion'
         return True
 
-    # Método para avanzar al siguiente estado
+
     def action_next_state(self):
         state_sequence = [
             'draft',
