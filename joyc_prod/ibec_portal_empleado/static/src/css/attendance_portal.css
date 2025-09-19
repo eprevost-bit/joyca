@@ -1,0 +1,15 @@
+.btn-clock-in, .btn-clock-out {
+    min-width: 200px;
+}
+
+.o_portal_category {
+    display: none;
+}
+
+.btn-link {
+    display: none;
+}
+
+.btn-secondary {
+    font-size: smaller;
+}

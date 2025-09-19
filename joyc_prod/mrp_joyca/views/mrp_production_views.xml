@@ -1,0 +1,37 @@
+<odoo>
+    <record id="view_mrp_production_form_inherit" model="ir.ui.view">
+        <field name="name">mrp.production.form.inherit</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <field name="state" position="replace">
+                <field name="state" widget="statusbar" statusbar_visible="draft,medicion,sketchup,layout,fabricacion,barnizado,montaje,done,cancel" statusbar_colors='{"draft":"lightblue","medicion":"#FFC107","sketchup":"#9C27B0","layout":"#3F51B5","fabricacion":"#FF5722","barnizado":"#795548","montaje":"#607D8B","done":"green","cancel":"red"}'/>
+            </field>
+
+            <!-- Añadir botón para avanzar estado -->
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_next_state" string="Pasar de Estado" type="object" class="oe_highlight" />
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="mrp_production_kanban_view" model="ir.ui.view">
+        <field name="name">mrp.production.kanban</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_kanban_view"/>
+        <!-- Hereda la vista original -->
+        <field name="arch" type="xml">
+            <!-- Modificar el campo state para incluir nuevos estados -->
+            <xpath expr="//field[@name='state']" position="replace">
+                <field name="state" widget="statusbar" statusbar_visible="draft,medicion,sketchup,layout,fabricacion,barnizado,montaje,done,cancel" statusbar_colors='{"draft":"lightblue","medicion":"#FFC107","sketchup":"#9C27B0","layout":"#3F51B5","fabricacion":"#FF5722","barnizado":"#795548","montaje":"#607D8B","done":"green","cancel":"red"}'/>
+            </xpath>
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="default_group_by">state</attribute>
+                <attribute name="group_create">true</attribute>
+                <attribute name="group_delete">true</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>
