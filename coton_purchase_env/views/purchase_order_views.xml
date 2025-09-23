@@ -16,8 +16,12 @@
                             type="object"
                             string="Enviar Partidas por Correo"
                             class="oe_highlight"
-                          />
+                    />
                 </xpath>
+
+<!--                <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="before">-->
+<!--                    <field name="is_selected_for_email" nolabel="1"/>-->
+<!--                </xpath>-->
 
             </field>
         </record>

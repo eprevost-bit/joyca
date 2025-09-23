@@ -4,9 +4,10 @@
     'summary': 'Oculta el botón "Enviar correo electrónico" y añade "Enviar partidas por correo electrónico".',
     'author': 'Tu Nombre',
     'category': 'Purchases',
-    'depends': ['purchase'], # Es muy importante indicar la dependencia
+    'depends': ['purchase'],
     'data': [
         'views/purchase_order_views.xml',
+        'data/mail_template_data.xml',
     ],
     'installable': True,
     'application': False,
