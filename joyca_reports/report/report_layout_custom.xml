@@ -278,27 +278,204 @@
                     </div>
 
 
-                    <t t-if="doc.note and doc.note.strip()">
-                        <div class="page bordered-page"
-                             style="height: 100vh;
+                    <div class="page bordered-page"
+                         style="height: 100vh;
             box-sizing: border-box;
             position: relative;
             border: 1.5px solid #d99d69;
             padding: 40px;
             page-break-before: always;">
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('/web/image?model=res.company&amp;id=1&amp;field=x_studio_img'); background-repeat: no-repeat; background-position: center; background-size: 70%; opacity: 0.08; z-index: -1;"/>
-                            <div style="position: relative; z-index: 1;">
-                                <p t-field="doc.note"/>
-                                <br/>
-
-                                <p t-if="not is_html_empty(doc.payment_term_id.note)">
-                                    <span t-field="doc.payment_term_id.note">El pago también debe transmitirse con
-                                        amor
-                                    </span>
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('/web/image?model=res.company&amp;id=1&amp;field=x_studio_img'); background-repeat: no-repeat; background-position: center; background-size: 70%; opacity: 0.08; z-index: -1;"/>
+                        <div style="position: relative; z-index: 1;">
+                            <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6;">
+                                <p>
+                                    <strong>* Pliego de condiciones:</strong>
                                 </p>
+
+                                <ul style="padding-left: 20px;">
+                                    <li style="margin-bottom: 10px;">
+                                        Este presupuesto tiene una validez de 30 días. Una vez superado este
+                                        período, Proyectos Joyca se reserva el derecho de modificación de los
+                                        precios sujeto a posibles incrementos de las materias primas.
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        En caso de sufrir alguna modificación el diseño inicial, ésta será objeto
+                                        del correspondiente estudio para valorar si implica algún tipo de incremento
+                                        en el presupuesto aprobado, en cuyo caso correrían por cuenta del cliente.
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        Cualquier ampliación correrá por cuenta del cliente, salvo acuerdo en
+                                        contrario.
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        Los precios aquí detallados son válidos para la realización de todos los
+                                        trabajos descritos, en una sola fase. La no aceptación de alguna de las
+                                        partidas del presente presupuesto implica la revisión económica del resto.
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        Una vez terminados los trabajos, se facturarán las cantidades realmente
+                                        ejecutadas.
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        Estos precios quedan condicionados a la comprobación en obra de todas las
+                                        medidas y datos aportados por el cliente. En el caso de que los datos no
+                                        coincidan con lo valorado, se volverá a estudiar el presupuesto y se
+                                        realizarán los cambios oportunos.
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        - Proyectos Joyca no realizará ningún tipo de trabajo fuera de su
+                                        competencia (tomas de agua, luz, conexionado, etc.), exceptuando los
+                                        detallados en esta oferta, salvo pacto en contrario.
+                                        <br></br>
+                                        - Proyectos Joyca no dará plazos de ejecución cerrados hasta la recepción de
+                                        este presupuesto firmado y sellado por el cliente. Hasta
+                                        ese momento, los plazos se considerarán orientativos y podrán ser
+                                        modificados en función de la carga de trabajo en cada momento. No
+                                        obstante, la empresa intentará respetar por todos los medios los plazos
+                                        orientativos dados, siempre que la planificación de producción lo
+                                        permita.
+
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        - Los plazos de entrega una vez confirmados, comenzarán a ser efectivos una
+                                        vez tomadas todas las medidas reales en obra.
+
+                                    </li>
+                                    <li style="margin-bottom: 5px;">
+                                        - Estos plazos pueden verse afectados directamente por alguna de las
+                                        siguientes causas:
+                                        <br/>
+                                        a) Defectos o retrasos en la transmisión del pedido.
+                                        <br/>
+                                        b) Fuerza mayor, tales como p.e. incendios, inundaciones, huelga, falta de
+                                        energía, materias primas, etc.
+                                        <br/>
+                                        c) Incumplimiento de las
+                                        condiciones de pago.
+                                        <br/>
+                                        d) Cambios en los diseños iniciales una vez iniciada la producción.
+
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        - Una vez aceptado este presupuesto, Proyectos Joyca procederá a la
+                                        comprobación de la ubicación de los trabajos a realizar,
+                                        valorándose en ese momento la dificultad para el acopio de material en la
+                                        obra y decidiendo si es necesario la contratación de medios
+                                        externos para realizar la subida del material a obra, en cuyo caso habría
+                                        que sumar al presupuesto aceptado el importe de dichos
+                                        trabajos. Igualmente
+                                        dependiendo de la localidad en la que se deban de realizar los trabajos,
+                                        Proyectos Joyca se reserva el derecho de incrementar este
+                                        presupuesto con una partida de desplazamiento.
+
+
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        - En el caso de que la instalación de los trabajos conlleve un
+                                        desplazamiento extraordinario fuera de la Comunidad de Madrid, que
+                                        incluya dietas por alojamiento y comidas, esta partida podrá variar en
+                                        función de la época del año en la que finalmente se realicen los
+                                        trabajos. - En el supuesto de que en el lugar de trabajo haya que hacer unos
+                                        horarios especiales (p.e. comunidades de vecinos en las
+                                        que no se pueda empezar a trabajar a las 8:00 y/o haya que parar 2 horas a
+                                        la hora de la comida), este presupuesto tendrá un
+                                        incremento a valorar en cada caso determinado.
+
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        -Proyectos Joyca se reserva la propiedad de las mercancías mientras no sean
+                                        pagadas en su totalidad por el comprador. - Con el fin de
+                                        mostrar y promocionar públicamente nuestro trabajo, PROYECTOS JOYCA S.L. se
+                                        reserva el derecho de hacer fotografías y de
+                                        publicarlas en su página web y/o redes sociales, noticias y/o fotografías
+                                        del antes y después de las obras realizadas, todo ello con
+                                        expreso cumplimiento de las disposiciones recogidas en la Ley Orgánica
+                                        1/1982, de 5 de mayo, sobre protección civil del derecho al
+                                        honor, a la intimidad personal y familiar y a la propia imagen. - No
+                                        obstante, si el cliente se opone expresamente a la publicación de las
+                                        imágenes de su propiedad, este deberá comunicar tal circunstancia a
+                                        PROYECTOS JOYCA S.L. mediante escrito firmado.
+                                    </li>
+                                    <li style="margin-bottom: 10px;">
+                                        La aceptación de este presupuesto implica que el cliente ha revisado todas
+                                        las partidas y está conforme con la totalidad de sus datos, así como con
+                                        cada punto de este pliego de condiciones.
+                                    </li>
+                                </ul>
+                            </div>
+                            <br/>
+
+                            <p t-if="not is_html_empty(doc.payment_term_id.note)">
+                                <span t-field="doc.payment_term_id.note">El pago también debe transmitirse con
+                                    amor
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="page bordered-page"
+                         style="height: 100vh;
+            box-sizing: border-box;
+            position: relative;
+            border: 1.5px solid #d99d69;
+            padding: 40px;
+            page-break-before: always;">
+
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('/web/image?model=res.company&amp;id=1&amp;field=x_studio_img'); background-repeat: no-repeat; background-position: center; background-size: 70%; opacity: 0.08; z-index: -1;"/>
+                        <div style="position: relative; z-index: 1;">
+                            <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6;">
+                                <h3 style="text-align: left; color: blue">Cláusula informativa de protección de datos
+                                </h3>
+                                <li>PROYECTOS JOYCA, S.L. informa que los datos personales contenidos en el presente
+                                    documento serán tratados con la finalidad de gestionar la presente relación
+                                    contractual, su gestión contable, fiscal o administrativa.
+                                </li>
+                                <li style="margin-bottom: 10px;">
+                                    Asimismo, se informa que, en virtud de lo establecido en el apartado 2 del artículo
+                                    21 de la Ley 34/2002, de 11 de julio, de servicios de la sociedad de la información
+                                    y de comercio electrónico, en relación a lo establecido en la letra f del apartado 1
+                                    del artículo 6 del Reglamento de Protección de Datos de la Unión Europea, sus datos
+                                    serán tratados con la finalidad de gestionar el envío de comunicaciones comerciales,
+                                    promocionales o publicitarias de nuestros servicios y productos, incluyéndose en el
+                                    envío de Newsletter.
+
+                                </li>
+                                <li style="margin-bottom: 10px;">
+                                    Los datos de carácter personal serán conservados hasta que hayan dejado de ser
+                                    necesarios o pertinentes para la finalidad por los que fueron recabados o
+                                    registrados en nuestros ficheros. Posteriormente, los datos de carácter personal que
+                                    cumplan esta condición serán suprimidos, a no ser que haya una norma de rango legal
+                                    que habilite su conservación. Destacar que los datos de carácter personal serán
+                                    suprimidos cuando se ejerza el derecho de supresión de los mismos, salvo que haya
+                                    una norma de rango legal que habilite la conservación de los mismos.
+                                </li>
+                                <li style="margin-bottom: 10px;">
+                                    Se informa que la base legal para el tratamiento de sus datos de carácter personal
+                                    es la relación contractual y el interés legítimo. Se informa que la base legal para
+                                    el tratamiento de los datos de carácter personal con la finalidad de enviar
+                                    comunicaciones comerciales es el interés legítimo. Se tratarán los datos de carácter
+                                    personal contenidos en el presente documento, además, para dar cumplimiento a las
+                                    obligaciones legales pertinentes.
+                                </li>
+                                <li style="margin-bottom: 10px;">
+                                    En cualquier momento podrá ejercer los derechos de acceso, rectificación, supresión,
+                                    portabilidad, limitación u oposición a su tratamiento enviando una solicitud,
+                                    acreditando su identidad, a Calle de las Industrias, 4 de la localidad de Torrejón
+                                    de Ardoz (28850 – Madrid), o a través del correo electrónico lopd@proyectosjoyca.es.
+
+                                </li>
+                                <li style="margin-bottom: 10px;">
+                                    Asimismo, se informa que se puede presentar una reclamación ante la Agencia Española
+                                    de Protección de Datos si considera que se vulneran los derechos anteriormente
+                                    expuestos en la presente política de privacidad o si considera que el tratamiento de
+                                    datos personales que le conciernen infringe el Reglamento General de Protección de
+                                    Datos (UE) 2016/679 del Parlamento Europeo y del Consejo, de 27 de abril de 2016 y
+                                    la Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y
+                                    garantía de los derechos digitales
+                                </li>
+
                             </div>
                         </div>
-                    </t>
+                    </div>
 
                 </div>
             </t>
