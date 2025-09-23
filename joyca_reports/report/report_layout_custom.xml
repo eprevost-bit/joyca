@@ -290,7 +290,12 @@
                             <div style="position: relative; z-index: 1;">
                                 <p t-field="doc.note"/>
                                 <br/>
-                                <p t-field="doc.x_studio_condiciones"/>
+
+                                <p t-if="not is_html_empty(doc.payment_term_id.note)">
+                                    <span t-field="doc.payment_term_id.note">El pago también debe transmitirse con
+                                        amor
+                                    </span>
+                                </p>
                             </div>
                         </div>
                     </t>
