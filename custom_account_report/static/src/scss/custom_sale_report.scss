@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Gideon+Roman&display=swap');
+
+// Borrar bordes de tablas
+table, th, td,
+.summary-table, .summary-table th, .summary-table td,
+#totals_summary_table table, #totals_summary_table td,
+.table, .table thead th {
+    border: none !important;
+}
+
+// Estilo del resumen
+.summary-table th {
+    color: #555;
+    font-weight: normal;
+}
+
+#totals_summary_table td {
+    color: #053863 !important;
+    font-family: 'Times New Roman', Times, serif !important;
+}
+
+#totals_summary_table strong {
+    font-weight: bold !important;
+}
+
+// Ocultar header y footer en la primera página
+.cover_page + .header {
+    display: none !important;
+}
+
+
+// Ocultar portada en páginas siguientes
+body.other_page .cover_page {
+    display: none !important;
+}
+
+
+/* Nombre de la empresa en portada */
+.company-title {
+  font-family: 'AlbertusMTPro-Light', serif;
+  font-size: 100px;
+  font-weight: 500;
+  letter-spacing: 5px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+
+// Tabla de resumen
+.summary-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  border: none; /* elimina borde externo */
+}
+
+.summary-table thead {
+  border-bottom: 1px solid #999; /* línea solo bajo cabecera */
+}
+
+.summary-table th,
+.summary-table td {
+  padding: 8px 10px;
+  vertical-align: middle;
+  border: none; /* elimina bordes internos */
+}
+
+.summary-table th {
+  text-align: left;
+  font-weight: bold;
+}
+
+.summary-table th.text-end,
+.summary-table td.text-end {
+  text-align: right;
+}
+
+.summary-table tbody tr {
+  border: none;
+}
+
+#totals_summary_table td {
+    padding-left: 60px !important;
+    padding-right: 60px !important;
+}
+
+#sale_order_table tbody tr:not(.section-row) td {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.product-description {
+  font-size: 85%; 
+  color: #555;
+}
+
+.details_product{
+  font-size: 90%; 
+}
+
+.section-subtotal td {
+  background-color: #eeeeee;
+  font-weight: bold;
+}
+
+.table-total td {
+  border-top: 2px solid #000;
+  font-weight: bold;
+  background-color: #ddd;
+}

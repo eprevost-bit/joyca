@@ -7,7 +7,7 @@
         con un formato de portada, términos, resumen y detalle.""",
 
     'description': """
-        Este módulo crea un nuevo formato de impresión para las cotizaciones (Sale Order)
+        Este módulo crea un nuevo formato de impresión para las cotizaciones (Account Move)
         siguiendo un diseño específico. No reemplaza el reporte original.
     """,
 
@@ -15,18 +15,18 @@
     'website': "https://www.tuempresa.com",
 
     # Categoria del módulo
-    'category': 'Sales',
+    'category': 'Accounting',
     'version': '1.0',
 
     # Dependencias: nuestro módulo necesita el módulo de Ventas ('sale_management') para funcionar
-    'depends': ['sale_management', 'sale'],
+    'depends': ['sale_management', 'sale', 'account'],
 
     # Los archivos XML que se cargarán
     'data': [
         # 'report/sale_report_layout.xml',
-        'report/sale_report_template.xml',
+        # 'report/sale_report_template.xml',
         'report/sale_report_actions.xml',
-        'report/report_sale_order_aclaraciones.xml',
+        # 'report/report_sale_order_aclaraciones.xml',
         'report/account_report.xml',
         'report/account_report_all.xml',
     ],

@@ -1,0 +1,19 @@
+@font-face {
+  font-family: 'AlbertusMTPro-Light';
+  src: url('/custom_sale_report/static/src/fonts/AlbertusMTPro-Light.ttf') format('truetype');
+}
+
+// @font-face {
+//   font-family: 'GideonRoman-Regular';
+//   src: url('/custom_sale_report/static/src/fonts/GideonRoman-Regular.ttf') format('truetype');
+// }
+
+/* Solo el título principal en la portada */
+.cover_page h2.custom-title {
+  font-family: 'AlbertusMTPro-Light', serif;
+}
+
+
+// .total_summ_tb_font{
+//     font-family: 'GideonRoman-Regular', serif !important;
+// }
