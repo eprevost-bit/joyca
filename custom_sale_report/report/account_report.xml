@@ -113,39 +113,10 @@
 
                                 <t t-foreach="doc.invoice_line_ids" t-as="line">
 
-                                    <t t-if="line.display_type == 'line_section'">
-                                        <t t-if="not is_first_section">
-                                            <tr class="section-subtotal">
-                                                <td colspan="4" class="text-end">
-                                                    <strong>Subtotal
-                                                        <t t-esc="last_section_name"/>
-                                                    </strong>
-                                                </td>
-                                                <td class="text-end">
-                                                    <strong>
-                                                        <span t-esc="section_total"
-                                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                                    </strong>
-                                                </td>
-                                            </tr>
-                                        </t>
-                                        <t t-set="section_total" t-value="0"/>
-                                        <t t-set="raw_section_name" t-value="line.name.split('\n')[0]"/>
-                                        <t t-set="last_section_name" t-value="raw_section_name"/>
-                                        <tr class="bg-light section-row">
-                                            <td colspan="5" style="padding-left:20px; background-color: #b1b6a0;">
-                                                <strong>
-                                                    <span t-esc="raw_section_name"/>
-                                                </strong>
-                                            </td>
-                                        </tr>
-                                        <t t-set="is_first_section" t-value="False"/>
-                                    </t>
-
                                     <t t-if="line.display_type == 'product'">
                                         <tr>
                                             <td>
-                                                <span t-field="line.product_id.default_code"/>
+                                                <span t-field="line.product_id.categ_id.parent_id.name"/>
                                             </td>
                                             <td>
                                                 <t t-set="clean_name" t-value="line.name.split('] ', 1)[-1]"/>
