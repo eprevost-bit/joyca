@@ -7,13 +7,15 @@
 
                 <div class="article o_report_layout_standard">
                     <!-- Portada -->
-                    <div class="page cover_page" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 95vh; page-break-after: always;">
-                        
+                    <div class="page cover_page"
+                         style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 95vh; page-break-after: always;">
+
                         <div class="company-title">
-                                <span style="display: block; line-height: 1; margin: 0; padding: 0;">COTON</span>
-                                <span style="display: block; line-height: 0.8; margin: 0; padding: 0;">ET BOIS</span>
+                            <span style="display: block; line-height: 1; margin: 0; padding: 0;">COTON</span>
+                            <span style="display: block; line-height: 0.8; margin: 0; padding: 0;">ET BOIS</span>
                         </div>
-                        <img t-if="doc.company_id.logo" t-att-src="image_data_uri(doc.company_id.logo)" style="max-height: 80px; margin-bottom: 60px;"/>
+                        <img t-if="doc.company_id.logo" t-att-src="image_data_uri(doc.company_id.logo)"
+                             style="max-height: 80px; margin-bottom: 60px;"/>
 
                         <h2 style="font-size: 24px; color: #004a8b; font-weight: bold; margin-bottom: 40px; letter-spacing: 2px;">
                             PRESUPUESTO
@@ -32,60 +34,64 @@
 
                     </div>
 
-<div class="header" style="margin-bottom: 20px; color: #666666;">
+                    <div class="header" style="margin-bottom: 20px; color: #666666;">
 
-    <!-- Logo alineado a la izquierda -->
-    <div style="text-align: left; margin-bottom: 10px;">
-        <img t-if="doc.company_id.logo" t-att-src="image_data_uri(doc.company_id.logo)" style="max-height: 80px;"/>
-    </div>
+                        <!-- Logo alineado a la izquierda -->
+                        <div style="text-align: left; margin-bottom: 10px;">
+                            <img t-if="doc.company_id.logo" t-att-src="image_data_uri(doc.company_id.logo)"
+                                 style="max-height: 80px;"/>
+                        </div>
 
-    <!-- Referencia y Fecha alineadas -->
-    <div style="font-size: 14px; line-height: 1.2; margin-bottom: 5px;">
+                        <!-- Referencia y Fecha alineadas -->
+                        <div style="font-size: 14px; line-height: 1.2; margin-bottom: 5px;">
 
-        <!-- Referencia a la izquierda -->
-        <span style="float: left;">
-            <strong>Referencia:</strong> <t t-esc="doc.name"/>
-        </span>
+                            <!-- Referencia a la izquierda -->
+                            <span style="float: left;">
+                                <strong>Referencia:</strong>
+                                <t t-esc="doc.name"/>
+                            </span>
 
-        <!-- Fecha a la derecha -->
-        <span style="float: right;">
-            <strong>Fecha:</strong> <t t-esc="doc.date_order.strftime('%d/%m/%Y')"/>
-        </span>
+                            <!-- Fecha a la derecha -->
+                            <span style="float: right;">
+                                <strong>Fecha:</strong>
+                                <t t-esc="doc.date_order.strftime('%d/%m/%Y')"/>
+                            </span>
 
-        <!-- Limpieza del flujo flotante -->
-        <div style="clear: both;"></div>
-    </div>
+                            <!-- Limpieza del flujo flotante -->
+                            <div style="clear: both;"></div>
+                        </div>
 
-    <!-- Línea horizontal en gris claro -->
-    <div style="border-top: 1px solid #cccccc; margin: 16px 0 10px 0;"></div>
-</div>
-
-
-
-
+                        <!-- Línea horizontal en gris claro -->
+                        <div style="border-top: 1px solid #cccccc; margin: 16px 0 10px 0;"></div>
+                    </div>
 
 
-<div class="footer" style="font-size: 10px; color: #999999; text-align: center;" >
-    <div class="text-center text-muted" style="font-size: 10px; color: #999999;">
-        <span class="page"/>
-    </div>
-    <div>
-        <span style="margin-right: 15px; color: #999999; font-size: 10px;">C/ Velázquez 71, Bajo Derecha, Madrid</span>
-        <span style="color: #999999; font-size: 10px;">C/ Brusi 15, local, Barcelona</span>
-    </div>
+                    <div class="footer" style="font-size: 10px; color: #999999; text-align: center;">
+                        <div class="text-center text-muted" style="font-size: 10px; color: #999999;">
+                            <span class="page"/>
+                        </div>
+                        <div>
+                            <span style="margin-right: 15px; color: #999999; font-size: 10px;">C/ Velázquez 71, Bajo
+                                Derecha, Madrid
+                            </span>
+                            <span style="color: #999999; font-size: 10px;">C/ Brusi 15, local, Barcelona</span>
+                        </div>
 
-    <!-- Web, teléfono y correos -->
-    <div>
-        <span style="margin-right: 15px; color: #999999; font-size: 10px;">
-            <a href="https://www.cotonetbois.com/" style="color: #999999; text-decoration: none; font-size: 10px;">
-                www.cotonetbois.com
-            </a>
-        </span>
-        <span style="margin-right: 15px; color: #999999; font-size: 10px;">T. 914 183 574</span>
-        <span style="margin-right: 15px; color: #999999; font-size: 10px;">javierbaldrich@cotonetbois.com</span>
-        <span style="color: #999999; font-size: 10px;">patricia@cotonetbois.com</span>
-    </div>
-</div>
+                        <!-- Web, teléfono y correos -->
+                        <div>
+                            <span style="margin-right: 15px; color: #999999; font-size: 10px;">
+                                <a href="https://www.cotonetbois.com/"
+                                   style="color: #999999; text-decoration: none; font-size: 10px;">
+                                    www.cotonetbois.com
+                                </a>
+                            </span>
+                            <span style="margin-right: 15px; color: #999999; font-size: 10px;">T. 914 183 574</span>
+                            <span style="margin-right: 15px; color: #999999; font-size: 10px;">
+                                javierbaldrich@cotonetbois.com
+                            </span>
+                            <span style="color: #999999; font-size: 10px;">patricia@cotonetbois.com</span>
+                        </div>
+                    </div>
 
 
                     <!-- Aclaraciones -->
@@ -97,12 +103,15 @@
                             <h3>RESUMEN DE PRESUPUESTO</h3>
                         </div>
 
-                        <table class="summary-table table-borderless" style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                        <table class="summary-table table-borderless"
+                               style="width: 100%; margin-top: 10px; border-collapse: collapse;">
                             <thead style="border-bottom: 1px solid #999;">
                                 <tr>
                                     <th style="width:10%; text-align:left; font-weight:bold; border:none;">CAPÍTULO</th>
                                     <th style="text-align:left; font-weight:bold; border:none;">RESUMEN</th>
-                                    <th class="text-end" style="width:20%; text-align:right; font-weight:bold; border:none;">IMPORTE</th>
+                                    <th class="text-end"
+                                        style="width:20%; text-align:right; font-weight:bold; border:none;">IMPORTE
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -122,7 +131,7 @@
                                                 </td>
                                                 <td class="text-end" style="text-align:right; border:none;">
                                                     <span t-esc="current_subtotal"
-                                                        t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                          t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                                 </td>
                                             </tr>
                                         </t>
@@ -145,7 +154,7 @@
                                         </td>
                                         <td class="text-end" style="text-align:right; border:none;">
                                             <span t-esc="current_subtotal"
-                                                t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                 </t>
@@ -154,36 +163,48 @@
 
 
                         <!-- Totales -->
-                        <div class="total_summ_tb_font" id="totals_summary_table" style="margin-top: 40px;  font-size: 18px;">
+                        <div class="total_summ_tb_font" id="totals_summary_table"
+                             style="margin-top: 40px;  font-size: 18px;">
                             <div>
-                                <table class=" total_summ_tb_font table table-sm table-borderless" style="width: 100%; min-width: 600; margin: 0 auto;">
+                                <table class=" total_summ_tb_font table table-sm table-borderless"
+                                       style="width: 100%; min-width: 600; margin: 0 auto;">
                                     <tr>
-                                        <td class="total_summ_tb_font" style="text-align: left; white-space: nowrap;"><strong>PRESUPUESTO DE EJECUCIÓN POR CONTRATA</strong></td>
+                                        <td class="total_summ_tb_font" style="text-align: left; white-space: nowrap;">
+                                            <strong>PRESUPUESTO DE EJECUCIÓN POR CONTRATA</strong>
+                                        </td>
                                         <td style="text-align: right;">
                                             <strong>
-                                                <span t-esc="doc.amount_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                <span t-esc="doc.amount_untaxed"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                             </strong>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="text-align: left; white-space: nowrap;"><strong>Base Imponible</strong></td>
+                                        <td style="text-align: left; white-space: nowrap;">
+                                            <strong>Base Imponible</strong>
+                                        </td>
                                         <td style="text-align: right;">
                                             <strong>
-                                                <span t-esc="doc.amount_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                <span t-esc="doc.amount_untaxed"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                             </strong>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td style="text-align: left; white-space: nowrap;">21% I.V.A. General</td>
                                         <td style="text-align: right;">
-                                            <span t-esc="doc.amount_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                            <span t-esc="doc.amount_tax"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="text-align: left; white-space: nowrap;"><strong>PRESUPUESTO DE EJECUCIÓN TOTAL</strong></td>
+                                        <td style="text-align: left; white-space: nowrap;">
+                                            <strong>PRESUPUESTO DE EJECUCIÓN TOTAL</strong>
+                                        </td>
                                         <td style="text-align: right;">
                                             <strong>
-                                                <span t-esc="doc.amount_total" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                <span t-esc="doc.amount_total"
+                                                      t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                             </strong>
                                         </td>
                                     </tr>
@@ -199,108 +220,130 @@
                     </div>
 
                     <!-- Detalle de productos -->
-<div class="page">
-    <table class="table table-sm table-borderless" id="sale_order_table" style="width:100%;">
-        <thead>
-            <tr>
-                <th class="text-start">Código</th>
-                <th class="text-start">Resumen</th>
-                <th class="text-end">Cantidad</th>
-                <th class="text-end">Precio</th>
-                <th class="text-end">Importe</th>
-            </tr>
-        </thead>
-        <tbody>
+                    <div class="page">
+                        <table class="table table-sm table-borderless" id="sale_order_table" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th class="text-start">Código</th>
+                                    <th class="text-start">Resumen</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
 
-            <!-- Inicializamos subtotal de sección y bandera de primera sección -->
-            <t t-set="section_total" t-value="0"/>
-            <t t-set="is_first_section" t-value="True"/>
-            <t t-set="last_section_name" t-value="'Sección'"/>
+                                <!-- Inicializamos subtotal de sección y bandera de primera sección -->
+                                <t t-set="section_total" t-value="0"/>
+                                <t t-set="is_first_section" t-value="True"/>
+                                <t t-set="last_section_name" t-value="'Sección'"/>
 
-            <t t-foreach="doc.order_line" t-as="line">
-                
-                <!-- Si es una línea de sección -->
-                <t t-if="line.display_type == 'line_section'">
+                                <t t-foreach="doc.order_line" t-as="line">
 
-                    <!-- Mostrar subtotal si NO es la primera sección -->
-                    <t t-if="not is_first_section">
-                        <tr class="section-subtotal">
-                            <td colspan="4" class="text-end"><strong>Subtotal <t t-esc="last_section_name"/></strong></td>
-                            <td class="text-end"><strong><t t-esc="section_total"/></strong></td>
-                        </tr>
-                        <!-- Reiniciar el subtotal -->
-                        <t t-set="section_total" t-value="0"/>
-                    </t>
+                                    <!-- Si es una línea de sección -->
+                                    <t t-if="line.display_type == 'line_section'">
 
-                    <t t-set="raw_section_name" t-value="line.name.split('\n')[0]"/>
-                    <t t-set="last_section_name" t-value="raw_section_name"/>
-                    
-                    <!-- Mostrar la nueva sección -->
-                    <tr class="bg-light section-row">
-                        <td colspan="5" style="padding-left:20px; background-color: #b1b6a0;">
-                            <strong><span t-esc="raw_section_name"/></strong>
-                        </td>
-                    </tr>
+                                        <!-- Mostrar subtotal si NO es la primera sección -->
+                                        <t t-if="not is_first_section">
+                                            <tr class="section-subtotal">
+                                                <td colspan="4" class="text-end">
+                                                    <strong>Subtotal
+                                                        <t t-esc="last_section_name"/>
+                                                    </strong>
+                                                </td>
+                                                <td class="text-end">
+                                                    <strong>
+                                                        <t t-esc="section_total"/>
+                                                    </strong>
+                                                </td>
+                                            </tr>
+                                            <!-- Reiniciar el subtotal -->
+                                            <t t-set="section_total" t-value="0"/>
+                                        </t>
 
-                    <!-- Ya no estamos en la primera sección -->
-                    <t t-set="is_first_section" t-value="False"/>
-                </t>
+                                        <t t-set="raw_section_name" t-value="line.name.split('\n')[0]"/>
+                                        <t t-set="last_section_name" t-value="raw_section_name"/>
 
-                <!-- Si es una línea de producto -->
-                <t t-if="not line.display_type">
-                    <tr>
-                        <td>
-                            <span t-field="line.line_number_display"/>
-                        </td>
-                        <td>
-                            <t t-set="clean_name" t-value="line.name.split('] ', 1)[-1]"/>
-                            <t t-set="name_parts" t-value="clean_name.split('\n')"/>
+                                        <!-- Mostrar la nueva sección -->
+                                        <tr class="bg-light section-row">
+                                            <td colspan="5" style="padding-left:20px; background-color: #b1b6a0;">
+                                                <strong>
+                                                    <span t-esc="raw_section_name"/>
+                                                </strong>
+                                            </td>
+                                        </tr>
 
-                            <strong><t t-esc="name_parts[0]"/></strong>
-                            
-                            <t t-if="len(name_parts) > 1">
-                                <br/>
-                                <span class="product-description">
-                                    <t t-esc="' '.join(name_parts[1:])"/>
-                                </span>
-                            </t>
-                        </td>
-                        <td class="text-end details_product">
-                            <span t-field="line.product_uom_qty"/>
-                            <!-- <span t-field="line.product_uom" groups="uom.group_uom"/> -->
-                        </td>
-                        <td class="text-end details_product">
-                            <span t-field="line.price_unit"/>
-                        </td>
-                        <td class="text-end details_product">
-                            <span t-field="line.price_subtotal"/>
-                        </td>
-                    </tr>
+                                        <!-- Ya no estamos en la primera sección -->
+                                        <t t-set="is_first_section" t-value="False"/>
+                                    </t>
 
-                    <!-- Sumar al subtotal de sección -->
-                    <t t-set="section_total" t-value="section_total + line.price_subtotal"/>
-                </t>
-            </t>
+                                    <!-- Si es una línea de producto -->
+                                    <t t-if="not line.display_type">
+                                        <tr>
+                                            <td>
+                                                <span t-field="line.line_number_display"/>
+                                            </td>
+                                            <td>
+                                                <t t-set="clean_name" t-value="line.name.split('] ', 1)[-1]"/>
+                                                <t t-set="name_parts" t-value="clean_name.split('\n')"/>
 
-            <!-- Subtotal de la última sección -->
-            <tr class="section-subtotal">
-                <td colspan="4" class="text-end">
-                    <strong>Subtotal <t t-esc="last_section_name"/></strong>
-                </td>
-                <td class="text-end">
-                    <strong><t t-esc="section_total"/></strong>
-                </td>
-            </tr>
+                                                <strong>
+                                                    <t t-esc="name_parts[0]"/>
+                                                </strong>
 
-            <!-- Total general -->
-            <tr class="table-total">
-                <td colspan="4" class="text-end"><strong>TOTAL</strong></td>
-                <td class="text-end"><strong><span t-field="doc.amount_untaxed"/></strong></td>
-            </tr>
+                                                <t t-if="len(name_parts) > 1">
+                                                    <br/>
+                                                    <span class="product-description">
+                                                        <t t-esc="' '.join(name_parts[1:])"/>
+                                                    </span>
+                                                </t>
+                                            </td>
+                                            <td class="text-end details_product">
+                                                <span t-field="line.product_uom_qty"/>
+                                                <!-- <span t-field="line.product_uom" groups="uom.group_uom"/> -->
+                                            </td>
+                                            <td class="text-end details_product">
+                                                <span t-field="line.price_unit"/>
+                                            </td>
+                                            <td class="text-end details_product">
+                                                <span t-field="line.price_subtotal"/>
+                                            </td>
+                                        </tr>
 
-        </tbody>
-    </table>
-</div>
+                                        <!-- Sumar al subtotal de sección -->
+                                        <t t-set="section_total" t-value="section_total + line.price_subtotal"/>
+                                    </t>
+                                </t>
+
+                                <!-- Subtotal de la última sección -->
+                                <tr class="section-subtotal">
+                                    <td colspan="4" class="text-end">
+                                        <strong>Subtotal
+                                            <t t-esc="last_section_name"/>
+                                        </strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong>
+                                            <t t-esc="section_total"/>
+                                        </strong>
+                                    </td>
+                                </tr>
+
+                                <!-- Total general -->
+                                <tr class="table-total">
+                                    <td colspan="4" class="text-end">
+                                        <strong>TOTAL</strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong>
+                                            <span t-field="doc.amount_untaxed"/>
+                                        </strong>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
 
 
                 </div>

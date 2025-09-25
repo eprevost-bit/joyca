@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_account_document_main">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <div class="article o_report_layout_standard" style="padding: 10px;">
+                    <style>
+                        @media print {
+                            @page {
+                                margin: 0px;
+                            }
+                        }
+                        .totals_taxes_company_currency{
+                         border: none !important
+                        }
+                    </style>
+
+                    <div class="header" style="color: #666666;">
+                        <div class="row">
+                            <div class="col-6">
+                                <img t-if="doc.company_id.logo"
+                                     t-att-src="image_data_uri(doc.company_id.x_studio_img_invoice)"
+                                     style="max-height: 150px; margin-top: 10px;"/>
+                            </div>
+                            <div class="col-6 text-end" style="font-size: 12px;">
+                                <p style="margin: 0; line-height: 1.3;">
+                                    <strong t-field="doc.company_id.name"/>
+                                    <br/>
+                                    <span t-field="doc.company_id.vat"/>
+                                    <br/>
+                                    <span t-field="doc.company_id.street"/>
+                                    <br/>
+                                    <span t-field="doc.company_id.zip"/>
+                                    <span t-field="doc.company_id.city"/>,
+                                    <span t-field="doc.company_id.country_id.name"/>
+                                    <br/>
+                                    <span t-field="doc.company_id.phone"/>
+                                    <br/>
+                                    <span t-field="doc.company_id.email"/>
+                                </p>
+                            </div>
+                        </div>
+                        <div style="border-bottom: 1px solid #cccccc; margin-top: 10px;"></div>
+
+                        <div class="row" style="margin-top: 10px;">
+                            <div class="col-6">
+                                <h2 style="font-size: 1.0em; font-weight: bold;">
+                                    <strong>FACTURA #
+                                        <span t-field="doc.name"/>
+                                    </strong>
+                                </h2>
+                            </div>
+                            <div class="col-6 text-end">
+                                <table class="table table-sm table-borderless"
+                                       style="width: auto; margin-left: auto; text-align: left;">
+                                    <tbody>
+                                        <tr>
+                                            <td class="pe-3">
+                                                <strong>Fecha:</strong>
+                                            </td>
+                                            <td>
+                                                <span t-field="doc.invoice_date"
+                                                      t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="pe-3">
+                                                <strong>Vencimiento:</strong>
+                                            </td>
+                                            <td>
+                                                <span t-field="doc.invoice_date_due"
+                                                      t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="page">
+                        <div class="row">
+                            <div class="col-6">
+                                <div style="margin-top: 1rem;">
+                                    <div>
+                                        <span>
+                                            <span t-field="doc.partner_id.name"/>
+                                        </span>
+                                    </div>
+
+                                    <div t-field="doc.partner_id"
+                                         t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/>
+                                </div>
+                                <div t-if="doc.partner_id.vat" class="mt-1">
+                                    <t t-esc="doc.company_id.country_id.vat_label or 'NIF'"/>:
+                                    <span t-field="doc.partner_id.vat"/>
+                                </div>
+                                <div t-if="doc.partner_id.email" class="mt-1">
+                                    <span t-field="doc.partner_id.email"/>
+                                </div>
+                            </div>
+                            <div class="col-6 text-end">
+                                <h2 style="font-size: 2.0em; margin-top: 1rem; font-weight: 100;">
+                                    <strong>TOTAL
+                                        <span t-field="doc.amount_total"/>
+                                    </strong>
+                                </h2>
+                            </div>
+                        </div>
+                        <div style="border-bottom: 1px solid #dee2e6; margin-top: 2rem;"></div>
+                    </div>
+
+                    <div class="page">
+
+                        <table class="table table-sm table-borderless" id="invoice_line_table" style="width:100%;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <th class="text-start" style="width:15%;">CÓDIGO</th>
+                                    <th class="text-start">CONCEPTO</th>
+                                    <th class="text-end" style="width:12%;">PRECIO</th>
+                                    <th class="text-end" style="width:12%;">UNIDADES</th>
+                                    <th class="text-end" style="width:12%;">SUBTOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="section_total" t-value="0"/>
+                                <t t-set="is_first_section" t-value="True"/>
+                                <t t-set="last_section_name" t-value="''"/>
+
+                                <t t-foreach="doc.invoice_line_ids" t-as="line">
+                                    <!--                                    <t t-if="line.display_type == 'line_section'">-->
+                                    <!--                                        <t t-if="not is_first_section">-->
+                                    <!--                                            <tr class="section-subtotal">-->
+                                    <!--                                                <td colspan="4">-->
+                                    <!--                                                    <strong>-->
+                                    <!--                                                        <t t-esc="last_section_name"/>-->
+                                    <!--                                                    </strong>-->
+                                    <!--                                                </td>-->
+                                    <!--                                                <td class="text-end">-->
+                                    <!--                                                    <strong>-->
+                                    <!--                                                        <span t-esc="section_total"-->
+                                    <!--                                                              t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>-->
+                                    <!--                                                    </strong>-->
+                                    <!--                                                </td>-->
+                                    <!--                                            </tr>-->
+                                    <!--                                        </t>-->
+                                    <!--                                        <t t-set="section_total" t-value="0"/>-->
+                                    <!--                                        <t t-set="last_section_name" t-value="line.name"/>-->
+                                    <!--                                        <t t-set="is_first_section" t-value="False"/>-->
+                                    <!--                                    </t>-->
+
+                                    <t t-if="line.display_type == 'product'">
+                                        <tr>
+                                            <td></td>
+                                            <td style="padding-left: 30px;">
+                                                <t t-set="clean_name" t-value="line.name.split('] ', 1)[-1]"/>
+                                                <t t-set="name_parts" t-value="clean_name.split('\n')"/>
+                                                <strong>
+                                                    <t t-esc="name_parts[0]"/>
+                                                </strong>
+                                                <t t-if="len(name_parts) > 1">
+                                                    <br/>
+                                                    <span class="product-description">
+                                                        <t t-esc="' '.join(name_parts[1:])"/>
+                                                    </span>
+                                                </t>
+                                            </td>
+                                            <td class="text-end details_product">
+                                                <span t-field="line.price_unit"/>
+                                            </td>
+                                            <td class="text-end details_product">
+                                                <span t-field="line.quantity"/>
+                                            </td>
+                                            <td class="text-end details_product">
+                                                <span t-field="line.price_subtotal"/>
+                                            </td>
+                                        </tr>
+                                        <t t-set="section_total" t-value="section_total + line.price_subtotal"/>
+                                    </t>
+                                </t>
+
+                                <tr class="section-subtotal">
+                                    <td colspan="4">
+                                        <strong>
+                                            <t t-esc="last_section_name"/>
+                                        </strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong>
+                                            <span t-esc="section_total"
+                                                  t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </strong>
+                                    </td>
+                                </tr>
+
+
+                            </tbody>
+                        </table>
+
+                        <div class="row justify-content-end" style="margin-top: 20px;">
+                            <div class="col-5">
+                                <t t-set="tax_totals" t-value="doc.tax_totals"/>
+
+                                <t t-call="account.document_tax_totals_company_currency_template">
+                                    <t t-set="o" t-value="doc"/>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer o_standard_footer">
+                        <div class="text-center" style="font-size: 11px;">
+                            <p style="margin: 2px 0;">Pagar por transferencia bancaria al siguiente número de cuenta</p>
+                            <p style="margin: 2px 0;">
+                                <strong>ES81 0081 1923 8500 0112 5223 BANCO SABADELL</strong>
+                            </p>
+                            <div>
+                                <p style="margin: 2px 0;">Calle Velázquez 71, Bajo Derecha 28006 Madrid</p>
+                                <p style="margin: 2px 0;">Calle Brusi 15, Local 08006 Barcelona</p>
+                            </div>
+                            <div class="text-muted">
+                                Página:
+                                <span class="page"/>
+                                /
+                                <span class="topage"/>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

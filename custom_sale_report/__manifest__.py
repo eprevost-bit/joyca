@@ -27,6 +27,8 @@
         'report/sale_report_template.xml',
         'report/sale_report_actions.xml',
         'report/report_sale_order_aclaraciones.xml',
+        'report/account_report.xml',
+        'report/account_report_all.xml',
     ],
 
     'assets': {
