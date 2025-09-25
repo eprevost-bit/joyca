@@ -4,7 +4,7 @@
         <field name="name">Factura Coton et Bois</field>
         <field name="model">account.move</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">custom_sale_report.report_account_document_custom_main</field>
+        <field name="report_name">custom_account_report.report_account_document_custom_main</field>
         <field name="print_report_name">'Factura - %s' % (object.name)</field>
         <field name="binding_model_id" ref="account.model_account_move"/>
         <field name="binding_type">report</field>
@@ -14,7 +14,7 @@
         <field name="name">Factura Coton et Bois Completa</field>
         <field name="model">account.move</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">custom_sale_report.report_account_document_main</field>
+        <field name="report_name">custom_account_report.report_account_document_main</field>
         <field name="print_report_name">'Factura - %s' % (object.name)</field>
         <field name="binding_model_id" ref="account.model_account_move"/>
         <field name="binding_type">report</field>
