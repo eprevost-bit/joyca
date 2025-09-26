@@ -3,70 +3,139 @@
 import publicWidget from "@web/legacy/js/public/public_widget";
 import {rpc} from "@web/core/network/rpc";
 
-publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
-    selector: '#attendance_portal_widget, #attendance_portal_widget_home',
+// =================================================================
+// WIDGET 1: SOLO PARA LA TARJETA DE FICHAJE EN LA PÁGINA DE INICIO (/my/home)
+// =================================================================
+publicWidget.registry.AttendanceHomeWidget = publicWidget.Widget.extend({
+    selector: '#attendance_portal_widget_home, #attendance_portal_widget .card-body.text-center',
     events: {
-        // --- Funcionalidad existente ---
         'click .btn-clock-in': '_onClickClock',
         'click .btn-clock-out': '_onClickClock',
+    },
+
+    start() {
+        this._super.apply(this, arguments);
+        const notice = localStorage.getItem('attendance_entry_notice');
+        if (notice) {
+            this._displayAlert('warning', 'Oye, recuerda que tu jornada laboral es de 8 horas. Si necesitas trabajar más de este tiempo, contacta con tu jefe directo y no olvides registrar tu salida.');
+            localStorage.removeItem('attendance_entry_notice');
+        }
+    },
+
+    async _onClickClock(ev) {
+        ev.preventDefault();
+        const btnIn = this.el.querySelector('.btn-clock-in');
+        const btnOut = this.el.querySelector('.btn-clock-out');
+
+        btnIn.disabled = true;
+        btnOut.disabled = true;
+
+        try {
+            const result = await rpc('/my/attendance/clock', {});
+            console.log("Respuesta del servidor (Home Widget):", result);
+
+            if (result.error) {
+                this._displayAlert('danger', result.error);
+                this._updateButtonsState(result.previous_state || null);
+            } else {
+                this._updateAttendanceUI(result);
+                if (result.action === 'check_in') {
+                    localStorage.setItem('attendance_entry_notice', '1');
+                }
+                setTimeout(() => {
+                    window.location.reload();
+                }, 5000);
+            }
+        } catch (error) {
+            this._displayAlert('danger', 'Error de conexión con el servidor.');
+            this._updateButtonsState(null);
+        }
+    },
+
+    _updateAttendanceUI(data) {
+        const messageEl = this.el.querySelector('#attendance_message');
+        const timeInfoEl = this.el.querySelector('#attendance_time_info');
+        const statusBadge = this.el.querySelector('#attendance_status_badge');
+
+        if (!messageEl || !timeInfoEl || !statusBadge) {
+            return;
+        }
+
+        if (data.action === 'check_in') {
+            messageEl.innerHTML = `Bienvenido, ${data.employee_name}`;
+            timeInfoEl.textContent = `Tu entrada fue registrada a las ${data.formatted_time}.`;
+            statusBadge.textContent = 'DENTRO';
+            statusBadge.classList.remove('bg-danger');
+            statusBadge.classList.add('bg-success');
+            this._updateButtonsState('checked_in');
+        } else if (data.action === 'check_out') {
+            messageEl.innerHTML = `¡Hasta luego, ${data.employee_name}!`;
+            let timeMessage = `Tu salida fue registrada a las ${data.formatted_time}.`;
+            if (data.worked_hours !== undefined && data.worked_hours > 0) {
+                const hours = data.worked_hours.toFixed(2);
+                timeMessage += ` Duración total: ${hours} horas.`;
+            }
+            timeInfoEl.textContent = timeMessage;
+            statusBadge.textContent = 'FUERA';
+            statusBadge.classList.remove('bg-success');
+            statusBadge.classList.add('bg-danger');
+            this._updateButtonsState('checked_out');
+        }
+        const actionText = data.action === 'check_in' ? 'ENTRADA' : 'SALIDA';
+        this._displayAlert('success', `Registro de ${actionText} exitoso.`);
+    },
+
+    _updateButtonsState(state) {
+        const btnIn = this.el.querySelector('.btn-clock-in');
+        const btnOut = this.el.querySelector('.btn-clock-out');
+        if (!btnIn || !btnOut) return;
+        btnIn.disabled = (state === 'checked_in');
+        btnOut.disabled = (state !== 'checked_in');
+    },
+
+    /**
+     * Muestra una alerta dentro de la tarjeta.
+     */
+    _displayAlert(type, message) {
+        const alertContainer = this.el.querySelector('.card-header');
+        if (!alertContainer) return;
+        const alert = document.createElement('div');
+        // alert.className = `alert alert-${type} alert-dismissible fade show mt-2 mb-0`;
+        // alert.role = 'alert';
+        // alert.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+        // alertContainer.insertAdjacentElement('afterend', alert);
+        setTimeout(() => alert.remove(), 5000);
+    },
+});
+
+
+// =================================================================
+// WIDGET 2: PARA LA PÁGINA DE DETALLE DE ASISTENCIAS (/my/attendances)
+// (Contiene la lógica de la tabla, borrado, modal, etc.)
+// =================================================================
+publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
+    selector: '#attendance_portal_widget',
+    events: {
         'click .btn-save': '_onSaveChanges',
         'click .btn-delete': '_onDeleteAttendance',
         'click .page-link': '_onPageClick',
-
-        // --- NUEVOS EVENTOS PARA EL MODAL DE REGISTRO MÚLTIPLE ---
         'shown.bs.modal #manualEntryModal': '_onManualIntervalModalShown',
         'click #add-interval-btn': '_onAddInterval',
         'click .btn-remove-interval': '_onRemoveInterval',
         'click #btn-save-manual-intervals': '_onSaveManualIntervals',
     },
 
-    // =================================================================
-    // FUNCIONES EXISTENTES (SIN CAMBIOS)
-    // =================================================================
+    start() {
+        this._super.apply(this, arguments);
+        $(this.el).find('[data-bs-toggle="tooltip"]').tooltip({trigger: 'hover', placement: 'top'});
+    },
 
-    /**
-     * Maneja el click en los enlaces de paginación
-     */
     _onPageClick(ev) {
         ev.preventDefault();
-        const url = ev.currentTarget.getAttribute('href');
-        window.location.href = url;
+        window.location.href = ev.currentTarget.getAttribute('href');
     },
 
-    /**
-     * Maneja el evento de clic en los botones de entrada/salida
-     */
-    async _onClickClock(ev) {
-        ev.preventDefault();
-        const btn = ev.currentTarget;
-        btn.disabled = true;
-        try {
-            const result = await rpc('/my/attendance/clock', {});
-            if (result.error) {
-                this._displayAlert('danger', result.error);
-            } else {
-                const action = result.action === 'check_in' ? 'ENTRADA' : 'SALIDA';
-                this._displayAlert('success', `Registro de ${action} exitoso`);
-                if (result.action === 'check_in') {
-                    this._displayAlert(
-                        'warning',
-                        'Disfrute su tiempo de trabajo. Recuerde que debe registrar su salida al finalizar su jornada laboral.'
-                    );
-                    localStorage.setItem('attendance_entry_notice', '1');
-                }
-                setTimeout(() => window.location.reload(), 3500);
-            }
-        } catch (error) {
-            this._displayAlert('danger', 'Error de conexión con el servidor');
-            btn.disabled = false;
-        }
-    },
-
-    /**
-     * Maneja el evento de guardar cambios en los registros editables
-     */
     async _onSaveChanges(ev) {
-        // Esta función se mantiene para la tabla de edición rápida
         const btn = ev.currentTarget;
         const attendanceId = parseInt(btn.dataset.id);
         const row = btn.closest('tr');
@@ -82,8 +151,6 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
         if (checkOutInput && checkOutInput.value) {
             checkOut = checkOutInput.value;
         }
-
-        // Aquí iría tu lógica de validación de formatos...
 
         btn.disabled = true;
         btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
@@ -111,9 +178,6 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
         }
     },
 
-    /**
-     * Maneja la eliminación de un registro
-     */
     async _onDeleteAttendance(ev) {
         ev.preventDefault();
         const btn = ev.currentTarget;
@@ -142,17 +206,8 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
         }
     },
 
-    // =================================================================
-    // NUEVAS FUNCIONES PARA EL MODAL DE REGISTRO DE INTERVALOS
-    // =================================================================
-
-    /**
-     * Se ejecuta cuando el modal de registro manual se muestra.
-     * Prepara el formulario para un nuevo registro.
-     */
     _onManualIntervalModalShown: function () {
         const container = this.el.querySelector('#time-intervals-container');
-        // Limpia el contenedor y deja solo una fila limpia como plantilla
         container.innerHTML = `
             <div class="row g-3 align-items-center mb-2 time-interval-row">
                 <div class="col-auto"><label class="col-form-label">De:</label></div>
@@ -165,8 +220,6 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
                     </button>
                 </div>
             </div>`;
-
-        // Pone la fecha de hoy por defecto y limita la fecha máxima a hoy
         const dateInput = this.el.querySelector('#manualEntryDate');
         if (dateInput) {
             const today = new Date().toISOString().split('T')[0];
@@ -175,32 +228,20 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
         }
     },
 
-    /**
-     * Clona la primera fila de intervalo y la añade al final.
-     */
     _onAddInterval: function () {
         const container = this.el.querySelector('#time-intervals-container');
         const firstRow = container.querySelector('.time-interval-row');
         const newRow = firstRow.cloneNode(true);
-
-        // Limpia los valores de los nuevos inputs y hace visible el botón de eliminar
         newRow.querySelector('.manual-check-in').value = '';
         newRow.querySelector('.manual-check-out').value = '';
         newRow.querySelector('.btn-remove-interval').style.display = 'inline-block';
-        
         container.appendChild(newRow);
     },
 
-    /**
-     * Elimina la fila de intervalo de tiempo correspondiente al botón clickeado.
-     */
     _onRemoveInterval: function (ev) {
         ev.currentTarget.closest('.time-interval-row').remove();
     },
 
-    /**
-     * Recopila todos los intervalos, los valida y los envía al backend.
-     */
     async _onSaveManualIntervals(ev) {
         const btn = ev.currentTarget;
         btn.disabled = true;
@@ -217,402 +258,67 @@ publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
         const intervals = [];
         const rows = this.el.querySelectorAll('.time-interval-row');
         let isValid = true;
-
         rows.forEach(row => {
             const checkIn = row.querySelector('.manual-check-in').value;
             const checkOut = row.querySelector('.manual-check-out').value;
-
-            if (checkIn && checkOut) { // Solo procesa si ambos campos tienen valor
+            if (checkIn && checkOut) {
                 if (checkIn >= checkOut) {
                     this._displayAlert('danger', `La hora de entrada (${checkIn}) debe ser menor que la de salida (${checkOut}).`);
                     isValid = false;
                 }
-                intervals.push({ check_in: checkIn, check_out: checkOut });
+                intervals.push({check_in: checkIn, check_out: checkOut});
             }
         });
 
-        if (!isValid) {
-            btn.disabled = false;
-            btn.innerHTML = 'Guardar Horarios';
-            return;
-        }
-        
-        if (intervals.length === 0) {
-            this._displayAlert('warning', 'No has introducido ningún horario válido para guardar.');
+        if (!isValid || intervals.length === 0) {
+            if (intervals.length === 0) {
+                this._displayAlert('warning', 'No has introducido ningún horario válido para guardar.');
+            }
             btn.disabled = false;
             btn.innerHTML = 'Guardar Horarios';
             return;
         }
 
         try {
-            const result = await rpc('/my/attendance/manual_entry_intervals', {
-                date: date,
-                intervals: intervals,
-            });
+            const result = await rpc('/my/attendance/manual_entry_intervals', {date: date, intervals: intervals});
 
             if (result.error) {
                 this._displayAlert('danger', result.error);
             } else {
+                // ¡ÉXITO!
                 this._displayAlert('success', result.message || 'Horarios guardados correctamente.');
-                const modalInstance = bootstrap.Modal.getInstance(this.el.querySelector('#manualEntryModal'));
-                modalInstance.hide();
-                setTimeout(() => window.location.reload(), 1500);
+
+                // === INICIO DE LA CORRECCIÓN ===
+                // Buscamos el modal
+                const modalEl = this.el.querySelector('#manualEntryModal');
+                if (modalEl) {
+                    $(modalEl).modal('hide');
+                }
+
+                // Planificamos la recarga de la página para ver el nuevo registro.
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500); // 1.5 segundos de espera para que el usuario vea el mensaje de éxito.
+                // === FIN DE LA CORRECCIÓN ===
             }
         } catch (error) {
+            // Este bloque ya no debería ejecutarse si la conexión es buena.
             this._displayAlert('danger', 'Error de conexión con el servidor.');
         } finally {
+            // Este bloque se ejecuta siempre, pero como la página se va a recargar,
+            // no es crítico restaurar el botón.
             btn.disabled = false;
             btn.innerHTML = 'Guardar Horarios';
         }
     },
 
-    // =================================================================
-    // FUNCIONES AUXILIARES (SIN CAMBIOS)
-    // =================================================================
-
-    /**
-     * Muestra una alerta en la interfaz.
-     */
     _displayAlert(type, message) {
-        const existingAlerts = this.el.querySelectorAll(`.alert.alert-${type}`);
-        existingAlerts.forEach(alert => alert.remove());
-
+        const container = this.el;
         const alert = document.createElement('div');
-        alert.className = `alert alert-${type} alert-dismissible fade show mt-2 mb-3`;
+        alert.className = `alert alert-${type} alert-dismissible fade show mt-2`;
         alert.role = 'alert';
-        alert.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-
-        const header = this.el.querySelector('.card-header');
-        if (header) {
-            header.insertAdjacentElement('afterend', alert);
-        } else {
-            this.el.insertAdjacentElement('afterbegin', alert);
-        }
-
-        setTimeout(() => {
-            if (alert.parentNode) {
-                alert.remove();
-            }
-        }, 5000);
+        alert.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+        container.prepend(alert);
+        setTimeout(() => alert.remove(), 5000);
     },
-
-    /**
-     * Inicialización del widget
-     */
-    start() {
-        this._super.apply(this, arguments);
-        $(this.el).find('[data-bs-toggle="tooltip"]').tooltip({
-            trigger: 'hover',
-            placement: 'top'
-        });
-        const notice = localStorage.getItem('attendance_entry_notice');
-        if (notice) {
-            this._displayAlert(
-                'warning',
-                'Oye, recuerda que tu jornada laboral es de 8 horas. Si necesitas trabajar más de este tiempo, contacta con tu jefe directo y no olvides registrar tu salida.'
-            );
-            localStorage.removeItem('attendance_entry_notice');
-        }
-    }
 });
-
-export default publicWidget.registry.AttendancePortalWidget;
-// /** @odoo-module **/
-
-// import publicWidget from "@web/legacy/js/public/public_widget";
-// import {rpc} from "@web/core/network/rpc";
-
-// publicWidget.registry.AttendancePortalWidget = publicWidget.Widget.extend({
-//     selector: '#attendance_portal_widget, #attendance_portal_widget_home',
-//     events: {
-//         'click .btn-clock-in': '_onClickClock',
-//         'click .btn-clock-out': '_onClickClock',
-//         'click .btn-save': '_onSaveChanges',
-//         'click .btn-delete': '_onDeleteAttendance',
-//         'click .btn-submit-manual': '_onSubmitManualEntry',
-//         'shown.bs.modal #manualEntryModal': '_onManualModalShown',
-//         'click .page-link': '_onPageClick'
-//     },
-
-//     /**
-//      * Maneja el click en los enlaces de paginación
-//      */
-//     _onPageClick(ev) {
-//         ev.preventDefault();
-//         const url = ev.currentTarget.getAttribute('href');
-//         window.location.href = url;
-//     },
-
-//     /**
-//      * Maneja el evento de clic en los botones de entrada/salida
-//      */
-//     async _onClickClock(ev) {
-//         ev.preventDefault();
-//         const btn = ev.currentTarget;
-//         btn.disabled = true;
-
-//         try {
-//             const result = await rpc('/my/attendance/clock', {});
-
-//             if (result.error) {
-//                 this._displayAlert('danger', result.error);
-//             } else {
-//                 const action = result.action === 'check_in' ? 'ENTRADA' : 'SALIDA';
-
-//                 this._displayAlert('success', `Registro de ${action} exitoso`);
-
-//                 if (result.action === 'check_in') {
-//                     this._displayAlert(
-//                         'warning',
-//                         'Disfrute su tiempo de trabajo. Recuerde que debe registrar su salida al finalizar su jornada laboral.'
-//                     );
-//                 }
-//                 if (result.action === 'check_in') {
-//                     localStorage.setItem('attendance_entry_notice', '1');
-//                 }
-//                 setTimeout(() => window.location.reload(), 3500);
-//             }
-//         } catch (error) {
-//             this._displayAlert('danger', 'Error de conexión con el servidor');
-//             btn.disabled = false;
-//         }
-//     },
-
-//     /**
-//      * Maneja el evento de guardar cambios en los registros editables
-//      */
-//     async _onSaveChanges(ev) {
-//         const btn = ev.currentTarget;
-//         const attendanceId = parseInt(btn.dataset.id);
-//         const row = btn.closest('tr');
-
-//         if (!row) {
-//             return;
-//         }
-
-//         const dateInput = row.querySelector('input[data-field="check_in_date"]');
-//         const checkInInput = row.querySelector('input[data-field="check_in"]');
-//         const checkOutInput = row.querySelector('input[data-field="check_out"]');
-
-//         // Validation logic (unchanged)
-//         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-//         const dateValue = dateInput.value;
-//         if (!dateRegex.test(dateValue)) {
-//             this._displayAlert('danger', 'Formato de fecha inválido. Use YYYY-MM-DD');
-//             return;
-//         }
-//         const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-//         const checkIn = checkInInput.value;
-//         if (!timeRegex.test(checkIn)) {
-//             this._displayAlert('danger', 'Formato de hora de entrada inválido. Use HH:MM');
-//             return;
-//         }
-//         let checkOut = null;
-//         if (checkOutInput && checkOutInput.value) {
-//             checkOut = checkOutInput.value;
-//             if (!timeRegex.test(checkOut)) {
-//                 this._displayAlert('danger', 'Formato de hora de salida inválido. Use HH:MM');
-//                 return;
-//             }
-//         }
-
-//         btn.disabled = true;
-//         btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
-
-//         try {
-//             const result = await rpc('/my/attendance/update', {
-//                 attendance_id: attendanceId,
-//                 new_check_in_date: dateValue,
-//                 new_check_in: checkIn,
-//                 new_check_out: checkOut,
-//             });
-
-//             if (result.error) {
-//                 this._displayAlert('danger', result.error);
-//             } else {
-//                 this._displayAlert('success', 'Registro actualizado correctamente');
-
-//                 // More reliable way to find the duration cell
-//                 const durationCell = row.querySelector('td:nth-of-type(4)'); // Changed to nth-of-type
-//                 if (durationCell && result.worked_hours !== undefined) {
-//                     durationCell.textContent = `${result.worked_hours.toFixed(2)} h`;
-//                 }
-//             }
-//         } catch (error) {
-//             this._displayAlert('danger', 'Error al conectar con el servidor');
-//         } finally {
-//             btn.disabled = false;
-//             btn.innerHTML = '<i class="fa fa-save"></i> Guardar';
-//         }
-//     },
-//     async _onDeleteAttendance(ev) {
-//         ev.preventDefault();
-//         const btn = ev.currentTarget;
-//         const attendanceId = parseInt(btn.dataset.id);
-//         const row = btn.closest('tr');
-
-//         if (!confirm('¿Estás seguro de que quieres eliminar este registro?')) {
-//             return;
-//         }
-
-//         btn.disabled = true;
-//         btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Eliminando...';
-
-//         try {
-//             const result = await rpc('/my/attendance/delete', {
-//                 attendance_id: attendanceId,
-//             });
-
-//             if (result.error) {
-//                 this._displayAlert('danger', result.error);
-//             } else {
-//                 this._displayAlert('success', result.message || 'Registro eliminado correctamente');
-//                 // Eliminar la fila de la tabla
-//                 row.remove();
-//             }
-//         } catch (error) {
-//             this._displayAlert('danger', 'Error al conectar con el servidor');
-//         } finally {
-//             btn.disabled = false;
-//             btn.innerHTML = '<i class="fa fa-trash"></i> Eliminar';
-//         }
-//     },
-
-//     /**
-//      * Maneja el registro manual de un día completo
-//      */
-//     async _onSubmitManualEntry(ev) {
-//         ev.preventDefault();
-//         const btn = ev.currentTarget;
-//         const modal = this.el.querySelector('#manualEntryModal');
-
-//         const date = this.el.querySelector('#manualEntryDate').value;
-//         const checkIn = this.el.querySelector('#manualCheckIn').value;
-//         const checkOut = this.el.querySelector('#manualCheckOut').value;
-
-//         // Validaciones
-//         if (!date || !checkIn || !checkOut) {
-//             this._displayAlert('danger', 'Todos los campos son obligatorios');
-//             return;
-//         }
-
-//         if (checkIn >= checkOut) {
-//             this._displayAlert('danger', 'La hora de entrada debe ser anterior a la hora de salida');
-//             return;
-//         }
-
-//         btn.disabled = true;
-//         btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
-
-//         try {
-//             const result = await rpc('/my/attendance/manual_entry', {
-//                 date: date,
-//                 check_in: checkIn,
-//                 check_out: checkOut,
-//             });
-
-//             if (result.error) {
-//                 this._displayAlert('danger', result.error);
-//             } else {
-//                 this._displayAlert('success', result.message || 'Registro manual guardado correctamente');
-//                 // Cerrar el modal y limpiar el formulario
-//                 const modalInstance = bootstrap.Modal.getInstance(modal);
-//                 modalInstance.hide();
-//                 this._resetManualEntryForm();
-//                 // Recargar después de 2 segundos
-//                 setTimeout(() => window.location.reload(), 2000);
-//             }
-//         } catch (error) {
-//             this._displayAlert('danger', 'Error al conectar con el servidor: ' + (error.message || ''));
-//         } finally {
-//             btn.disabled = false;
-//             btn.innerHTML = 'Guardar';
-//         }
-//     },
-
-//     /**
-//      * Cuando se muestra el modal de registro manual
-//      */
-//     _onManualModalShown() {
-//         // Establecer la fecha por defecto a hoy
-//         const today = new Date().toISOString().split('T')[0];
-//         const dateInput = this.el.querySelector('#manualEntryDate');
-//         dateInput.value = today;
-//         dateInput.max = today;
-
-//         // Establecer horas por defecto (8:00 - 17:00)
-//         this.el.querySelector('#manualCheckIn').value = '08:00';
-//         this.el.querySelector('#manualCheckOut').value = '17:00';
-//     },
-
-//     /**
-//      * Limpia el formulario de registro manual
-//      */
-//     _resetManualEntryForm() {
-//         const form = this.el.querySelector('#manualEntryForm');
-//         if (form) {
-//             form.reset();
-//         }
-//     },
-
-//     /**
-//      * Muestra una alerta en la interfaz
-//      * @param {string} type - Tipo de alerta (success, danger, warning, etc.)
-//      * @param {string} message - Mensaje a mostrar
-//      */
-//     _displayAlert(type, message) {
-//         // Limpiar alertas anteriores del mismo tipo
-//         const existingAlerts = this.el.querySelectorAll(`.alert.alert-${type}`);
-//         existingAlerts.forEach(alert => alert.remove());
-
-//         const alert = document.createElement('div');
-//         alert.className = `alert alert-${type} mt-2 mb-3`;
-//         alert.role = 'alert';
-//         alert.innerHTML = `
-//             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-//             ${message}
-//         `;
-
-//         // Insertar la alerta en un lugar visible
-//         const header = this.el.querySelector('.card-header');
-//         if (header) {
-//             header.insertAdjacentElement('afterend', alert);
-//         } else {
-//             this.el.insertAdjacentElement('afterbegin', alert);
-//         }
-
-//         // Configurar autodestrucción después de 5 segundos
-//         setTimeout(() => {
-//             if (alert.parentNode) {
-//                 alert.remove();
-//             }
-//         }, 5000);
-//     },
-
-//     /**
-//      * Inicialización del widget
-//      */
-//     start() {
-//         // Configurar tooltips para los botones
-//         $(this.el).find('[data-bs-toggle="tooltip"]').tooltip({
-//             trigger: 'hover',
-//             placement: 'top'
-//         });
-
-//         const notice = localStorage.getItem('attendance_entry_notice');
-//         if (notice) {
-//             this._displayAlert(
-//                 'warning',
-//                 'Oye, recuerda que tu jornada laboral es de 8 horas. Si necesitas trabajar más de este tiempo, contacta con tu jefe directo y no olvides registrar tu salida.'
-//             );
-//             localStorage.removeItem('attendance_entry_notice');
-//         }
-
-//         return this._super.apply(this, arguments);
-//     }
-// });
-
-// export default publicWidget.registry.AttendancePortalWidget;

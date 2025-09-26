@@ -13,6 +13,8 @@ from datetime import datetime, timedelta, time
 import random
 from dateutil.relativedelta import relativedelta
 import logging
+import pytz
+from odoo.tools import format_time
 
 _logger = logging.getLogger(__name__)
 
@@ -94,35 +96,56 @@ class EmployeePortal(CustomerPortal):
         }
         return request.render("ibec_portal_empleado_instalacion.portal_attendances_template", values)
 
+    # En tu archivo de controllers (portal.py)
+
     @http.route('/my/attendance/clock', type='json', auth="user", website=True)
     def portal_attendance_clock(self, **kw):
         """
         Endpoint JSON para fichar entrada/salida.
+        --- VERSIÓN MEJORADA CON CÁLCULO DE HORAS TRABAJADAS ---
         """
         employee = request.env.user.employee_id
         if not employee:
             return {'error': 'No se encontró el empleado asociado.'}
 
+        previous_state = employee.attendance_state
+
         try:
             attendance = employee._attendance_action_change()
-            action = 'check_in' if not attendance.check_out else 'check_out'
+            action = 'check_in' if attendance.check_in and not attendance.check_out else 'check_out'
 
-            worked_hours = 0
-            if action == 'check_out' and attendance.check_in and attendance.check_out:
-                delta = attendance.check_out - attendance.check_in
-                worked_hours = delta.total_seconds() / 3600
+            user_tz = request.env.user.tz or 'UTC'
+            local_tz = pytz.timezone(user_tz)
+            formatted_time_str = ''
 
-            return {
+            if action == 'check_in' and attendance.check_in:
+                local_time = pytz.utc.localize(attendance.check_in).astimezone(local_tz)
+                formatted_time_str = local_time.strftime('%H:%M:%S')
+            elif action == 'check_out' and attendance.check_out:
+                local_time = pytz.utc.localize(attendance.check_out).astimezone(local_tz)
+                formatted_time_str = local_time.strftime('%H:%M:%S')
+
+            response = {
+                'success': True,
                 'action': action,
-                'attendance_state': employee.attendance_state,
-                'check_in_time': attendance.check_in.strftime('%H:%M') if attendance.check_in else '',
-                'worked_hours': worked_hours,
-                'message': 'Registro exitoso'
+                'employee_name': employee.name,
+                'formatted_time': formatted_time_str,
             }
+
+            # === INICIO DE LA MODIFICACIÓN ===
+            # Si la acción es de salida, calcula y añade las horas trabajadas a la respuesta.
+            if action == 'check_out':
+                response['worked_hours'] = attendance.worked_hours
+            # === FIN DE LA MODIFICACIÓN ===
+
+            _logger.info(f"Portal Attendance Clock Success: {response}")
+            return response
+
         except Exception as e:
+            _logger.error(f"Error en portal_attendance_clock: {str(e)}")
             return {
                 'error': str(e),
-                'attendance_state': employee.attendance_state
+                'previous_state': previous_state
             }
 
     @http.route('/my/attendance/update', type='json', auth="user", website=True)
@@ -321,58 +344,44 @@ class EmployeePortal(CustomerPortal):
             return request.redirect(f"{redirect_url}?error=Formato de fecha/hora inválido")
         except Exception as e:
             return request.redirect(f"{redirect_url}?error=Error al guardar el registro")
-    
-    # Añade este nuevo método a tu controlador EmployeePortal
+
     @http.route('/my/attendance/manual_entry_intervals', type='json', auth="user", website=True, methods=['POST'])
     def portal_attendance_manual_intervals(self, date, intervals, **kw):
-        """
-        Endpoint JSON para registrar múltiples intervalos de asistencia en un día.
-        """
         employee = request.env.user.employee_id
         if not employee:
             return {'error': 'No se encontró el empleado asociado.'}
-
         try:
             entry_date = fields.Date.to_date(date)
             today = fields.Date.today()
-
-            # Validaciones de seguridad
             if entry_date > today:
                 return {'error': 'No puedes registrar días futuros.'}
             if (today - entry_date).days > 7:
                 return {'error': 'Solo puedes registrar días de los últimos 7 días.'}
-
-            # --- Clave: Eliminar registros existentes de ese día para evitar duplicados ---
             domain_start = fields.Datetime.to_datetime(f"{date} 00:00:00")
             domain_end = fields.Datetime.to_datetime(f"{date} 23:59:59")
-            
             existing_attendances = request.env['hr.attendance'].search([
                 ('employee_id', '=', employee.id),
                 ('check_in', '>=', domain_start),
                 ('check_in', '<=', domain_end)
             ])
             if existing_attendances:
-                existing_attendances.sudo().unlink() # Usamos sudo() por si el usuario no tiene permisos de borrado
-
-            # Crear los nuevos registros
+                existing_attendances.sudo().unlink()
             for interval in intervals:
                 check_in_str = interval.get('check_in')
                 check_out_str = interval.get('check_out')
-
                 if not check_in_str or not check_out_str:
-                    continue # Ignorar intervalos vacíos
-
+                    continue
                 check_in_dt = fields.Datetime.to_datetime(f"{date} {check_in_str}:00")
                 check_out_dt = fields.Datetime.to_datetime(f"{date} {check_out_str}:00")
-
+                if check_in_dt >= check_out_dt:
+                    return {
+                        'error': f'Intervalo inválido: La entrada ({check_in_str}) no puede ser posterior o igual a la salida ({check_out_str}).'}
                 request.env['hr.attendance'].sudo().create({
                     'employee_id': employee.id,
                     'check_in': check_in_dt,
                     'check_out': check_out_dt,
                 })
-            
             return {'success': True, 'message': 'Registros guardados correctamente.'}
-
         except Exception as e:
             _logger.error(f"Error en registro manual de intervalos: {e}")
             return {'error': f'Error al procesar los registros: {e}'}

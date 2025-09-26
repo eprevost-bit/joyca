@@ -29,7 +29,9 @@
     'data': [
         # 'security/ir.model.access.csv', # Lo añadiremos cuando sea necesario
         'views/portal_templates.xml',
-        'views/template.xml',
+        'views/layout_header.xml',
+        'views/hr_attendance_view_form.xml',
+        'views/portal_attendances_template.xml',
         'data/cron.xml',
     ],
 
