@@ -1,6 +1,10 @@
 from odoo import http, fields
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
+from odoo.tools.misc import file_open
+import base64
+import io
+
 
 from odoo.http import request, content_disposition
 from io import BytesIO
@@ -8,6 +12,10 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
 from odoo import models, fields, api
 from datetime import datetime, timedelta, time
 import random
@@ -64,7 +72,7 @@ class EmployeePortal(CustomerPortal):
         ], order='check_in desc', limit=per_page, offset=offset)
 
         # Paginación para Registros Recientes (últimos 7 días)
-        seven_days_ago = datetime.now() - timedelta(days=7)
+        seven_days_ago = datetime.now() - timedelta(days=15)
         total_recent = request.env['hr.attendance'].search_count([
             ('employee_id', '=', employee.id),
             ('check_in', '>=', seven_days_ago)
@@ -233,40 +241,102 @@ class EmployeePortal(CustomerPortal):
         if not employee:
             return request.not_found()
 
-        # Obtener los registros de asistencia
-        attendances = request.env['hr.attendance'].search([
-            ('employee_id', '=', employee.id)
-        ], order='check_in desc')
+        # --- FILTRO: OBTENER Y VALIDAR FECHAS ---
+        start_date_str = kwargs.get('start_date')
+        end_date_str = kwargs.get('end_date')
+        domain = [('employee_id', '=', employee.id)]
+        date_title_part = ""
 
-        # Crear el PDF
+        try:
+            if start_date_str:
+                start_date = fields.Date.to_date(start_date_str)
+                domain.append(('check_in', '>=', start_date))
+
+            if end_date_str:
+                end_date = fields.Date.to_date(end_date_str)
+                domain.append(('check_in', '<=', fields.Datetime.end_of(end_date, 'day')))
+
+            if start_date_str and end_date_str:
+                date_title_part = f" ({start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')})"
+            elif start_date_str:
+                date_title_part = f" (Desde {start_date.strftime('%d/%m/%Y')})"
+            elif end_date_str:
+                date_title_part = f" (Hasta {end_date.strftime('%d/%m/%Y')})"
+
+        except Exception as e:
+            _logger.warning(f"Formato de fecha inválido para el reporte PDF: {e}")
+            pass
+
+        # --- BÚSQUEDA DE REGISTROS CON EL FILTRO APLICADO ---
+        attendances = request.env['hr.attendance'].search(domain, order='check_in desc')
+
+        # --- INICIO DE LA CREACIÓN DEL PDF ---
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=inch / 2, leftMargin=inch / 2, topMargin=inch / 2,
+                                bottomMargin=inch / 2)
         elements = []
-
-        # Estilos
         styles = getSampleStyleSheet()
+
+        # --- ENCABEZADO: OBTENER DATOS DE LA COMPAÑÍA ---
+        company = request.env.user.company_id
+
+        # --- ENCABEZADO: PREPARAR EL LOGO ---
+        logo_image = False
+        if company.logo:
+            image_data = base64.b64decode(company.logo)
+            image_in_memory = io.BytesIO(image_data)
+            img = Image(image_in_memory, width=1.0 * inch, height=1.0 * inch, kind='proportional')
+            logo_image = img
+        if not logo_image:
+            logo_image = Paragraph("Sin Logo", styles['Normal'])
+
+        # --- ENCABEZADO: PREPARAR LA DIRECCIÓN ---
+        address_style = ParagraphStyle(
+            name='AddressStyle', parent=styles['Normal'], fontSize=9, leading=11, alignment=2
+        )
+        company_details = []
+        if company.name: company_details.append(f"<b>{company.name}</b>")
+        if company.street: company_details.append(company.street)
+        if company.city or company.state_id or company.zip: company_details.append(
+            f"{company.city or ''}, {company.state_id.name or ''} {company.zip or ''}")
+        if company.country_id: company_details.append(company.country_id.name)
+        if company.phone: company_details.append(f"Tel: {company.phone}")
+        if company.website: company_details.append(company.website)
+        address_paragraph = Paragraph("<br/>".join(company_details), address_style)
+
+        # --- ENCABEZADO: CREAR LA TABLA DEL ENCABEZADO Y AÑADIRLA AL PDF ---
+        header_data = [[logo_image, address_paragraph]]
+        header_table = Table(header_data, colWidths=[1.2 * inch, 6.3 * inch])
+        header_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ]))
+        elements.append(header_table)
+        elements.append(Spacer(1, 0.25 * inch))
+
+        # --- TÍTULO DINÁMICO DEL REPORTE ---
         style_title = styles['Title']
-        style_normal = styles['BodyText']
-
-        # Título
-        title = Paragraph(f"Registros de Asistencia - {employee.name}", style_title)
+        report_title = f"Registros de Asistencia - {employee.name}{date_title_part}"
+        title = Paragraph(report_title, style_title)
         elements.append(title)
-        elements.append(Paragraph("<br/>", style_normal))
+        elements.append(Paragraph("<br/>", styles['Normal']))
 
-        # Datos para la tabla
+        # --- TABLA DE REGISTROS ---
         data = [
-            ["Fecha", "Entrada", "Salida", "Duración (horas)"]
+            ["Fecha", "Entrada", "Salida", "Duración (horas)", "Estado"]
         ]
-
+        status_map = {'to_approve': 'A Aprobar', 'approved': 'Aprobado', 'refused': 'Rechazado'}
         for att in attendances:
+            status_text = status_map.get(att.overtime_status, '')
             data.append([
                 att.check_in.strftime('%d/%m/%Y') if att.check_in else '',
                 att.check_in.strftime('%H:%M:%S') if att.check_in else '',
                 att.check_out.strftime('%H:%M:%S') if att.check_out else '',
-                "%.2f" % att.worked_hours
+                "%.2f" % att.worked_hours,
+                status_text
             ])
 
-        # Crear tabla
         table = Table(data)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -278,15 +348,13 @@ class EmployeePortal(CustomerPortal):
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
             ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
-
         elements.append(table)
 
-        # Generar PDF
+        # --- FINALIZACIÓN Y DESCARGA DEL PDF ---
         doc.build(elements)
         pdf = buffer.getvalue()
         buffer.close()
 
-        # Descargar el archivo
         filename = f"registros_asistencia_{employee.name.replace(' ', '_')}.pdf"
         headers = [
             ('Content-Type', 'application/pdf'),

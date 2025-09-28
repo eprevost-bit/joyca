@@ -100,7 +100,7 @@
                         </div>
                         <div class="card-body">
                             <div class="alert alert-info">
-                                Solo puedes modificar o eliminar registros de los últimos 7 días
+                                Solo puedes modificar o eliminar registros de los últimos 15 días
                                 <span t-if="total_recent_pages &gt; 1" class="float-end">
                                     Página
                                     <t t-esc="recent_current_page"/>
@@ -115,6 +115,7 @@
                                         <th>Entrada</th>
                                         <th>Salida</th>
                                         <th>Duración</th>
+                                        <th class="text-center">Estado</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -149,6 +150,17 @@
                                                 </t>
 
                                                 <t t-esc="'%02d:%02d' % (hours, minutes)"/>
+                                            </t>
+                                        </td>
+                                        <td class="text-center">
+                                            <t t-if="att.overtime_status == 'approved'">
+                                                <span class="badge bg-success">Aprobado</span>
+                                            </t>
+                                            <t t-if="att.overtime_status == 'refused'">
+                                                <span class="badge bg-danger">Rechazado</span>
+                                            </t>
+                                            <t t-if="att.overtime_status == 'to_approve'">
+                                                <span class="badge bg-warning text-dark">A Aprobar</span>
                                             </t>
                                         </td>
                                         <td>
@@ -304,10 +316,24 @@
                             </ul>
                         </nav>
 
-                        <div class="text-end mt-3">
-                            <a href="/my/attendances/pdf_report" class="btn btn-primary">
-                                <i class="fa fa-download me-2"/>Descargar Registros (PDF)
-                            </a>
+                        <div class="text-end mt-4 p-3 bg-light border rounded">
+                            <h5 class="mb-3" style="text-align: justify;">Descargar Reporte por Fechas
+                            </h5>
+                            <form action="/my/attendances/pdf_report" method="GET" class="row g-3 align-items-center">
+                                <div class="col-sm-4">
+                                    <label for="start_date" class="form-label">Desde:</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date"/>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label for="end_date" class="form-label">Hasta:</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date"/>
+                                </div>
+                                <div class="col-sm-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100" style="margin-top: 32px;">
+                                        <i class="fa fa-download me-2"/>Descargar PDF
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
