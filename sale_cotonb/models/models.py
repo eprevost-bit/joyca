@@ -466,7 +466,7 @@ class SaleOrder(models.Model):
         # Busca una PO existente para esta venta y este proveedor.
         purchase_order = self.env['purchase.order'].search([
             ('origin', '=', self.name),
-            ('partner_id', '=', supplier.id)
+            # ('partner_id', '=', supplier.id)
         ], limit=1)
 
         # Si no existe, la crea vacía. Las líneas se añadirán después.
