@@ -10,7 +10,7 @@
             <field name="body_html"><![CDATA[
 <div style="margin: 0px; padding: 0px; font-family: 'Lucida Grande', Ubuntu, Arial, Verdana, sans-serif; font-size: 13px;">
 
-    <p>Estimado/a <strong><t t-out="object.partner_id.name or ''">Proveedor</t></strong>,</p>
+    <p>Estimado/a Proveedor,</p>
 
     <p>
         Aquí se adjunta una solicitud de presupuesto <strong><t t-out="object.name or ''">nº de presupuesto</t></strong> de <strong><t t-out="object.company_id.name or ''">Empresa</t></strong>
