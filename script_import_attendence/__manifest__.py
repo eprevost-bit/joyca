@@ -24,6 +24,7 @@
     'data': [
         'security/ir.model.access.csv',
         'wizards/attendance_import_wizard_views.xml',
+        'wizards/attendance_autocomplete_wizard_views.xml',
     ],
     'installable': True,
     'application': False,

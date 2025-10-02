@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="attendance_autocomplete_wizard_form_view" model="ir.ui.view">
+            <field name="name">attendance.autocomplete.wizard.form</field>
+            <field name="model">attendance.autocomplete.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Autocompletar Asistencias">
+                    <group>
+                        <field name="operation_mode" widget="radio" />
+                    </group>
+
+                    <group>
+                        <field name="employee_ids" widget="many2many_tags" placeholder="Todos los empleados activos..."/>
+                    </group>
+
+                    <group invisible="operation_mode != 'fill_range'">
+                        <group>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                        <group>
+                            <label for="check_in_time" string="Horario Estándar"/>
+                            <div class="o_row">
+                                <field name="check_in_time" widget="float_time"/>
+                                <span> - </span>
+                                <field name="check_out_time" widget="float_time"/>
+                            </div>
+                        </group>
+                    </group>
+
+                    <group invisible="operation_mode != 'copy_week'">
+                         <group>
+                            <field name="source_date"/>
+                            <field name="target_date"/>
+                        </group>
+                        <group>
+                            <field name="fill_missing_days"/>
+                        </group>
+                    </group>
+
+                    <footer>
+                        <button name="action_execute_autocomplete" string="Ejecutar" type="object" class="btn-primary" data-hotkey="q"/>
+                        <button string="Cancelar" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_attendance_autocomplete_wizard" model="ir.actions.act_window">
+            <field name="name">Autocompletar Asistencias</field>
+            <field name="res_model">attendance.autocomplete.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            id="menu_attendance_autocomplete"
+            name="Autocompletar Asistencias"
+            parent="hr_attendance.menu_hr_attendance_root"
+            action="action_attendance_autocomplete_wizard"
+            sequence="110"/>
+
+    </data>
+</odoo>
