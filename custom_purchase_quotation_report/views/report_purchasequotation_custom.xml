@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_purchasequotation_document_inherit" inherit_id="purchase.report_purchasequotation_document">
+    
+    <xpath expr="//t[@t-call='web.external_layout']" position="attributes">
+        <attribute name="t-call">custom_purchase_quotation_report.empty_layout</attribute>
+    </xpath>
+
+        <!-- Quitamos el bloque que imprime el partner_id (proveedor) -->
+    <xpath expr="//t[@t-set='address']" position="replace">
+    </xpath>
+
+
+
+        <!-- Eliminar columna 'Expected Date' del encabezado -->
+        <xpath expr="//th[@name='th_expected_date']" position="replace"/>
+
+        <!-- Eliminar celda con fecha esperada por línea -->
+        <xpath expr="//td[@class='text-center']" position="replace"/>
+
+        <!-- Eliminar el campo de notas al final del reporte -->
+        <xpath expr="//p[@t-field='o.notes']" position="replace"/>
+
+    </template>
+
+</odoo>
