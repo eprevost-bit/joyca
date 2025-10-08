@@ -14,7 +14,7 @@
                 <xpath expr="//header" position="inside">
                     <button name="action_send_items_by_email"
                             type="object"
-                            string="Dividir por proveedor"
+                            string="Enviar Partidas por Correo"
                             class="oe_highlight"
                     />
                 </xpath>
