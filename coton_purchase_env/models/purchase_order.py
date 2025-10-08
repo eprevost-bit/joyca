@@ -15,7 +15,21 @@ class PurchaseOrderLineCustom(models.Model):
 class PurchaseOrderCustom(models.Model):
     _inherit = 'purchase.order'
 
+    # Redefinimos el campo 'state' para eliminar los estados 'sent' e 'intermediate'
+    # y mantener el estado personalizado 'inicial_presu'.
+    # Los estados base de Odoo son: draft, sent, to approve, purchase, done, cancel.
+    state = fields.Selection([
+        ('draft', 'Borrador'),
+        ('to approve', 'A Aprobar'),
+        ('inicial_presu', 'Presupuesto Inicial'),
+        ('purchase', 'Orden de Compra'),
+        ('done', 'Bloqueado'),
+        ('cancel', 'Cancelado'),
+    ], string='Estado', readonly=True, index=True, copy=False, default='draft', tracking=True)
+
+
     def action_set_to_inicial_presupuesto(self):
+        all_new_orders = []
         for order in self:
             # 1. Agrupar lineas por proveedor
             supplier_lines = defaultdict(lambda: self.env['purchase.order.line'])
@@ -24,11 +38,12 @@ class PurchaseOrderCustom(models.Model):
                     supplier_lines[line.proveedor_line] |= line
 
             if not supplier_lines:
-                # Si no se asignaron proveedores, simplemente cambia el estado.
-                return order.write({'state': 'inicial_presu'})
+                # Si no se asignaron proveedores, simplemente cambia el estado y continúa.
+                order.write({'state': 'inicial_presu'})
+                continue
 
             # 2. Crear nuevos pedidos de compra
-            new_orders = []
+            new_orders_for_current = []
             for supplier, lines in supplier_lines.items():
                 # Copiamos el pedido original
                 new_order = order.copy({
@@ -42,19 +57,27 @@ class PurchaseOrderCustom(models.Model):
                     line.copy({
                         'order_id': new_order.id,
                     })
-                new_orders.append(new_order.id)
+                new_orders_for_current.append(new_order.id)
 
             # 3. Cambiar el estado del pedido original
-            order.write({'state': 'inicial_presu'})
+            if new_orders_for_current:
+                order.write({'state': 'inicial_presu'})
+                all_new_orders.extend(new_orders_for_current)
 
-            # Opcional: Devolver una acción para ver los nuevos pedidos creados
+        # 4. Opcional: Devolver una acción para ver todos los nuevos pedidos creados
+        if all_new_orders:
+            tree_view_id = self.env.ref('purchase.purchase_order_tree').id
+            form_view_id = self.env.ref('purchase.purchase_order_form').id
             return {
                 'name': 'Pedidos de Compra Generados',
                 'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',
-                'view_mode': 'list,form',
-                'domain': [('id', 'in', new_orders)],
+                'view_mode': 'tree,form',
+                'views': [(tree_view_id, 'list'), (form_view_id, 'form')],
+                'domain': [('id', 'in', all_new_orders)],
+                'target': 'current',  # Abre en la misma pestaña
             }
+        
         return True
 
     def action_send_items_by_email(self):

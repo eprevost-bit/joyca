@@ -26,8 +26,8 @@ class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
     state = fields.Selection(selection_add=[
-        ('intermediate', 'Pendiente Aprobación'),
         ('inicial_presu','Presupuesto Inicial'),  # Esto reutiliza la definición del estado 'purchase' existente
+        ('purchase','Orden de compra'),  # Esto reutiliza la definición del estado 'purchase' existente
     ], ondelete={'intermediate': 'cascade'})
 
 
