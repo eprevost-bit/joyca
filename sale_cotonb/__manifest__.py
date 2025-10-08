@@ -13,7 +13,7 @@
     'version': '1.0',
     'depends': [
         'sale_management',
-        'sale',
+        'sale_management',
         'purchase'
     ],
     'data': [

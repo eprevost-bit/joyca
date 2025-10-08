@@ -17,6 +17,14 @@
                             help="Mueve el pedido al estado intermedio para una revisión final antes de confirmar."/>
                 </xpath>
 
+                <xpath expr="//button[@name='button_confirm']" position="before">
+                    <button name="action_set_to_inicial_presupuesto"
+                            string="Presupuesto Inicial"
+                            class="oe_highlight"
+                            type="object"
+                            help="Mueve el pedido al estado Inicial para una revisión final antes de confirmar."/>
+                </xpath>
+
                 <xpath expr="//button[@name='button_confirm']" position="attributes">
                     <attribute name="invisible">state != 'intermediate'</attribute>
                 </xpath>

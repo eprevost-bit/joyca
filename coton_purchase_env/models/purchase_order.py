@@ -7,6 +7,7 @@ class PurchaseOrderLineCustom(models.Model):
 
     # 1. Campo para la casilla de selección en cada línea
     is_selected_for_email = fields.Boolean(string="Seleccionar para Correo")
+    proveedor_line = fields.Many2one('res.partner', string='Partner')
 
 
 class PurchaseOrderCustom(models.Model):

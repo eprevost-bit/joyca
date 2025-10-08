@@ -27,13 +27,17 @@ class PurchaseOrder(models.Model):
 
     state = fields.Selection(selection_add=[
         ('intermediate', 'Pendiente Aprobación'),
-        ('purchase',),  # Esto reutiliza la definición del estado 'purchase' existente
+        ('inicial_presu','Presupuesto Inicial'),  # Esto reutiliza la definición del estado 'purchase' existente
     ], ondelete={'intermediate': 'cascade'})
 
 
 
     def action_set_to_intermediate(self):
         return self.write({'state': 'intermediate'})
+
+    def action_set_to_inicial_presupuesto(self):
+        return self.write({'state': 'inicial_presu'})
+
 
     def button_confirm(self):
         res = super(PurchaseOrder, self).button_confirm()
