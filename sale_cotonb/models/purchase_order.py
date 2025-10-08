@@ -35,9 +35,6 @@ class PurchaseOrder(models.Model):
     def action_set_to_intermediate(self):
         return self.write({'state': 'intermediate'})
 
-    def action_set_to_inicial_presupuesto(self):
-        return self.write({'state': 'inicial_presu'})
-
 
     def button_confirm(self):
         res = super(PurchaseOrder, self).button_confirm()
