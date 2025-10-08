@@ -25,16 +25,6 @@ class PurchaseOrderLine(models.Model):
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
-    state = fields.Selection(selection_add=[
-        ('inicial_presu','Presupuesto Inicial'),  # Esto reutiliza la definición del estado 'purchase' existente
-        ('purchase','Orden de compra'),  # Esto reutiliza la definición del estado 'purchase' existente
-    ], ondelete={'intermediate': 'cascade'})
-
-
-
-    def action_set_to_intermediate(self):
-        return self.write({'state': 'intermediate'})
-
 
     def button_confirm(self):
         res = super(PurchaseOrder, self).button_confirm()
