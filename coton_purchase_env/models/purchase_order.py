@@ -31,6 +31,7 @@ class PurchaseOrderCustom(models.Model):
     def action_set_to_inicial_presupuesto(self):
         all_new_orders = []
         for order in self:
+            origin_name = order.origin
             # 1. Agrupar lineas por proveedor
             supplier_lines = defaultdict(lambda: self.env['purchase.order.line'])
             for line in order.order_line:
@@ -51,7 +52,7 @@ class PurchaseOrderCustom(models.Model):
                     'order_line': [],  # Limpiamos las lineas para no duplicar las originales
                     'state': 'draft',  # Estado inicial para los nuevos pedidos
                 })
-
+                new_order.write({'origin': origin_name})
                 # Copiamos solo las lineas correspondientes a este proveedor
                 for line in lines:
                     line.copy({
