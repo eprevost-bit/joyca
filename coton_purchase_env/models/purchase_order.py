@@ -27,6 +27,7 @@ class PurchaseOrderCustom(models.Model):
         ('cancel', 'Cancelado'),
     ], string='Estado', readonly=True, index=True, copy=False, default='draft', tracking=True)
 
+    number = fields.Float(string="numero de acciones")
 
     def action_set_to_inicial_presupuesto(self):
         all_new_orders = []
@@ -52,12 +53,13 @@ class PurchaseOrderCustom(models.Model):
                     'order_line': [],  # Limpiamos las lineas para no duplicar las originales
                     'state': 'draft',  # Estado inicial para los nuevos pedidos
                 })
-                new_order.write({'origin': origin_name})
+                new_order.write({'origin': origin_name, 'number': 1})
                 # Copiamos solo las lineas correspondientes a este proveedor
                 for line in lines:
                     line.copy({
                         'order_id': new_order.id,
                     })
+
                 new_orders_for_current.append(new_order.id)
 
             # 3. Cambiar el estado del pedido original
