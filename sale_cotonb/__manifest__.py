@@ -13,6 +13,7 @@
     'version': '1.0',
     'depends': [
         'sale_management',
+        'project',
         'sale_management',
         'purchase'
     ],
