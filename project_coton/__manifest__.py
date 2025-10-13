@@ -11,7 +11,7 @@
     'company': 'Cybrosys Techno Solutions',
     'maintainer': 'Cybrosys Techno Solutions',
     'website': 'https://www.cybrosys.com',
-    'depends': ['base', 'project', 'sale_management', 'purchase', 'account'],
+    'depends': ['base', 'project', 'sale_management', 'purchase', 'account', 'analytic'],
     'data': [
         # 'security/ir.model.access.csv',
         'views/project_coton_views.xml',

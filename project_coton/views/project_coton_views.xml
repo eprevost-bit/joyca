@@ -1,33 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <record id="project_project_view_form_financial_summary" model="ir.ui.view">
-            <field name="name">project.project.form.financial.summary</field>
+        <record id="project_edit_project_inherit_sales_purchases" model="ir.ui.view">
+            <field name="name">project.project.form.inherit.sales.purchases</field>
             <field name="model">project.project</field>
             <field name="inherit_id" ref="project.edit_project"/>
             <field name="arch" type="xml">
-
                 <xpath expr="//page[@name='description']" position="replace"/>
-
                 <xpath expr="//notebook" position="inside">
-                    <page name="financial_summary" string="Resumen Financiero">
-                        <field name="currency_id" invisible="1"/>
-                        <group>
-                            <group string="Ventas">
-                                <field name="sale_order_amount_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                <field name="sale_invoice_paid_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                <field name="sale_invoice_paid_percent" widget="progressbar" options="{'current_value': 'sale_invoice_paid_percent', 'max_value': 100}"/>
-                            </group>
+                    <page string="Presupuestos de Venta">
+                        <field name="sale_order_ids" readonly="1">
+                            <list>
+                                <field name="name"/>
+                                <field name="partner_id"/>
+                                <field name="amount_total"/>
+                                <field name="amount_paid"/>
 
-                            <group string="Compras">
-                                <field name="purchase_order_amount_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                <field name="purchase_bill_paid_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                <field name="purchase_bill_paid_percent" widget="progressbar" options="{'current_value': 'purchase_bill_paid_percent', 'max_value': 100}"/>
-                            </group>
-                        </group>
+                                <field name="aggregated_percentage_invoiced" widget="progressbar"/>
+                                <field name="percentage_paid" widget="progressbar"/>
+                            </list>
+                        </field>
+                    </page>
+                    <page string="Órdenes de Compra">
+                        <field name="purchase_order_ids" readonly="1">
+                            <list>
+                                <field name="name"/>
+                                <field name="partner_id"/>
+                                <field name="amount_total" sum="Total Comprado"/>
+
+                                <field name="aggregated_percentage_invoiced" widget="progressbar"/>
+                                <field name="amount_paid" sum="Total Pagado"/>
+                                <field name="percentage_paid" widget="progressbar"/>
+                            </list>
+                        </field>
                     </page>
                 </xpath>
-
             </field>
         </record>
     </data>
