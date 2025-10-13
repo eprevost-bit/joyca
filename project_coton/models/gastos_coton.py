@@ -1,80 +1,165 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+from odoo import models, fields, tools
 
 
-class SaleOrder(models.Model):
-    _inherit = 'sale.order'
+class ProjectUnifiedLine(models.Model):
+    """
+    Modelo VIRTUAL para mostrar una vista unificada basada en las líneas de venta
+    de un proyecto y sus correspondientes líneas de compra.
+    """
+    _name = 'project.unified.line'
+    _description = 'Línea Unificada de Venta/Compra para Proyectos'
+    _auto = False  # Odoo no creará una tabla física para este modelo.
 
-    # ... (aquí van todos los campos que ya tienes en tu clase SaleOrder) ...
+    # --- Campos de la Vista ---
+    project_id = fields.Many2one('project.project', string='Proyecto', readonly=True)
+    reference = fields.Char(string='Referencia (Venta)', readonly=True)
+    line_description = fields.Char(string='Descripción', readonly=True)
+    currency_id = fields.Many2one('res.currency', string='Moneda', readonly=True)
 
-    # --- NUEVOS CAMPOS PARA SEGUIMIENTO DE FACTURACIÓN Y COBROS ---
+    # --- Campos de Venta ---
+    sale_amount = fields.Monetary(string='Importe venta', readonly=True)
+    sale_paid_percentage = fields.Float(string='% Cobrado', readonly=True, group_operator="avg")
+    sale_paid_amount = fields.Monetary(string='Importe cobrado', readonly=True)
 
-    aggregated_percentage_invoiced = fields.Float(
-        string="% Facturado",
-        compute='_compute_aggregated_invoice_percentage',
-        store=True,
-        readonly=True,
-        help="Porcentaje facturado ponderado basado en el subtotal de cada línea."
-    )
+    # --- Campos de Compra ---
+    purchase_amount = fields.Monetary(string='Importe compra', readonly=True)
+    purchase_paid_percentage = fields.Float(string='% Pagado', readonly=True, group_operator="avg")
+    purchase_paid_amount = fields.Monetary(string='Importe pagado', readonly=True)
 
-    amount_paid = fields.Monetary(
-        string="Importe Cobrado",
-        compute='_compute_payment_info',
-        store=True,
-        readonly=True,
-        help="Suma total de los pagos recibidos en las facturas asociadas."
-    )
+    # en models/project_unified_line.py
 
-    percentage_paid = fields.Float(
-        string="% Cobrado",
-        compute='_compute_payment_info',
-        store=True,
-        readonly=True,
-        help="Porcentaje cobrado sobre el total que ha sido facturado."
-    )
+    # en models/project_unified_line.py
 
-    @api.depends('order_line.price_subtotal', 'order_line.percentage_invoiced_total')
-    def _compute_aggregated_invoice_percentage(self):
+    def _auto_init(self):
         """
-        Calcula un promedio ponderado del campo '% Facturado' de las líneas.
-        Usa el subtotal de cada línea como peso para que el cálculo sea preciso.
+        Crea la vista SQL.
+        VERSIÓN CORREGIDA: Se corrige el JOIN entre la orden de compra y su factura
+        usando el campo 'invoice_origin' que es más robusto entre versiones de Odoo.
         """
-        for order in self:
-            if order.amount_untaxed > 0:
-                # Tu campo 'percentage_invoiced_total' es una proporción (ej: 0.5).
-                # Lo multiplicamos por el subtotal de la línea para ponderarlo.
-                weighted_sum = sum(line.percentage_invoiced_total * line.price_subtotal for line in order.order_line)
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute("""
+            CREATE OR REPLACE VIEW %s AS (
+                WITH sales_payment_data AS (
+                    SELECT
+                        so.id AS sale_order_id,
+                        SUM(inv.amount_total) AS total_billed,
+                        SUM(inv.amount_total - inv.amount_residual) AS total_paid
+                    FROM
+                        sale_order so
+                    JOIN account_move inv ON inv.invoice_origin = so.name
+                    WHERE
+                        inv.move_type = 'out_invoice' AND inv.state = 'posted'
+                    GROUP BY
+                        so.id
+                ),
+                purchase_payment_data AS (
+                    SELECT
+                        po.id AS purchase_id,
+                        SUM(bill.amount_total) AS total_billed,
+                        SUM(bill.amount_total - bill.amount_residual) AS total_paid
+                    FROM
+                        purchase_order po
+                    -- *** ¡ESTA ES LA LÍNEA CORREGIDA! ***
+                    -- Usamos 'invoice_origin' que coincide con el 'name' de la PO.
+                    JOIN account_move bill ON bill.invoice_origin = po.name
+                    WHERE
+                        bill.move_type = 'in_invoice' AND bill.state = 'posted'
+                    GROUP BY
+                        po.id
+                ),
+                main_data AS (
+                    SELECT
+                        sol.id,
+                        sol.order_id,
+                        so.project_id,
+                        so.name AS reference,
+                        sol.name AS line_description,
+                        so.currency_id,
+                        sol.price_subtotal AS sale_amount,
+                        sol.provider_cost AS purchase_amount,
+                        po.id as purchase_order_id
+                    FROM
+                        sale_order_line sol
+                    JOIN sale_order so ON (sol.order_id = so.id)
+                    LEFT JOIN purchase_order po ON (po.origin = so.name)
+                    WHERE
+                        so.project_id IS NOT NULL
+                    GROUP BY sol.id, so.id, po.id
+                )
+                -- Ensamblaje Final
+                SELECT
+                    m.id,
+                    m.project_id,
+                    m.reference,
+                    m.line_description,
+                    m.currency_id,
+                    m.sale_amount,
+                    m.purchase_amount,
 
-                # El resultado es la suma ponderada dividida por el total, multiplicado por 100
-                # para que el widget 'progressbar' lo muestre correctamente.
-                order.aggregated_percentage_invoiced = (weighted_sum / order.amount_untaxed) * 100
-            else:
-                order.aggregated_percentage_invoiced = 0.0
+                    COALESCE(spd.total_paid, 0) AS sale_paid_amount,
+                    CASE
+                        WHEN spd.total_billed > 0 THEN (COALESCE(spd.total_paid, 0) / spd.total_billed) * 100
+                        ELSE 0
+                    END AS sale_paid_percentage,
 
-    @api.depends('invoice_ids.state', 'invoice_ids.amount_total', 'invoice_ids.amount_residual')
-    def _compute_payment_info(self):
-        """
-        Calcula el importe total cobrado y su porcentaje
-        basándose en las facturas asociadas al pedido de venta.
-        """
-        for order in self:
-            # Filtramos solo las facturas que han sido confirmadas ("Publicado")
-            posted_invoices = order.invoice_ids.filtered(lambda inv: inv.state == 'posted')
+                    COALESCE(ppd.total_paid, 0) AS purchase_paid_amount,
+                    CASE
+                        WHEN ppd.total_billed > 0 THEN (COALESCE(ppd.total_paid, 0) / ppd.total_billed) * 100
+                        ELSE 0
+                    END AS purchase_paid_percentage
 
-            if not posted_invoices:
-                order.amount_paid = 0.0
-                order.percentage_paid = 0.0
-                continue
+                FROM
+                    main_data m
+                LEFT JOIN sales_payment_data spd ON m.order_id = spd.sale_order_id
+                LEFT JOIN purchase_payment_data ppd ON m.purchase_order_id = ppd.purchase_id
+            )
+        """ % self._table)
 
-            # El importe cobrado es el total de la factura menos lo que queda por pagar (residual)
-            total_invoiced = sum(posted_invoices.mapped('amount_total'))
-            amount_paid = total_invoiced - sum(posted_invoices.mapped('amount_residual'))
-
-            order.amount_paid = amount_paid
-
-            if total_invoiced > 0:
-                # El porcentaje cobrado se calcula sobre el total que ya ha sido facturado.
-                order.percentage_paid = (amount_paid / total_invoiced) * 100
-            else:
-                order.percentage_paid = 0.0
+    # def _auto_init(self):
+    #     """
+    #     Crea la vista SQL. La lógica ahora se basa en la relación directa
+    #     entre sale.order.line y purchase.order.line.
+    #     """
+    #     tools.drop_view_if_exists(self.env.cr, self._table)
+    #     self.env.cr.execute("""
+    #         CREATE OR REPLACE VIEW %s AS (
+    #             SELECT
+    #                 -- El ID de la línea de venta es único y sirve como ID para la vista.
+    #                 sol.id AS id,
+    #                 so.project_id,
+    #                 so.name AS reference,
+    #                 sol.name AS line_description,
+    #                 so.currency_id,
+    #
+    #                 -- --- DATOS DE VENTA (Directos de la línea de venta y su pedido) ---
+    #                 sol.price_subtotal AS sale_amount,
+    #                 -- Los campos de pago vienen del pedido de venta (SO)
+    #                 so.percentage_paid AS sale_paid_percentage,
+    #                 so.amount_paid AS sale_paid_amount,
+    #
+    #                 -- --- DATOS DE COMPRA (Agregados desde las líneas de compra vinculadas) ---
+    #                 -- Usamos COALESCE para mostrar 0 si no hay línea de compra asociada.
+    #                 COALESCE(SUM(pol.price_subtotal), 0) AS purchase_amount,
+    #                 -- Los campos de pago vienen del pedido de compra (PO)
+    #                 COALESCE(AVG(po.percentage_paid), 0) AS purchase_paid_percentage,
+    #                 -- Si múltiples POs están vinculados, sumamos sus pagos.
+    #                 COALESCE(SUM(po.amount_paid), 0) AS purchase_paid_amount
+    #
+    #             FROM
+    #                 sale_order_line sol
+    #             -- Unimos con el pedido de venta para obtener el proyecto y datos de pago
+    #             JOIN sale_order so ON (sol.order_id = so.id)
+    #             -- Usamos LEFT JOIN porque una línea de venta puede no tener una compra asociada
+    #             LEFT JOIN purchase_order_line pol ON (pol.sale_line_id = sol.id)
+    #             LEFT JOIN purchase_order po ON (pol.order_id = po.id)
+    #
+    #             WHERE
+    #                 so.project_id IS NOT NULL
+    #
+    #             -- Agrupamos por cada línea de venta para consolidar datos de múltiples compras (si existieran)
+    #             GROUP BY
+    #                 sol.id, so.project_id, so.name, so.currency_id, so.percentage_paid, so.amount_paid
+    #         )
+    #     """ % self._table)

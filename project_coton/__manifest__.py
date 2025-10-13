@@ -13,7 +13,7 @@
     'website': 'https://www.cybrosys.com',
     'depends': ['base', 'project', 'sale_management', 'purchase', 'account', 'analytic'],
     'data': [
-        # 'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'views/project_coton_views.xml',
     ],
     'license': 'LGPL-3',

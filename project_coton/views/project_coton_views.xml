@@ -8,29 +8,20 @@
             <field name="arch" type="xml">
                 <xpath expr="//page[@name='description']" position="replace"/>
                 <xpath expr="//notebook" position="inside">
-                    <page string="Presupuestos de Venta">
-                        <field name="sale_order_ids" readonly="1">
-                            <list>
-                                <field name="name"/>
-                                <field name="partner_id"/>
-                                <field name="amount_total"/>
-                                <field name="amount_paid"/>
+                    <page string="Análisis Económico por Línea" name="unified_lines">
+                        <field name="unified_line_ids">
+                            <list editable="bottom" create="false" delete="false">
+                                <field name="reference" string="Referencia"/>
+                                <field name="line_description" string="Descripción"/>
+                                <field name="currency_id" column_invisible="1"/>
 
-                                <field name="aggregated_percentage_invoiced" widget="progressbar"/>
-                                <field name="percentage_paid" widget="progressbar"/>
-                            </list>
-                        </field>
-                    </page>
-                    <page string="Órdenes de Compra">
-                        <field name="purchase_order_ids" readonly="1">
-                            <list>
-                                <field name="name"/>
-                                <field name="partner_id"/>
-                                <field name="amount_total" sum="Total Comprado"/>
+                                <field name="sale_amount" string="Importe Venta" sum="Total Venta" widget="monetary"/>
+                                <field name="sale_paid_percentage" string="Cobrado" widget="progressbar"/>
+                                <field name="sale_paid_amount" string="Importe Cobrado" sum="Total Cobrado" widget="monetary"/>
 
-                                <field name="aggregated_percentage_invoiced" widget="progressbar"/>
-                                <field name="amount_paid" sum="Total Pagado"/>
-                                <field name="percentage_paid" widget="progressbar"/>
+                                <field name="purchase_amount" string="Importe Compra" sum="Total Compra" widget="monetary"/>
+                                <field name="purchase_paid_percentage" string="Pagado" widget="progressbar"/>
+                                <field name="purchase_paid_amount" string="Importe Pagado" sum="Total Pagado" widget="monetary"/>
                             </list>
                         </field>
                     </page>
