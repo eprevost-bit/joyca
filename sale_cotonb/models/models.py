@@ -410,6 +410,7 @@ class SaleOrder(models.Model):
 
         # Crear la orden de compra
         self.env['purchase.order'].create(po_vals)
+        self.action_update_purchase_orders()
 
         # 4. Devolver una notificación de éxito
         return {
