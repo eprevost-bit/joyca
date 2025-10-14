@@ -14,7 +14,6 @@
     'depends': [
         'sale_management',
         'project',
-        'sale_management',
         'purchase'
     ],
     'data': [

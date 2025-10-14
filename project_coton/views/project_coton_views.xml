@@ -18,7 +18,8 @@
                                 <field name="quantity" string="Cantidad" sum="Total Cantidad"/>
 
                                 <field name="sale_amount" string="Importe Venta (Sin IVA)" />
-                                <field name="sale_total_invoiced" string="Total Facturado" />
+                                <field name="sale_invoiced_percentage" string="Importe Facturado" sum="Facturado" widget="porcentaje"/>
+<!--                                <field name="sale_total_invoiced" string="Total Facturado" />-->
 <!--                                <field name="sale_paid_percentage" string="Cobrado" widget="progressbar"/>-->
                                 <field name="sale_paid_amount" string="Importe Cobrado" />
 
