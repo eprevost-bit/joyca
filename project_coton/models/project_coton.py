@@ -40,11 +40,11 @@ class SaleOrderLine(models.Model):
     @api.depends('invoice_lines.move_id.state', 'invoice_lines.move_id.amount_residual_signed')
     def _compute_amount_paid_line(self):
         """
-        Calcula el importe pagado para una línea de pedido de venta específica.
+        Calcula el importe pagado SIN IVA para una línea de pedido de venta específica.
 
         Itera sobre todas las líneas de factura asociadas a esta línea de venta.
         Para cada factura, calcula qué porcentaje ha sido pagado y aplica ese
-        porcentaje al valor de la línea de factura correspondiente.
+        porcentaje al valor SIN IVA de la línea de factura correspondiente.
         """
         for line in self:
             total_paid_on_line = 0.0
@@ -57,16 +57,67 @@ class SaleOrderLine(models.Model):
                 if invoice.state != 'posted':
                     continue
 
-                # Calculamos la proporción de pago de la factura
+                # La proporción de pago de la factura se calcula sobre los totales (con IVA)
+                # Esta lógica es correcta y no necesita cambios.
                 payment_ratio = 0.0
-                if invoice.amount_total != 0:
-                    # El importe pagado en una factura es (Total - Pendiente)
+                # Usamos amount_total_signed para manejar correctamente notas de crédito
+                if invoice.amount_total_signed != 0:
                     amount_paid_on_invoice = invoice.amount_total_signed - invoice.amount_residual_signed
-                    # La proporción es (Pagado / Total)
                     payment_ratio = amount_paid_on_invoice / invoice.amount_total_signed
 
-                # Aplicamos esa proporción al valor de la línea de factura (con impuestos incluidos)
-                # Esto atribuye el pago a la línea de forma proporcional
-                total_paid_on_line += invoice_line.price_total * payment_ratio
+                # =========================================================================
+                # ¡CAMBIO CLAVE AQUÍ!
+                # Aplicamos esa proporción al valor de la línea de factura SIN IMPUESTOS.
+                #   - invoice_line.price_total -> Importe con IVA
+                #   - invoice_line.price_subtotal -> Importe SIN IVA
+                # =========================================================================
+                total_paid_on_line += invoice_line.price_subtotal * payment_ratio
+
+            line.amount_paid_line = total_paid_on_line
+
+
+class PurchaseOrderLine(models.Model):
+    _inherit = 'purchase.order.line'
+
+    # ¡NUEVO CAMPO PARA COMPRAS!
+    amount_paid_line = fields.Monetary(
+        string="Importe Pagado",
+        compute='_compute_amount_paid_line',
+        store=True,
+        readonly=True,
+        help="Cantidad total (sin IVA) que ha sido pagada al proveedor por esta línea específica, "
+             "calculada proporcionalmente a los pagos de las facturas asociadas."
+    )
+
+    @api.depends('invoice_lines.move_id.state', 'invoice_lines.move_id.amount_residual_signed')
+    def _compute_amount_paid_line(self):
+        """
+        Calcula el importe pagado SIN IVA para una línea de pedido de compra específica.
+
+        Itera sobre todas las líneas de factura de proveedor asociadas. Para cada factura,
+        calcula qué porcentaje ha sido pagado y aplica ese porcentaje al valor
+        SIN IVA de la línea de factura correspondiente.
+        """
+        for line in self:
+            total_paid_on_line = 0.0
+
+            # Recorremos todas las líneas de factura de proveedor creadas desde esta línea de compra
+            for invoice_line in line.invoice_lines:
+                bill = invoice_line.move_id  # 'bill' es más claro para facturas de proveedor
+
+                # Solo consideramos facturas confirmadas ('posted')
+                # y que sean del tipo correcto (facturas de proveedor)
+                if bill.state != 'posted' or not bill.move_type.startswith('in_'):
+                    continue
+
+                # Calculamos la proporción de pago de la factura
+                payment_ratio = 0.0
+                if bill.amount_total_signed != 0:
+                    amount_paid_on_bill = bill.amount_total_signed - bill.amount_residual_signed
+                    payment_ratio = amount_paid_on_bill / bill.amount_total_signed
+
+                # Aplicamos esa proporción al valor de la línea de factura SIN IMPUESTOS
+                # La lógica es idéntica a la de ventas: usamos price_subtotal
+                total_paid_on_line += invoice_line.price_subtotal * payment_ratio
 
             line.amount_paid_line = total_paid_on_line

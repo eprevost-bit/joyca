@@ -28,84 +28,78 @@ class ProjectUnifiedLine(models.Model):
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute("""
             CREATE OR REPLACE VIEW %s AS (
-                -- CTEs de facturación (las mantenemos para los importes pagados)
-                WITH sales_invoice_data AS (
-                    SELECT
-                        so.id AS sale_order_id,
-                        SUM(inv.amount_total) AS total_invoiced,
-                        SUM(inv.amount_total - inv.amount_residual) AS total_paid
-                    FROM sale_order so
-                    JOIN account_move inv ON inv.invoice_origin = so.name
-                    WHERE inv.move_type = 'out_invoice' AND inv.state = 'posted'
-                    GROUP BY so.id
-                ),
-                purchase_line_invoice_data AS (
+                WITH
+                -- 1. Primero, calculamos los totales facturados y pagados por cada línea de compra.
+                -- Esto evita duplicar montos si una línea de compra tiene varias facturas.
+                purchase_invoice_summary AS (
                     SELECT
                         aml.purchase_line_id,
-                        SUM(aml.price_total) as total_billed_on_line,
+                        SUM(aml.price_subtotal) AS total_invoiced,
                         SUM(
                             CASE
-                                WHEN am.amount_total > 0 THEN aml.price_total * ((am.amount_total - am.amount_residual) / am.amount_total)
+                                WHEN am.amount_total != 0 THEN aml.price_subtotal * (1 - (am.amount_residual / am.amount_total))
                                 ELSE 0
                             END
-                        ) as total_paid_on_line
+                        ) AS total_paid
                     FROM account_move_line aml
                     JOIN account_move am ON aml.move_id = am.id
                     WHERE aml.purchase_line_id IS NOT NULL
                       AND am.move_type = 'in_invoice'
                       AND am.state = 'posted'
                     GROUP BY aml.purchase_line_id
+                ),
+                -- 2. Ahora, agregamos todos los datos de compra (coste original, facturado y pagado)
+                -- por Pedido de Venta de Origen (po.origin) y por producto.
+                aggregated_purchase_data AS (
+                    SELECT
+                        po.origin,
+                        pol.product_id,
+                        SUM(pol.price_subtotal) AS total_purchase_amount,
+                        SUM(COALESCE(pis.total_invoiced, 0)) AS total_purchase_invoiced,
+                        SUM(COALESCE(pis.total_paid, 0)) AS total_purchase_paid
+                    FROM purchase_order_line pol
+                    JOIN purchase_order po ON pol.order_id = po.id
+                    LEFT JOIN purchase_invoice_summary pis ON pol.id = pis.purchase_line_id
+                    WHERE po.origin IS NOT NULL
+                    GROUP BY po.origin, pol.product_id
                 )
-                -- Ensamblaje Final
+                -- 3. Ensamblaje Final: Unimos las líneas de venta con los datos de compra agregados.
                 SELECT
                     sol.id,
                     so.project_id,
                     so.name AS reference,
                     sol.name AS line_description,
+                    sol.currency_id,
                     sol.product_uom_qty AS quantity,
-                    so.currency_id,
 
-                    -- Campos de Venta
+                    -- CAMPOS DE VENTA (Como los tenías)
                     sol.price_subtotal AS sale_amount,
-                    -- =========================================================================
-                    --  AQUÍ ESTÁ EL CAMBIO: Cogemos tu campo y lo multiplicamos por 100
-                    --  para que el widget 'progressbar' funcione (espera valores de 0 a 100).
-                    -- =========================================================================
-                    sol.percentage_invoiced_total * 100 AS sale_invoiced_percentage,
-                    sol.amount_paid_line AS sale_paid_amount,
-                    COALESCE(sid.total_invoiced, 0) AS sale_total_invoiced,
+                    COALESCE(sol.percentage_invoiced_total * 100, 0) AS sale_invoiced_percentage,
+                    COALESCE(sol.price_subtotal * sol.percentage_invoiced_total, 0) AS sale_total_invoiced,
+                    COALESCE(sol.amount_paid_line, 0) AS sale_paid_amount,
                     CASE
-                        WHEN sid.total_invoiced > 0 THEN (COALESCE(sid.total_paid, 0) / sid.total_invoiced) * 100
+                        WHEN (sol.price_subtotal * sol.percentage_invoiced_total) > 0 THEN
+                            (sol.amount_paid_line / (sol.price_subtotal * sol.percentage_invoiced_total)) * 100
                         ELSE 0
                     END AS sale_paid_percentage,
 
-                    -- Campos de Compra (sin cambios)
-                    MAX(pol.price_subtotal) AS purchase_amount,
-                    MAX(COALESCE(plid.total_billed_on_line, 0)) AS purchase_total_invoiced,
-                    MAX(COALESCE(plid.total_paid_on_line, 0)) AS purchase_paid_amount,
+                    -- CAMPOS DE COMPRA (Usando los datos de nuestro CTE 'aggregated_purchase_data')
+                    COALESCE(apd.total_purchase_amount, 0) AS purchase_amount,
+                    COALESCE(apd.total_purchase_invoiced, 0) AS purchase_total_invoiced,
+                    COALESCE(apd.total_purchase_paid, 0) AS purchase_paid_amount,
                     CASE
-                        WHEN MAX(COALESCE(plid.total_billed_on_line, 0)) > 0 THEN
-                            (MAX(COALESCE(plid.total_paid_on_line, 0)) / MAX(COALESCE(plid.total_billed_on_line, 0))) * 100
+                        WHEN apd.total_purchase_invoiced > 0 THEN
+                            (apd.total_purchase_paid / apd.total_purchase_invoiced) * 100
                         ELSE 0
                     END AS purchase_paid_percentage
 
                 FROM
                     sale_order_line sol
                 JOIN sale_order so ON sol.order_id = so.id
-                LEFT JOIN sales_invoice_data sid ON sid.sale_order_id = so.id
-                LEFT JOIN purchase_order po ON po.origin = so.name
-                LEFT JOIN purchase_order_line pol ON pol.order_id = po.id AND pol.product_id = sol.product_id
-                LEFT JOIN purchase_line_invoice_data plid ON plid.purchase_line_id = pol.id
+                LEFT JOIN aggregated_purchase_data apd ON apd.origin = so.name AND apd.product_id = sol.product_id
 
                 WHERE
                     so.project_id IS NOT NULL
-
-                GROUP BY
-                    sol.id,
-                    so.project_id,
-                    so.name,
-                    so.currency_id,
-                    sid.total_invoiced,
-                    sid.total_paid
+                    AND sol.display_type IS NULL
             )
         """ % self._table)
