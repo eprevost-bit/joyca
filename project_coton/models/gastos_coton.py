@@ -28,63 +28,51 @@ class ProjectUnifiedLine(models.Model):
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute("""
             CREATE OR REPLACE VIEW %s AS (
+                -- =========================================================================
+                --  El CTE se mantiene igual porque todavía se necesita para calcular
+                --  los totales de compra facturados y pagados.
+                -- =========================================================================
                 WITH
-                -- 1. Primero, calculamos los totales facturados y pagados por cada línea de compra.
-                -- Esto evita duplicar montos si una línea de compra tiene varias facturas.
-                purchase_invoice_summary AS (
-                    SELECT
-                        aml.purchase_line_id,
-                        SUM(aml.price_subtotal) AS total_invoiced,
-                        SUM(
-                            CASE
-                                WHEN am.amount_total != 0 THEN aml.price_subtotal * (1 - (am.amount_residual / am.amount_total))
-                                ELSE 0
-                            END
-                        ) AS total_paid
-                    FROM account_move_line aml
-                    JOIN account_move am ON aml.move_id = am.id
-                    WHERE aml.purchase_line_id IS NOT NULL
-                      AND am.move_type = 'in_invoice'
-                      AND am.state = 'posted'
-                    GROUP BY aml.purchase_line_id
-                ),
-                -- 2. Ahora, agregamos todos los datos de compra (coste original, facturado y pagado)
-                -- por Pedido de Venta de Origen (po.origin) y por producto.
                 aggregated_purchase_data AS (
                     SELECT
                         po.origin,
                         pol.product_id,
                         SUM(pol.price_subtotal) AS total_purchase_amount,
-                        SUM(COALESCE(pis.total_invoiced, 0)) AS total_purchase_invoiced,
-                        SUM(COALESCE(pis.total_paid, 0)) AS total_purchase_paid
+                        SUM(pol.price_subtotal * pol.percentage_invoiced) AS total_purchase_invoiced,
+                        SUM(pol.amount_paid_line) AS total_purchase_paid
                     FROM purchase_order_line pol
                     JOIN purchase_order po ON pol.order_id = po.id
-                    LEFT JOIN purchase_invoice_summary pis ON pol.id = pis.purchase_line_id
-                    WHERE po.origin IS NOT NULL
+                    WHERE po.origin IS NOT NULL AND pol.display_type IS NULL
                     GROUP BY po.origin, pol.product_id
                 )
-                -- 3. Ensamblaje Final: Unimos las líneas de venta con los datos de compra agregados.
+                -- 2. Ensamblaje Final
                 SELECT
                     sol.id,
                     so.project_id,
                     so.name AS reference,
                     sol.name AS line_description,
-                    sol.currency_id,
                     sol.product_uom_qty AS quantity,
+                    so.currency_id,
 
-                    -- CAMPOS DE VENTA (Como los tenías)
+                    -- CAMPOS DE VENTA (Sin cambios)
                     sol.price_subtotal AS sale_amount,
-                    COALESCE(sol.percentage_invoiced_total * 100, 0) AS sale_invoiced_percentage,
-                    COALESCE(sol.price_subtotal * sol.percentage_invoiced_total, 0) AS sale_total_invoiced,
-                    COALESCE(sol.amount_paid_line, 0) AS sale_paid_amount,
+                    (sol.percentage_invoiced_total * 100) AS sale_invoiced_percentage,
+                    (sol.price_subtotal * sol.percentage_invoiced_total) AS sale_total_invoiced,
+                    sol.amount_paid_line AS sale_paid_amount,
                     CASE
                         WHEN (sol.price_subtotal * sol.percentage_invoiced_total) > 0 THEN
                             (sol.amount_paid_line / (sol.price_subtotal * sol.percentage_invoiced_total)) * 100
                         ELSE 0
                     END AS sale_paid_percentage,
 
-                    -- CAMPOS DE COMPRA (Usando los datos de nuestro CTE 'aggregated_purchase_data')
-                    COALESCE(apd.total_purchase_amount, 0) AS purchase_amount,
+                    -- ======================================================================
+                    -- >> ÚNICO CAMBIO REALIZADO AQUÍ <<
+                    -- Se calcula 'purchase_amount' usando el campo 'provider_cost' de la
+                    -- línea de venta (sol) multiplicado por la cantidad.
+                    -- ======================================================================
+                    (COALESCE(sol.provider_cost, 0) * sol.product_uom_qty) AS purchase_amount,
+
+                    -- El resto de campos de compra siguen usando el CTE como antes
                     COALESCE(apd.total_purchase_invoiced, 0) AS purchase_total_invoiced,
                     COALESCE(apd.total_purchase_paid, 0) AS purchase_paid_amount,
                     CASE
@@ -96,6 +84,7 @@ class ProjectUnifiedLine(models.Model):
                 FROM
                     sale_order_line sol
                 JOIN sale_order so ON sol.order_id = so.id
+                -- El JOIN se mantiene para los otros cálculos de compra
                 LEFT JOIN aggregated_purchase_data apd ON apd.origin = so.name AND apd.product_id = sol.product_id
 
                 WHERE

@@ -15,7 +15,7 @@
                                 <field name="line_description" string="Descripción"/>
                                 <field name="currency_id" column_invisible="1"/>
 
-                                <field name="quantity" string="Cantidad" sum="Total Cantidad"/>
+                                <field name="quantity" string="Cantidad"/>
 
                                 <field name="sale_amount" string="Importe Venta (Sin IVA)" />
 <!--                                <field name="sale_invoiced_percentage" string="Importe Facturado" sum="Facturado" widget="porcentaje"/>-->
@@ -26,7 +26,7 @@
                                 <field name="purchase_amount" string="Importe Compra (Sin IVA)" />
                                 <field name="purchase_total_invoiced" string="Facturado de Compra" />
 <!--                                <field name="purchase_paid_percentage" string="Pagado" widget="progressbar"/>-->
-                                <field name="purchase_paid_amount" string="Importe Pagado" sum="Total Pagado" widget="monetary"/>
+                                <field name="purchase_paid_amount" string="Importe Pagado" widget="monetary"/>
                             </list>
                         </field>
                     </page>
