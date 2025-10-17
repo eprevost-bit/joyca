@@ -41,12 +41,6 @@ class SaleOrder(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """
-        Sobrescribimos el método 'create' para que el primer presupuesto
-        creado desde la secuencia ya incluya el sufijo '-V1'.
-        """
-        # 1. Llamamos al método 'create' original para que Odoo haga su trabajo
-        #    (crear el registro, asignar el número de secuencia, etc.).
         new_orders = super(SaleOrder, self).create(vals_list)
 
         # 2. Recorremos todos los presupuestos recién creados.
