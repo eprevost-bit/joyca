@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-
-        <!--        <record id="sale.action_quotations_with_onboarding" model="ir.actions.act_window">-->
-        <!--            <field name="domain">[('state', 'in', ['draft', 'sent'])]</field>-->
-        <!--        </record>-->
         <record id="view_order_form_custom_version_button" model="ir.ui.view">
             <field name="name">sale.order.form.custom.version</field>
             <field name="model">sale.order</field>
@@ -13,9 +9,9 @@
                 <xpath expr="//field[@name='state']" position="attributes">
                     <attribute name="statusbar_visible">draft,version,sent,confirmed</attribute>
                 </xpath>
-                <xpath expr="//button[@name='action_confirm']" position="attributes">
-                    <attribute name="string">Aceptado por Cliente</attribute>
-                </xpath>
+<!--                <xpath expr="//button[@name='action_confirm']" position="attributes">-->
+<!--                    <attribute name="string">Aceptado por Cliente</attribute>-->
+<!--                </xpath>-->
                 <xpath expr="//header" position="inside">
                     <button name="action_create_new_version" string="Crear Versión" type="object" class="oe_highlight"/>
                 </xpath>

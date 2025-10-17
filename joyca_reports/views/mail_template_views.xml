@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+            Modificamos la plantilla de correo electrónico por defecto para presupuestos.
+            El ID "sale.mail_template_sale_confirmation" es la plantilla que Odoo
+            usa cuando haces clic en "Enviar por correo" en una cotización.
+        -->
+        <record id="sale.mail_template_sale_confirmation" model="mail.template">
+            <!--
+                Aquí está la clave: cambiamos el campo 'report_template' para que
+                apunte a la acción de TU REPORTE PERSONALIZADO.
+                Usa el ID completo: nombre_del_modulo.id_del_reporte_action.
+            -->
+            <field name="report_template" ref="joyca_reports.action_report_saleorder_standalone"/>
+        </record>
+
+    </data>
+</odoo>

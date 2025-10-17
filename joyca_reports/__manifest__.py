@@ -25,7 +25,9 @@
     'data': [
         'report/sale_report_actions.xml',
         'report/report_layout_custom.xml',
-    ],
+		'views/mail_template_views.xml',
+		'views/mail_template_data.xml',
+],
     'installable': True,
     'application': False,
     'auto_install': False,

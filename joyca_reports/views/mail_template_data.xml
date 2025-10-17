@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="sale.mail_template_sale_confirmation" model="mail.template">
+            <field name="name">Ventas: Confirmación de Pedido (Joyca)</field> <field name="report_template" ref="joyca_reports.action_report_saleorder_standalone"/>
+        </record>
+
+        <record id="sale.mail_template_sale_confirmation" model="mail.template">
+            <field name="report_template" ref="joyca_reports.action_report_saleorder_standalone"/>
+        </record>
+
+
+    </data>
+</odoo>

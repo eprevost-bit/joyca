@@ -39,19 +39,40 @@ class SaleOrder(models.Model):
             order.total_manufacturing_hours = sum(line.manufacturing_hours for line in order.order_line)
             order.total_assembly_hours = sum(line.assembly_hours for line in order.order_line)
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """
+        Sobrescribimos el método 'create' para que el primer presupuesto
+        creado desde la secuencia ya incluya el sufijo '-V1'.
+        """
+        # 1. Llamamos al método 'create' original para que Odoo haga su trabajo
+        #    (crear el registro, asignar el número de secuencia, etc.).
+        new_orders = super(SaleOrder, self).create(vals_list)
+
+        # 2. Recorremos todos los presupuestos recién creados.
+        for order in new_orders:
+            # 3. Verificamos que el nombre no tenga ya una versión para evitar duplicados.
+            if order.name and '-V' not in order.name:
+                # 4. Añadimos el sufijo '-V1' al nombre.
+                order.name = f"{order.name}-V1"
+
+        # 5. Devolvemos los registros modificados.
+        return new_orders
+
     def action_create_new_version(self):
+        """
+        Crea una nueva versión del presupuesto (V2, V3...).
+        Si se está creando la V2, la V1 pasará a estado 'version'.
+        Para versiones posteriores (V3, V4...), no se cambia el estado de las anteriores.
+        """
         self.ensure_one()
 
-        # 1. Determinar el nombre base del presupuesto (ej: 'S00025' de 'S00025-V2')
-        # ESTA PARTE ESTÁ PERFECTA
+        # 1. Determinar el nombre base del presupuesto (ej: 'S00025')
         base_name_match = re.match(r'^(.*?)(?:-V(\d+))?$', self.name)
         base_name = base_name_match.groups()[0] if base_name_match else self.name
 
         # 2. Buscar todos los presupuestos relacionados para encontrar el número de versión más alto
-        # ESTA PARTE TAMBIÉN ESTÁ PERFECTA
         related_orders = self.env['sale.order'].search([
-            '|',
-            ('name', '=', base_name),
             ('name', '=like', f"{base_name}-V%")
         ])
 
@@ -70,23 +91,17 @@ class SaleOrder(models.Model):
             'origin': self.name,
         })
 
-        # --- INICIO DE LA MODIFICACIÓN ---
+        # --- INICIO DE LA LÓGICA CORREGIDA ---
 
-        # 4. En lugar de cambiar el estado de la versión actual ('self'),
-        #    buscamos y cambiamos el estado del documento RAÍZ.
+        # 4. Buscamos el presupuesto V1 de esta secuencia.
+        v1_order = self.env['sale.order'].search([('name', '=', f"{base_name}-V1")], limit=1)
 
-        # El 'base_name' que calculamos en el paso 1 nos sirve para encontrar el original.
-        original_order = self.env['sale.order'].search([('name', '=', base_name)], limit=1)
+        # 5. Si la V1 existe y su estado aún no es 'version', lo actualizamos.
+        #    Esto asegura que SÓLO la V1 cambie de estado, y sólo una vez.
+        if v1_order and v1_order.state != 'version':
+            v1_order.write({'state': 'version'})
 
-        # Si encontramos el documento original, lo pasamos a estado 'version'.
-        # Esto asegura que solo se modifique el presupuesto raíz.
-        if original_order:
-            original_order.write({'state': 'version'})
-
-        # La línea original que causaba el problema se elimina.
-        # self.write({'state': 'version'}) # <- LÍNEA ELIMINADA
-
-        # --- FIN DE LA MODIFICACIÓN ---
+        # --- FIN DE LA LÓGICA CORREGIDA ---
 
         return {
             'type': 'ir.actions.act_window',
@@ -96,46 +111,6 @@ class SaleOrder(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
-    # def action_create_new_version(self):
-    #     self.ensure_one()
-    #
-    #     # 1. Determinar el nombre base del presupuesto (ej: 'S00040' de 'S00040-V2')
-    #     base_name_match = re.match(r'^(.*?)(?:-V(\d+))?$', self.name)
-    #     base_name = base_name_match.groups()[0] if base_name_match else self.name
-    #
-    #     # 2. Buscar todos los presupuestos relacionados para encontrar el número de versión más alto
-    #     related_orders = self.env['sale.order'].search([
-    #         '|',
-    #         ('name', '=', base_name),
-    #         ('name', '=like', f"{base_name}-V%")
-    #     ])
-    #
-    #     max_version = 0
-    #     for order in related_orders:
-    #         version_match = re.search(r'-V(\d+)$', order.name)
-    #         if version_match:
-    #             max_version = max(max_version, int(version_match.group(1)))
-    #
-    #     # El número para la nueva versión es el máximo encontrado + 1
-    #     new_version_number = max_version + 1
-    #
-    #     # 3. Crear la nueva versión como una copia del presupuesto actual.
-    #     # Esta nueva versión será el borrador activo.
-    #     new_quotation = self.copy(default={
-    #         'name': f"{base_name}-V{new_version_number}",
-    #         'state': 'draft',
-    #         'origin': self.name,
-    #     })
-    #
-    #     self.write({'state': 'version'})
-    #     return {
-    #         'type': 'ir.actions.act_window',
-    #         'name': _('Nueva Versión'),
-    #         'res_model': 'sale.order',
-    #         'res_id': new_quotation.id,
-    #         'view_mode': 'form',
-    #         'target': 'current',
-    #     }
 
     def action_confirm(self):
         res = super(SaleOrder, self).action_confirm()

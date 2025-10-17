@@ -7,6 +7,8 @@ _logger = logging.getLogger(__name__)
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
+    translated_product_name = fields.Char('Nombre del producto traducido')
+
     # 1. Añadimos el campo para las horas de fabricación.
     # Usamos un campo Float para permitir decimales (ej: 1.5 horas).
     manufacturing_hours = fields.Float(
