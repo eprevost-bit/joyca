@@ -12,12 +12,6 @@
                             <div class="row align-items-start">
                                 <div class="col-7">
                                     <div class="d-flex align-items-start">
-                                        <div style="margin-right: 20px;">
-                                            <img t-if="doc.company_id.logo"
-                                                 t-att-src="image_data_uri(doc.company_id.x_studio_imagen_report)"
-                                                 style="max-height: 188px; margin-bottom: 5px;"/>
-
-                                        </div>
                                         <div style="font-size: 13px;">
                                             <strong style="font-weight: 900; font-size: large;">
                                                 <span t-field="doc.company_id.name"/>
@@ -44,11 +38,16 @@
                                                 </li>
                                             </ul>
                                         </div>
+                                        <div style="margin-left: 34px; margin-right: 0; margin-top: -40px;">
+                                            <img t-if="doc.company_id.logo"
+                                                 t-att-src="image_data_uri(doc.company_id.x_studio_imagen_report)"
+                                                 style="max-height: 188px; margin-bottom: 5px;"/>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="col-5">
-                                    <div style="border: 2px solid black; padding: 15px; border-radius: 8px; font-size: 12px; height: 100%;">
+                                    <div style="border: 2px solid black; padding: 15px; font-size: 12px; height: 100%;">
                                         <strong t-field="doc.partner_id.name"/>
                                         <ul class="list-unstyled mt-2">
                                             <li t-if="doc.partner_id.vat">
@@ -75,21 +74,26 @@
 
                         <div class="content-manual">
                             <div class="container" style="margin-top: 0px;">
+
                                 <div class="row">
                                     <div class="col-12">
-                                        <table class="table table-bordered" style="border-collapse: collapse;">
+                                        <table class="table table-bordered"
+                                               style="border-collapse: collapse; width: 100%; table-layout: fixed;">
                                             <thead>
                                                 <tr style="background-color: #c1c2c3; font-size: 0.9rem; font: small-caption;">
                                                     <th class="text-center"
-                                                        style="border-left: 2.5px solid black; border-right: none; border-top: 2.5px solid black; border-bottom: 2.5px solid black">
+                                                        style="width: 30%; border-left: 2.5px solid black; border-right: 2.5px solid black;
+                       border-top: 2.5px solid black; border-bottom: 2.5px solid black">
                                                         <strong>FECHA</strong>
                                                     </th>
                                                     <th class="text-center"
-                                                        style="border-right: none; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: none">
+                                                        style="width: 60%; border-left: 2.5px solid black; border-right: 2.5px solid black;
+                       border-top: 2.5px solid black; border-bottom: 2.5px solid black;">
                                                         <strong>PRESUPUESTO</strong>
                                                     </th>
                                                     <th class="text-center"
-                                                        style="border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: none">
+                                                        style="width: 30%; border-left: 2.5px solid black; border-right: 2.5px solid black;
+                       border-top: 2.5px solid black; border-bottom: 2.5px solid black">
                                                         <strong>PÁG.</strong>
                                                     </th>
                                                 </tr>
@@ -97,17 +101,18 @@
                                             <tbody>
                                                 <tr style="font-size: 0.8rem;">
                                                     <td class="text-center"
-                                                        style="border-left: 2.5px solid black; border-right: 2.5px solid black; border-bottom: 2.5px solid black">
-                                                        <span t-field="doc.date_order"
-                                                              t-options='{"format": "dd/MM/yy"}'/>
+                                                        style="border-left: 2.5px solid black; border-right: 2.5px solid black; border-bottom: 2.5px solid black;
+                       word-wrap: break-word;"><span t-field="doc.date_order"
+                                                     t-options='{"format": "dd/MM/yy"}'/>
                                                     </td>
                                                     <td class="text-center"
-                                                        style="border-left: 2.5px solid black; border-right: 2.5px solid black; border-bottom: 2.5px solid black">
-                                                        <span t-field="doc.name"/>
+                                                        style="border-left: 2.5px solid black; border-right: 2.5px solid black; border-bottom: 2.5px solid black;
+                       word-wrap: break-word;"><span t-field="doc.name"/>
                                                     </td>
                                                     <td class="text-center"
-                                                        style="border-left: 2.5px solid black; border-right: 2.5px solid black; border-bottom: 2.5px solid black">
-                                                        <span class="topage"/>
+                                                        style="border-left: 2.5px solid black; border-right: 2.5px solid black; border-bottom: 2.5px solid black;
+                       word-wrap: break-word;"><span class="page"/> / <span class="topage"/>
+
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -117,7 +122,7 @@
 
                                 <div class="row mb-1"
                                      style="margin-top: 15px; border: 2.5px solid #333; background-color: #c1c2c3; padding: 5px 0px 5px 0px; align-items: end;">
-                                    <div class="col-8" style="font-size: 0.8rem; text-align: left;">
+                                    <div class="col-8" style="font-size: 0.8rem; text-align: left; margin-left: 5px">
                                         <strong>DESCRIPCIÓN</strong>
                                     </div>
                                     <div class="col-1 text-center" style="font-size: 0.8rem; text-align: right;">
@@ -126,7 +131,8 @@
                                     <div class="col-1 text-right" style="font-size: 0.8rem; text-align: right;">
                                         <strong>PRECIO UD.</strong>
                                     </div>
-                                    <div class="col-2 text-right" style="font-size: 0.8rem; text-align: right;">
+                                    <div class="col-2 text-right"
+                                         style="font-size: 0.8rem; text-align: right; margin-left: -5px">
                                         <strong>IMPORTE</strong>
                                     </div>
                                 </div>
@@ -137,7 +143,7 @@
                                     </div>
                                 </div>
                                 <t t-foreach="doc.order_line" t-as="l">
-                                    <div class="row">
+                                    <div class="row" style="margin-top: 10px">
                                         <div class="col-8"
                                              style="font-size: 0.8rem; text-align: left; line-height: 1.5;">
                                             <span t-field="l.name"/>
@@ -154,28 +160,16 @@
                                     </div>
                                 </t>
 
-                                <div class="row justify-content-end" style="margin-top: 150px;"></div>
+                                <div class="row justify-content-end" style="margin-top: 120px;"></div>
                                 <div class="row mt-3"></div>
                                 <div class="row mt-4" style="font-size: 8px;"></div>
                             </div>
                         </div>
-                        <div class="row justify-content-end" style="margin-top: 150px;">
+                        <div class="row justify-content-end" style="margin-top: 100px;">
                             <div class="col-12">
                                 <table class="table table-bordered" style="font-size: 0.9rem;">
                                     <thead>
                                         <tr style="background-color: #c1c2c3;">
-                                            <th class="text-center"
-                                                style="border-left: 2.5px solid black; border-right: none; border-top: 2.5px solid black; border-bottom: 2.5px solid black">
-                                                <strong>TOTAL IMP.</strong>
-                                            </th>
-                                            <th class="text-center"
-                                                style="border-right: none; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: none">
-                                                <strong>%</strong>
-                                            </th>
-                                            <th class="text-center"
-                                                style="border-right: none; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: none">
-                                                <strong>IMPORTE</strong>
-                                            </th>
                                             <th class="text-center"
                                                 style="border-right: none; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: none">
                                                 <strong>BASE</strong>
@@ -196,12 +190,6 @@
                                     </thead>
                                     <tbody>
                                         <tr style="background-color: unset;">
-                                            <td class="text-center"
-                                                style="background-color: unset !important; border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black">
-                                                <span t-field="doc.amount_untaxed"/>
-                                            </td>
-                                            <td style="background-color: unset ; border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black"></td>
-                                            <td style="background-color: unset; border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black"></td>
                                             <td class="text-center" rowspan="2"
                                                 style="background-color: unset; border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black">
                                                 <span t-field="doc.amount_untaxed"/>
@@ -223,20 +211,15 @@
                                                 </strong>
                                             </td>
                                         </tr>
-                                        <tr>
-                                            <td style="border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black"></td>
-                                            <td style="border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black"></td>
-                                            <td style="border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black"></td>
 
-                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
 
                         <div class="row mt-3"
-                             style="border: 2.5px solid black; border-radius: 12px; height: 50px; align-items: center;">
-                            <div class="col-12">
+                             style="border: 2.5px solid black; height: 50px; align-items: center;">
+                            <div class="col-12" style="margin-left: 10px">
                                 <strong>Forma pago:</strong>
                                 50% Firma 30% Antes de montaje 20% finalización
                             </div>
