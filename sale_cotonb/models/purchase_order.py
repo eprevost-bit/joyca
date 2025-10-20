@@ -22,6 +22,47 @@ class PurchaseOrderLine(models.Model):
         store=True
     )
 
+    x_sale_paid_amount = fields.Float(
+        related='x_source_sale_line_id.amount_paid_line',
+        string='Importe Pagado (Venta)',
+        readonly=True,
+        store=True  # Es importante que esté almacenado para el cálculo
+    )
+
+    # 2. Campo nuevo para obtener el TOTAL de la línea de venta
+    # Lo necesitamos para calcular el porcentaje.
+    x_sale_line_total = fields.Float(
+        related='x_source_sale_line_id.price_subtotal',  # O usa 'price_total' si tu importe pagado incluye impuestos
+        string='Total Línea Venta (Base)',
+        readonly=True,
+        store=True
+    )
+
+    # --- CAMPO CALCULADO (PORCENTAJE) ---
+    # 3. Este es el NUEVO campo que pediste, con el cálculo del porcentaje
+    x_sale_paid_percentage = fields.Float(
+        string='Porcentaje Pagado (Venta) %',
+        compute='_compute_sale_paid_percentage',
+        store=True,  # Almacenamos el resultado
+        readonly=True,
+        digits=(16, 2)  # Formato (ej. 95.50)
+    )
+
+    @api.depends('x_sale_paid_amount', 'x_sale_line_total')
+    def _compute_sale_paid_percentage(self):
+        """
+        Calcula el porcentaje pagado de la línea de venta origen.
+        """
+        for line in self:
+            if line.x_sale_line_total > 0:
+                # Fórmula: (Pagado / Total) * 100
+                line.x_sale_paid_percentage = (line.x_sale_paid_amount / line.x_sale_line_total) * 100
+            else:
+                # Evitar división por cero
+                line.x_sale_paid_percentage = 0.0
+
+
+
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
