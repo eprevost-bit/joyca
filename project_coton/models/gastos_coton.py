@@ -9,7 +9,13 @@ class ProjectUnifiedLine(models.Model):
     _auto = False
 
     # Los campos del modelo no cambian
-    project_id = fields.Many2one('project.project', string='Proyecto', readonly=True)
+    project_id = fields.Many2one(
+        'project.project',
+        string='Proyecto',
+        required=True,
+        ondelete='cascade',
+        index=True
+    )
     reference = fields.Char(string='Referencia (Venta)', readonly=True)
     line_description = fields.Char(string='Descripción', readonly=True)
     currency_id = fields.Many2one('res.currency', string='Moneda', readonly=True)
