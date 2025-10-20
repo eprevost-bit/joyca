@@ -58,6 +58,7 @@ class PurchaseOrderCustom(models.Model):
                 for line in lines:
                     line.copy({
                         'order_id': new_order.id,
+                        'x_source_sale_line_id': line.x_source_sale_line_id.id
                     })
 
                 new_orders_for_current.append(new_order.id)
