@@ -22,30 +22,42 @@ class PurchaseOrderLine(models.Model):
         store=True
     )
 
-    x_sale_paid_amount = fields.Float(
+    # --- CAMPO NUEVO PARA LA MONEDA ---
+    # Necesario para los campos Monetary related
+    x_sale_currency_id = fields.Many2one(
+        related='x_source_sale_line_id.currency_id',
+        readonly=True
+    )
+
+    # --- CAMPOS OBTENIDOS DE LA VENTA (CORREGIDOS) ---
+
+    # 1. CORREGIDO: Cambiado de Float a Monetary
+    x_sale_paid_amount = fields.Monetary(
         related='x_source_sale_line_id.amount_paid_line',
         string='Importe Pagado (Venta)',
         readonly=True,
-        store=True  # Es importante que esté almacenado para el cálculo
+        store=True,
+        currency_field='x_sale_currency_id'  # Especificar la moneda
     )
 
-    # 2. Campo nuevo para obtener el TOTAL de la línea de venta
-    # Lo necesitamos para calcular el porcentaje.
-    x_sale_line_total = fields.Float(
-        related='x_source_sale_line_id.price_subtotal',  # O usa 'price_total' si tu importe pagado incluye impuestos
+    # 2. CORREGIDO: Cambiado de Float a Monetary
+    x_sale_line_total = fields.Monetary(
+        related='x_source_sale_line_id.price_subtotal',
         string='Total Línea Venta (Base)',
         readonly=True,
-        store=True
+        store=True,
+        currency_field='x_sale_currency_id'  # Especificar la moneda
     )
 
     # --- CAMPO CALCULADO (PORCENTAJE) ---
-    # 3. Este es el NUEVO campo que pediste, con el cálculo del porcentaje
+    # 3. Este campo está BIEN como Float, ya que el cómputo
+    #    lee los valores Monetary como números (float).
     x_sale_paid_percentage = fields.Float(
         string='Porcentaje Pagado (Venta) %',
         compute='_compute_sale_paid_percentage',
-        store=True,  # Almacenamos el resultado
+        store=True,
         readonly=True,
-        digits=(16, 2)  # Formato (ej. 95.50)
+        digits=(16, 2)
     )
 
     @api.depends('x_sale_paid_amount', 'x_sale_line_total')
@@ -54,11 +66,10 @@ class PurchaseOrderLine(models.Model):
         Calcula el porcentaje pagado de la línea de venta origen.
         """
         for line in self:
+            # Los campos Monetary se leen como floats dentro de los computes
             if line.x_sale_line_total > 0:
-                # Fórmula: (Pagado / Total) * 100
                 line.x_sale_paid_percentage = (line.x_sale_paid_amount / line.x_sale_line_total) * 100
             else:
-                # Evitar división por cero
                 line.x_sale_paid_percentage = 0.0
 
 

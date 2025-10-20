@@ -29,7 +29,7 @@ class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
     amount_paid_line = fields.Monetary(
-        string="Importe Cobrado",
+        string = "Importe Cobrado",
         compute='_compute_amount_paid_line',
         store=True,
         readonly=True,
