@@ -17,12 +17,12 @@ class ProjectProject(models.Model):
         string='Órdenes de Compra'
     )
 
-    unified_line_ids = fields.One2many(
-        comodel_name='project.unified.line',
-        inverse_name='project_id',
-        string='Líneas de Venta y Compra',
-        readonly=True
-    )
+    # unified_line_ids = fields.One2many(
+    #     comodel_name='project.unified.line',
+    #     inverse_name='project_id',
+    #     string='Líneas de Venta y Compra',
+    #     readonly=True
+    # )
 
 
 class SaleOrderLine(models.Model):
