@@ -45,10 +45,7 @@ class Project(models.Model):
     # --- PASO 2: INYECTAR LA DEFINICIÓN DE LA ACCIÓN ---
 
     def _get_project_dashboard_data(self):
-        """
-        Hereda el método principal del dashboard para inyectar
-        la definición de nuestra acción.
-        """
+
         # Obtiene todos los datos originales (incluyendo nuestros botones)
         data = super(Project, self)._get_project_dashboard_data()
 
@@ -64,8 +61,6 @@ class Project(models.Model):
             data['actions']['stock_moves_action'] = action.read(load=False)[0]
 
         return data
-
-    # --- MÉTODO DE ACCIÓN (No es usado por el dashboard, pero es bueno tenerlo) ---
 
     def action_view_project_stock_moves(self):
         """
