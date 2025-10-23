@@ -1,0 +1,8 @@
+/* Oculta las filas que marcamos como "escondidas" */
+.o_section_row .o_section_toggle {
+    color: var(--o-main-text-color);
+}
+
+tr.o_data_row.o_hidden {
+    display: none;
+}

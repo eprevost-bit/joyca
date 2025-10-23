@@ -1,0 +1,25 @@
+<odoo>
+    <record id="view_order_form_collapse" model="ir.ui.view">
+        <field name="name">sale.order.form.collapse</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Botón arriba de las líneas -->
+            <xpath expr="//field[@name='order_line']" position="before">
+                <div class="oe_button_box">
+                    <div class="btn btn-secondary o_collapse_button" title="Collapse/Expand Lines">
+                        <i class="fa fa-minus-square"></i>
+                        <span> Collapse / Expand Lines</span>
+                    </div>
+                </div>
+            </xpath>
+
+            <!-- Agregamos clase para identificar la tabla -->
+            <xpath expr="//field[@name='order_line']" position="attributes">
+                <attribute name="class">o_sale_order_lines</attribute>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
