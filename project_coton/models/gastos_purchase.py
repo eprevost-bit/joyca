@@ -6,8 +6,7 @@ from odoo import models, fields, api
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
-    # --- CAMPO NUEVO PARA LA MONEDA ---
-    # Necesario para los campos Monetary related
+
     x_sale_currency_id = fields.Many2one(
         related='x_source_sale_line_id.currency_id',
         readonly=True
@@ -76,6 +75,103 @@ class PurchaseOrderLine(models.Model):
                 line.percentage_invoiced = line.qty_invoiced / line.product_qty
             else:
                 line.percentage_invoiced = 0.0
+
+    po_currency_id = fields.Many2one(
+        related='order_id.currency_id',
+        string="Moneda de Compra",
+        readonly=True
+    )
+
+    # 2. Importe Total Facturado (Por el Proveedor)
+    #    Suma de los subtotales de las líneas de factura de proveedor.
+    amount_invoiced = fields.Monetary(
+        string='Importe Facturado (Compra)',
+        compute='_compute_purchase_payment_amounts',
+        store=True,
+        readonly=True,
+        currency_field='po_currency_id',
+        help="Total (sin impuestos) facturado por el proveedor para esta línea."
+    )
+
+    # 3. Importe Total Pagado (Al Proveedor)
+    #    Suma de los importes pagados prorrateados de las facturas.
+    amount_paid = fields.Monetary(
+        string='Importe Pagado (Compra)',
+        compute='_compute_purchase_payment_amounts',
+        store=True,
+        readonly=True,
+        currency_field='po_currency_id',
+        help="Total (sin impuestos) pagado al proveedor por las facturas de esta línea."
+    )
+
+    # 4. Porcentaje Pagado (de la Compra)
+    #    Este es el campo que has solicitado.
+    percentage_paid = fields.Float(
+        string='% Pagado (Compra)',
+        compute='_compute_purchase_percentage',
+        store=True,
+        readonly=True,
+        digits=(16, 2),
+        help="Porcentaje del total de la línea (price_subtotal) que ha sido pagado."
+    )
+
+    @api.depends('invoice_lines',
+                 'invoice_lines.move_id.state',
+                 'invoice_lines.move_id.payment_state',
+                 'invoice_lines.move_id.amount_total',
+                 'invoice_lines.move_id.amount_residual')
+    def _compute_purchase_payment_amounts(self):
+        """
+        Calcula el importe total facturado y el importe total pagado
+        para esta línea de pedido de compra.
+        """
+        for line in self:
+            total_invoiced_amount = 0.0
+            total_paid_amount = 0.0
+
+            # 'invoice_lines' es el campo One2many que relaciona
+            # purchase.order.line con account.move.line
+
+            # Filtramos solo facturas de proveedor (in_invoice) que estén publicadas
+            posted_bill_lines = line.invoice_lines.filtered(
+                lambda l: l.move_id.state == 'posted' and l.move_id.move_type == 'in_invoice'
+            )
+
+            for bill_line in posted_bill_lines:
+                bill = bill_line.move_id
+
+                # 1. Sumar el total facturado (base)
+                #    Usamos 'price_subtotal' de la línea de factura
+                total_invoiced_amount += bill_line.price_subtotal
+
+                # 2. Calcular el importe pagado prorrateado para esta línea
+                if bill.amount_total > 0:
+                    # Proporción pagada de la factura TOTAL
+                    # (Total Factura - Pendiente de Pago) / Total Factura
+                    paid_ratio = (bill.amount_total - bill.amount_residual) / bill.amount_total
+
+                    # Aplicar esa proporción al 'price_subtotal' de ESTA línea de factura
+                    total_paid_amount += bill_line.price_subtotal * paid_ratio
+
+                elif bill.payment_state == 'paid':
+                    # Caso borde: Factura con total 0 (ej. nota crédito) pero marcada como pagada
+                    total_paid_amount += bill_line.price_subtotal
+
+            line.amount_invoiced = total_invoiced_amount
+            line.amount_paid = total_paid_amount
+
+    @api.depends('amount_paid', 'price_subtotal')
+    def _compute_purchase_percentage(self):
+        """
+        Calcula el porcentaje pagado sobre el total de la línea de compra (price_subtotal).
+        """
+        for line in self:
+            if line.price_subtotal > 0:
+                # Usamos 'price_subtotal' (total sin impuestos de la línea de PO)
+                # como el 100% esperado.
+                line.percentage_paid = (line.amount_paid / line.price_subtotal) * 100
+            else:
+                line.percentage_paid = 0.0
 
 
 # --- 2. AÑADIR CAMPOS AGREGADOS A LA ORDEN DE COMPRA ---
