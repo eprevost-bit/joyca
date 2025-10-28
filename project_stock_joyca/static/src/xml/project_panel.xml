@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="project_stock_joyca.ProjectRightSidePanel" t-inherit="project.ProjectRightSidePanel"
+       t-inherit-mode="extension" owl="1">
+
+        <xpath expr="//ProjectProfitability" position="after">
+
+            <div class="o_rightpanel_data_section mt-4"
+                 t-if="state.data.panel_sale_lines &amp;&amp; state.data.panel_sale_lines.length > 0">
+                <h6 class="px-3 mb-2 fw-bold">Pedidos de Venta</h6>
+                <div class="table-responsive px-3">
+                    <table class="o_section_table table table-sm">
+                        <thead class="text-muted">
+                            <tr>
+                                <th class="text-start"># Pedido / Descripción</th>
+                                <th class="text-end">Importe Total</th>
+                                <th class="text-end">Facturado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="state.data.panel_sale_lines" t-as="line" t-key="line.id">
+                                <tr class="o_rightpanel_data_row">
+                                    <td class="text-start">
+                                        <span class="fw-bold" t-esc="line.sale_order_name"/>
+                                        <br/>
+                                        <small class="text-muted" t-esc="line.line_description"/>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <span t-esc="formatMonetary(line.total_amount, line.currency_id)"/>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <span t-esc="formatMonetary(line.invoiced_amount, line.currency_id)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="o_rightpanel_data_section mt-4"
+                 t-if="state.data.panel_timesheet_lines &amp;&amp; state.data.panel_timesheet_lines.length > 0">
+                <h6 class="px-3 mb-2 fw-bold">Partes de Horas (Coste)</h6>
+                <div class="table-responsive px-3">
+                    <table class="o_section_table table table-sm">
+                        <thead class="text-muted">
+                            <tr>
+                                <th class="text-start">Empleado / Descripción</th>
+                                <th class="text-end">Horas</th>
+                                <th class="text-end">Importe (Coste)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="state.data.panel_timesheet_lines" t-as="line" t-key="line.id">
+                                <tr class="o_rightpanel_data_row">
+                                    <td class="text-start">
+                                        <span t-esc="line.display_name"/>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <t t-esc="line.hours.toFixed(2)"/>h
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <span t-esc="formatMonetary(line.amount, line.currency_id)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </xpath>
+    </t>
+
+</templates>

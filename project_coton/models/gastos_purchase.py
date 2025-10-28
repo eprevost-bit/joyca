@@ -129,9 +129,6 @@ class PurchaseOrderLine(models.Model):
             total_invoiced_amount = 0.0
             total_paid_amount = 0.0
 
-            # 'invoice_lines' es el campo One2many que relaciona
-            # purchase.order.line con account.move.line
-
             # Filtramos solo facturas de proveedor (in_invoice) que estén publicadas
             posted_bill_lines = line.invoice_lines.filtered(
                 lambda l: l.move_id.state == 'posted' and l.move_id.move_type == 'in_invoice'
