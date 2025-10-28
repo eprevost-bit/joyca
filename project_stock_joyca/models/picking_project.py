@@ -86,82 +86,200 @@ class Project(models.Model):
 
         return labels
 
-    def _get_panel_sale_order_lines(self):
+    def _get_panel_sale_orders(self):
         """
-        Busca y formatea las líneas de pedido de venta para el panel.
-        ¡CORREGIDO! Ahora busca por el campo project_id en sale.order.
+        Busca y formatea los PEDIDOS de venta (agrupados) para el panel.
         """
         self.ensure_one()
 
-        # Buscamos líneas de pedidos de venta vinculados a este proyecto
-        sale_lines = self.env['sale.order.line'].search([
-            ('order_id.project_id', '=', self.id), # <- ESTA ES LA LÍNEA CORREGIDA
-            ('order_id.state', 'in', ['sale', 'done']),
-            ('display_type', '=', False), # Excluimos secciones, notas, etc.
+        # Buscamos los Pedidos de Venta vinculados a este proyecto
+        sale_orders = self.env['sale.order'].search([
+            ('project_id', '=', self.id),
+            ('state', 'in', ['sale', 'done']),
         ])
 
-        sol_data = []
-        for line in sale_lines:
-            # Calcular el importe facturado para esta línea
+        so_data = []
+        for order in sale_orders:
+            # 1. Total del pedido (usamos el subtotal sin impuestos)
+            total_amount = order.amount_untaxed
+
+            # 2. Calcular el importe total facturado (sin impuestos)
             invoiced_amount = 0.0
-            for inv_line in line.invoice_lines:
-                if inv_line.move_id.state == 'posted':
-                    if inv_line.move_id.move_type == 'out_invoice':
-                        invoiced_amount += inv_line.price_subtotal
-                    elif inv_line.move_id.move_type == 'out_refund':
-                        invoiced_amount -= inv_line.price_subtotal
 
-            sol_data.append({
-                'id': line.id,
-                'sale_order_name': line.order_id.name,
-                'line_description': line.name,
-                # Usamos price_total (con impuestos) o price_subtotal (sin impuestos)
-                # según tu necesidad. "Importe total" suele ser price_total.
-                'total_amount': line.price_total,
+            # Filtramos facturas publicadas (posted)
+            posted_invoices = order.invoice_ids.filtered(
+                lambda m: m.state == 'posted'
+            )
+            for inv in posted_invoices:
+                # amount_untaxed_signed maneja correctamente facturas y abonos
+                invoiced_amount += inv.amount_untaxed_signed
+
+            so_data.append({
+                'id': order.id,
+                'sale_order_name': order.name,
+                'total_amount': total_amount,
                 'invoiced_amount': invoiced_amount,
-                'currency_id': line.currency_id.id,
+                'currency_id': order.currency_id.id,
+                'date_order': order.date_order,
             })
-        return sol_data
+        return so_data
 
-    def _get_panel_timesheet_lines(self):
-
+    def _get_panel_timesheet_totals(self):
+        """
+        Calcula los totales de horas y coste para el panel.
+        """
         self.ensure_one()
         timesheets = self.env['account.analytic.line'].search([
             ('project_id', '=', self.id),
-            ('employee_id', '!=', False),  # Solo líneas con empleado
+            ('employee_id', '!=', False),
         ])
 
-        ts_data = []
-        for line in timesheets:
-            # El campo 'amount' en AAL para partes de horas suele ser el coste (negativo).
-            # Usamos abs() para mostrarlo como un coste positivo.
-            cost = abs(line.amount)
+        total_hours = 0.0
+        total_cost = 0.0
+        # Usaremos la moneda del proyecto como moneda de destino
+        project_currency = self.currency_id
 
-            ts_data.append({
-                'id': line.id,
-                'display_name': f"{line.employee_id.name or _('N/A')}: {line.name}",
-                'hours': line.unit_amount,
-                'amount': cost,
-                # Usamos la moneda de la propia línea analítica, es lo más seguro
-                'currency_id': line.currency_id.id,
+        for line in timesheets:
+            # Sumar las horas
+            total_hours += line.unit_amount
+
+            # Sumar el coste, convirtiendo la moneda si es necesario
+            line_cost = line.x_coste
+            if line.currency_id and line.currency_id != project_currency:
+                # Convertir el coste de la línea a la moneda del proyecto
+                total_cost += line.currency_id._convert(
+                    line_cost,
+                    project_currency,
+                    self.company_id or self.env.company,
+                    line.date or fields.Date.today()
+                )
+            else:
+                # La moneda es la misma (o no hay moneda), sumar directamente
+                total_cost += line_cost
+
+        # Devolvemos un solo diccionario con los totales
+        return {
+            'total_hours': total_hours,
+            'total_cost': total_cost,
+            'currency_id': project_currency.id,
+        }
+
+    def _get_panel_stock_moves(self):
+        """
+        Busca y formatea los movimientos de stock (materiales) para el panel.
+        """
+        self.ensure_one()
+        stock_moves = self.env['stock.move'].search([
+            ('picking_id.project_id', '=', self.id),
+            ('state', '=', 'done')
+        ])
+
+        move_data = []
+        for move in stock_moves:
+            move_data.append({
+                'id': move.id,
+                'product_name': move.product_id.display_name,
+
+                # --- CORREGIDO ---
+                'quantity_done': move.product_uom_qty,  # Usamos la cantidad hecha
+                # --- FIN CORRECCIÓN ---
+
+                'product_uom': move.product_uom.name,
+
+                # --- CORREGIDO ---
+                'cost': move.x_coste_total,  # Sin la 'e' extra
+                # --- FIN CORRECCIÓN ---
+
+                'currency_id': move.currency_id.id,
+                'date': move.date,
             })
-        return ts_data
+        return move_data
 
     def get_panel_data(self):
         """
-        Heredamos la función principal para inyectar nuestros nuevos datos.
+        Heredamos la función principal para inyectar todos los datos
+        Y AÑADIMOS EL CÁLCULO DEL MARGEN.
         """
-        # Obtenemos todos los datos estándar llamando a 'super'
         panel_data = super().get_panel_data()
 
-        # Solo añadimos los datos si el usuario tiene permisos
         if self.env.user.has_group('project.group_project_user'):
-            # Añadimos nuestras nuevas listas de datos
-            panel_data['panel_sale_lines'] = self._get_panel_sale_order_lines()
-            panel_data['panel_timesheet_lines'] = self._get_panel_timesheet_lines()
 
-            # Aseguramos que la moneda principal esté disponible para formatear
+            project_currency = self.currency_id
+            company = self.company_id or self.env.company
+            today = fields.Date.today()  # Fecha de fallback
+
+            # 1. INGRESOS (Ventas)
+            panel_sale_orders = self._get_panel_sale_orders()
+            panel_data['panel_sale_orders'] = panel_sale_orders
+
+            total_revenue = 0.0
+            for order in panel_sale_orders:
+                order_currency = self.env['res.currency'].browse(order['currency_id'])
+                total_revenue += order_currency._convert(
+                    order['total_amount'],
+                    project_currency,
+                    company,
+                    order.get('date_order', today)
+                )
+
+            # 2. COSTE (Horas)
+            panel_timesheet_totals = self._get_panel_timesheet_totals()
+            panel_data['panel_timesheet_totals'] = panel_timesheet_totals
+            # Este coste ya está en la moneda del proyecto (según nuestra función)
+            total_hours_cost = panel_timesheet_totals['total_cost']
+
+            # 3. COSTE (Materiales)
+            panel_stock_moves = self._get_panel_stock_moves()
+            panel_data['panel_stock_moves'] = panel_stock_moves
+
+            total_material_cost = 0.0
+            for move in panel_stock_moves:
+                move_currency = self.env['res.currency'].browse(move['currency_id'])
+                total_material_cost += move_currency._convert(
+                    move['cost'],
+                    project_currency,
+                    company,
+                    move.get('date', today)
+                )
+
+            # 4. CÁLCULO DEL MARGEN
+            margin_amount = total_revenue - total_hours_cost - total_material_cost
+            margin_percentage = (total_revenue and (margin_amount / total_revenue) * 100) or 0.0
+
+            # 5. Guardar datos del margen para el XML
+            panel_data['panel_margin'] = {
+                'total_revenue': total_revenue,
+                'total_hours_cost': total_hours_cost,
+                'total_material_cost': total_material_cost,
+                'margin_amount': margin_amount,
+                'margin_percentage': margin_percentage,
+                'currency_id': project_currency.id,
+            }
+
             if 'currency_id' not in panel_data:
-                panel_data['currency_id'] = self.currency_id.id
+                panel_data['currency_id'] = project_currency.id
 
         return panel_data
+
+    # def get_panel_data(self):
+    #     """
+    #     Heredamos la función principal para inyectar nuestros nuevos datos.
+    #     """
+    #     panel_data = super().get_panel_data()
+    #
+    #     if self.env.user.has_group('project.group_project_user'):
+    #
+    #         panel_data['panel_sale_orders'] = self._get_panel_sale_orders()
+    #
+    #         # --- LÍNEA CORREGIDA ---
+    #         # La clave ahora es 'panel_timesheet_totals'
+    #         panel_data['panel_timesheet_totals'] = self._get_panel_timesheet_totals()
+    #         # --- FIN DE LA CORRECCIÓN ---
+    #
+    #         panel_data['panel_stock_moves'] = self._get_panel_stock_moves()
+    #
+    #         if 'currency_id' not in panel_data:
+    #             panel_data['currency_id'] = self.currency_id.id
+    #
+    #     return panel_data
+

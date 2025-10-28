@@ -4,33 +4,31 @@
     <t t-name="project_stock_joyca.ProjectRightSidePanel" t-inherit="project.ProjectRightSidePanel"
        t-inherit-mode="extension" owl="1">
 
-        <xpath expr="//ProjectProfitability" position="after">
+        <xpath expr="//ProjectProfitability" position="replace">
 
             <div class="o_rightpanel_data_section mt-4"
-                 t-if="state.data.panel_sale_lines &amp;&amp; state.data.panel_sale_lines.length > 0">
+                 t-if="state.data.panel_sale_orders &amp;&amp; state.data.panel_sale_orders.length > 0">
                 <h6 class="px-3 mb-2 fw-bold">Pedidos de Venta</h6>
                 <div class="table-responsive px-3">
                     <table class="o_section_table table table-sm">
                         <thead class="text-muted">
                             <tr>
-                                <th class="text-start"># Pedido / Descripción</th>
-                                <th class="text-end">Importe Total</th>
+                                <th class="text-start"># Pedido</th>
                                 <th class="text-end">Facturado</th>
+                                <th class="text-end">Importe Total</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-foreach="state.data.panel_sale_lines" t-as="line" t-key="line.id">
+                            <t t-foreach="state.data.panel_sale_orders" t-as="order" t-key="order.id">
                                 <tr class="o_rightpanel_data_row">
                                     <td class="text-start">
-                                        <span class="fw-bold" t-esc="line.sale_order_name"/>
-                                        <br/>
-                                        <small class="text-muted" t-esc="line.line_description"/>
+                                        <span class="fw-bold" t-esc="order.sale_order_name"/>
                                     </td>
                                     <td class="text-end text-nowrap">
-                                        <span t-esc="formatMonetary(line.total_amount, line.currency_id)"/>
+                                        <span t-esc="formatMonetary(order.invoiced_amount, order.currency_id)"/>
                                     </td>
                                     <td class="text-end text-nowrap">
-                                        <span t-esc="formatMonetary(line.invoiced_amount, line.currency_id)"/>
+                                        <span t-esc="formatMonetary(order.total_amount, order.currency_id)"/>
                                     </td>
                                 </tr>
                             </t>
@@ -40,31 +38,114 @@
             </div>
 
             <div class="o_rightpanel_data_section mt-4"
-                 t-if="state.data.panel_timesheet_lines &amp;&amp; state.data.panel_timesheet_lines.length > 0">
+                 t-if="state.data.panel_timesheet_totals &amp;&amp; state.data.panel_timesheet_totals.total_hours > 0">
                 <h6 class="px-3 mb-2 fw-bold">Partes de Horas (Coste)</h6>
+                <div class="table-responsive px-3">
+                    <table class="o_section_table table table-sm">
+                        <tbody>
+                            <tr class="o_rightpanel_data_row">
+                                <td class="text-start">
+                                    <span class="fw-bold">Coste Total de Horas</span>
+                                    <br/>
+                                    <small class="text-muted">
+                                        (<t t-esc="state.data.panel_timesheet_totals.total_hours.toFixed(2)"/> horas
+                                        totales)
+                                    </small>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <span t-esc="formatMonetary(state.data.panel_timesheet_totals.total_cost, state.data.panel_timesheet_totals.currency_id)"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="o_rightpanel_data_section mt-4"
+                 t-if="state.data.panel_stock_moves &amp;&amp; state.data.panel_stock_moves.length > 0">
+                <h6 class="px-3 mb-2 fw-bold">Materiales (Coste)</h6>
                 <div class="table-responsive px-3">
                     <table class="o_section_table table table-sm">
                         <thead class="text-muted">
                             <tr>
-                                <th class="text-start">Empleado / Descripción</th>
-                                <th class="text-end">Horas</th>
-                                <th class="text-end">Importe (Coste)</th>
+                                <th class="text-start">Producto</th>
+                                <th class="text-end">Coste Total</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-foreach="state.data.panel_timesheet_lines" t-as="line" t-key="line.id">
+                            <t t-foreach="state.data.panel_stock_moves" t-as="move" t-key="move.id">
                                 <tr class="o_rightpanel_data_row">
                                     <td class="text-start">
-                                        <span t-esc="line.display_name"/>
+                                        <span t-esc="move.product_name"/>
                                     </td>
                                     <td class="text-end text-nowrap">
-                                        <t t-esc="line.hours.toFixed(2)"/>h
-                                    </td>
-                                    <td class="text-end text-nowrap">
-                                        <span t-esc="formatMonetary(line.amount, line.currency_id)"/>
+                                        <span t-esc="formatMonetary(move.cost, move.currency_id)"/>
                                     </td>
                                 </tr>
                             </t>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="o_rightpanel_data_section mt-4"
+                 t-if="state.data.panel_margin">
+                <h6 class="px-3 mb-2 fw-bold">Margen del Proyecto</h6>
+                <div class="px-3">
+                    <table class="o_section_table table table-sm">
+                        <tbody>
+                            <tr class="o_rightpanel_data_row">
+                                <td class="text-start">
+                                    <span class="fw-bold">Ingresos Totales</span>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <span class="text-success fw-bold"
+                                          t-esc="formatMonetary(state.data.panel_margin.total_revenue, state.data.panel_margin.currency_id)"/>
+                                </td>
+                            </tr>
+
+                            <tr class="o_rightpanel_data_row">
+                                <td class="text-start">
+                                    <span class="text-muted ps-3">(-) Coste de Horas</span>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <span class="text-danger"
+                                          t-esc="formatMonetary(state.data.panel_margin.total_hours_cost, state.data.panel_margin.currency_id)"/>
+                                </td>
+                            </tr>
+
+                            <tr class="o_rightpanel_data_row">
+                                <td class="text-start">
+                                    <span class="text-muted ps-3">(-) Coste de Materiales</span>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <span class="text-danger"
+                                          t-esc="formatMonetary(state.data.panel_margin.total_material_cost, state.data.panel_margin.currency_id)"/>
+                                </td>
+                            </tr>
+
+                            <tr class="o_rightpanel_data_row border-top">
+                                <td class="text-start">
+                                    <span class="fw-bold">Margen Neto</span>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <span class="fw-bold"
+                                          t-att-class="state.data.panel_margin.margin_amount >= 0 ? 'text-success' : 'text-danger'"
+                                          t-esc="formatMonetary(state.data.panel_margin.margin_amount, state.data.panel_margin.currency_id)"/>
+                                </td>
+                            </tr>
+
+                            <tr class="o_rightpanel_data_row">
+                                <td class="text-start">
+                                    <span class="fw-bold">Margen (%)</span>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <span class="fw-bold"
+                                          t-att-class="state.data.panel_margin.margin_percentage >= 20 ? 'text-success' : (state.data.panel_margin.margin_percentage > 0 ? 'text-warning' : 'text-danger')">
+                                        <t t-esc="state.data.panel_margin.margin_percentage.toFixed(2)"/>%
+                                    </span>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

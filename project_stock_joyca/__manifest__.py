@@ -20,9 +20,10 @@
     'website': "https://www.tuweb.com",
     "version": "18.0.1.0.0",
     'sequence': 0,
-    "depends": ['project', 'stock', 'account', 'sale_project', 'sale_timesheet'],
+    "depends": ['project', 'stock', 'account', 'sale_project', 'sale_timesheet','hr_timesheet'],
     "data": [
         "views/project_views.xml",
+        "views/view_account_analytic_line.xml",
     ],
 
     'assets': {
