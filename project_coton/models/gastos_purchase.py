@@ -200,6 +200,88 @@ class PurchaseOrder(models.Model):
         help="Porcentaje pagado sobre el total que ha sido facturado."
     )
 
+    x_sale_total_line_amount_po_currency = fields.Monetary(
+        string="Total (Venta)",
+        compute='_compute_sale_paid_percentage_total',
+        store=True,
+        currency_field='currency_id',  # Usamos la moneda de la PO
+        help="Suma de todos los importes totales de las líneas de venta asociadas, convertidos a la moneda de esta orden de compra."
+    )
+
+    # 2. Campo de ayuda: Suma de los importes pagados de venta (convertidos a la moneda de la PO)
+    x_sale_total_paid_amount_po_currency = fields.Monetary(
+        string="Total Cobrado (Venta)",
+        compute='_compute_sale_paid_percentage_total',
+        store=True,
+        currency_field='currency_id',  # Usamos la moneda de la PO
+        help="Suma de todos los importes cobrados de las líneas de venta asociadas, convertidos a la moneda de esta orden de compra."
+    )
+
+    # 3. CAMPO FINAL: El porcentaje total cobrado
+    x_sale_paid_percentage_total = fields.Float(
+        string="% Cobrado (Venta)",
+        compute='_compute_sale_paid_percentage_total',
+        store=True,
+        digits=(16, 2),
+        help="Porcentaje total cobrado de las ventas asociadas, calculado como (Total Cobrado / Total Líneas de Venta)."
+    )
+
+    @api.depends('order_line.x_sale_paid_amount',
+                 'order_line.x_sale_line_total',
+                 'order_line.x_sale_currency_id',
+                 'order_line',  # Para recalcular si se añade/quita línea
+                 'currency_id',  # Moneda de la PO
+                 'date_order')  # Fecha para la tasa de conversión
+    def _compute_sale_paid_percentage_total(self):
+        """
+        Calcula el porcentaje total cobrado de las ventas asociadas
+        agregando los importes de las líneas y convirtiendo moneda.
+        """
+        for po in self:
+            total_paid_in_po_currency = 0.0
+            total_line_in_po_currency = 0.0
+
+            # Moneda de destino (la de la PO)
+            po_currency = po.currency_id
+
+            for line in po.order_line:
+                # Moneda de origen (la de la línea de venta)
+                sale_currency = line.x_sale_currency_id
+
+                # --- Convertir el importe pagado de la línea de venta ---
+                if sale_currency and sale_currency != po_currency:
+                    # Usamos _convert para cambiar de la moneda de venta a la moneda de compra
+                    total_paid_in_po_currency += sale_currency._convert(
+                        line.x_sale_paid_amount,
+                        po_currency,
+                        po.company_id,
+                        po.date_order or fields.Date.today()
+                    )
+                else:
+                    # Las monedas son iguales o no hay moneda de venta
+                    total_paid_in_po_currency += line.x_sale_paid_amount
+
+                # --- Convertir el importe total de la línea de venta ---
+                if sale_currency and sale_currency != po_currency:
+                    total_line_in_po_currency += sale_currency._convert(
+                        line.x_sale_line_total,
+                        po_currency,
+                        po.company_id,
+                        po.date_order or fields.Date.today()
+                    )
+                else:
+                    total_line_in_po_currency += line.x_sale_line_total
+
+            # Asignar los valores totales calculados
+            po.x_sale_total_paid_amount_po_currency = total_paid_in_po_currency
+            po.x_sale_total_line_amount_po_currency = total_line_in_po_currency
+
+            # Calcular el porcentaje final
+            if total_line_in_po_currency > 0:
+                po.x_sale_paid_percentage_total = (total_paid_in_po_currency / total_line_in_po_currency) * 100
+            else:
+                po.x_sale_paid_percentage_total = 0.0
+
     @api.depends('order_line.price_subtotal', 'order_line.percentage_invoiced')
     def _compute_aggregated_invoice_percentage(self):
         """

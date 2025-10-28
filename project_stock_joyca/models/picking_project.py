@@ -76,9 +76,7 @@ class Project(models.Model):
         }
 
     def _get_profitability_labels(self):
-        """
-        Heredamos este método para cambiar la etiqueta de la columna.
-        """
+
         labels = super()._get_profitability_labels()
 
         # Cambiamos 'A facturar' por 'Total'
@@ -126,10 +124,7 @@ class Project(models.Model):
         return sol_data
 
     def _get_panel_timesheet_lines(self):
-        """
-        Busca y formatea las líneas de parte de horas (coste) para el panel.
-        ¡CORREGIDO! Usa el campo 'amount' estándar en lugar de 'timesheet_cost'.
-        """
+
         self.ensure_one()
         timesheets = self.env['account.analytic.line'].search([
             ('project_id', '=', self.id),
