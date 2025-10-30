@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="sale_order_portal_content_inherit_fanatics" inherit_id="sale.sale_order_portal_content">
+        <xpath expr="//div[@id='informations']" position="after">
+            <div class="div_display_type" t-if="sale_order.allow_detail_view">
+                <label for="d_line_type" class="label">Display Type:</label>
+                <select id="d_line_type" class="select_line_type">
+                    <option value="heads">Main Products</option>
+                    <option value="all">All Products</option>
+                </select>
+            </div>
+        </xpath>
+    </template>
+</odoo>

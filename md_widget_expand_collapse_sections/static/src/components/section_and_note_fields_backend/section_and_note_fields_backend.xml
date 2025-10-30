@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+        <t t-name="md_widget_expand_collapse_sections.ListRenderer" t-inherit="web.ListRenderer" t-inherit-mode="primary" owl="1">
+            <xpath expr="//thead//tr" position="inside">
+                 <th class="custom_th" style="width: 32px !important; min-width: 32px">
+                </th>
+            </xpath>
+        </t>
+        <t t-name="md_widget_expand_collapse_sections.ExpandListRenderer.RecordRow" t-inherit="web.ListRenderer.RecordRow" t-inherit-mode="primary" owl="1">
+            <xpath expr="//tr//td[hasclass('o_list_record_remove')]" position="after">
+                <td t-if="record.data.display_type=='line_section'" class="o_section_expand text-center"
+                    t-on-click.stop="(ev) => this.onClickExpandCollapse(ev,record)"
+                    >
+                    <button class="fa fa-chevron-down"
+                        id="expand_collapsesa_section"
+                        name="expand"
+                        aria-label="Expand/Collapse Section"
+                        tabindex="-1"></button>
+                </td>
+             </xpath>
+        </t>
+</templates>

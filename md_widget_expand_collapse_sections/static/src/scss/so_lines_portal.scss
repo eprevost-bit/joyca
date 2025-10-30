@@ -1,0 +1,26 @@
+#portal_sale_content{
+    #sales_order_table{
+        .sale_tbody{
+            tr.is_task_product{
+                background-color: #d2e2e3 !important;
+                color:#9a6b01 !important;
+            }
+        }
+    }
+
+.div_display_type{
+        display:flex;
+//         flex-direction:row-reverse;
+        justify-content:end;
+        .d_line_type{
+            float:right;
+            label,input{
+              display:flex;
+              flex-direction:column;
+            }
+            label{
+                font-weight:500;
+            }
+        }
+    }
+}

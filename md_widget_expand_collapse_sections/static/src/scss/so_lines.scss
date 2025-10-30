@@ -1,0 +1,31 @@
+.o_sale_order{
+    .o_field_section_and_note_one2many{
+        tr.text-danger{
+            background-color: #d2e2e3 !important;
+        }
+        tr.text-warning{
+            background-color: #bdbdbd !important;
+        }
+        .text-danger{
+            color:#9a6b01 !important;
+        }
+        a.text-danger{
+            color:#9c2824 !important;
+        }
+        .text-warning{
+            color:black !important;
+        }
+    }
+}
+
+.o_field_section_and_note_one2many_expand{
+    .o_list_renderer .o_list_table tbody > tr > td:not(.o_list_record_selector):not(.o_handle_cell):not(.o_list_button):not(.o_list_record_remove):not(.o_list_record_open_form_view){
+                text-overflow:unset !important;
+    }
+/*
+tbody{
+        .o_data_row:not(.o_is_line_section){
+                display:none;
+            }
+    } */
+}
