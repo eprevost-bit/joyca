@@ -257,6 +257,31 @@
                         </div>
 
                         <div class="footer" style="font-size: 10px;">
+                            <div class="row">
+                                <div class="col-12">
+                                    <hr style="border-top: 1px solid black; margin-top: 2px; margin-bottom: 2px;"/>
+
+                                    <div class="row" style="font-size: 0.8rem; padding: 4px;">
+
+                                        <div class="col-4 text-left">
+                                            <strong>Fecha:</strong>
+                                            <span t-field="doc.date_order"
+                                                  t-options="{&quot;format&quot;: &quot;dd/MM/yy&quot;}"/>
+                                        </div>
+
+                                        <div class="col-5 text-left">
+                                            <strong>Presupuesto:</strong>
+                                            <span t-field="doc.name"/>
+                                        </div>
+
+                                        <div class="col-3 text-center">
+                                            <span class="page"/> / <span class="topage"/>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </div>
                         </div>
                     </div>
 
