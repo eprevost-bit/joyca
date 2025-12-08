@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="partner_import_wizard_view_form" model="ir.ui.view">
+            <field name="name">partner.import.wizard.form</field>
+            <field name="model">partner.import.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Importar Contactos (Empresas)">
+                    <group>
+                        <p class="text-muted">
+                            Estructura del Excel (3 Columnas):<br/>
+                            <strong>A:</strong> Nombre Empresa<br/>
+                            <strong>B:</strong> Línea (Se creará si no existe)<br/>
+                            <strong>C:</strong> Descripción (Etiquetas separadas por guión "-")
+                        </p>
+                        <field name="excel_file" filename="excel_filename"/>
+                        <field name="excel_filename" invisible="1"/>
+                    </group>
+                    <footer>
+                        <button name="action_import_partners" string="Importar Empresas" type="object" class="btn-primary"/>
+                        <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_partner_import_wizard" model="ir.actions.act_window">
+            <field name="name">Importar Empresas Excel</field>
+            <field name="res_model">partner.import.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_partner_import_wizard"
+                  name="Importar Empresas Excel"
+                  parent="contacts.res_partner_menu_config"
+                  action="action_partner_import_wizard"
+                  sequence="100"/>
+
+
+        <record id="view_partner_line_tree" model="ir.ui.view">
+            <field name="name">res.partner.line.tree</field>
+            <field name="model">res.partner.line</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_partner_line_config" model="ir.actions.act_window">
+            <field name="name">Líneas de Negocio</field>
+            <field name="res_model">res.partner.line</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+        <menuitem id="menu_partner_line_config"
+                  name="Líneas de Negocio"
+                  parent="contacts.res_partner_menu_config"
+                  action="action_partner_line_config"
+                  sequence="10"/>
+
+
+        <record id="view_partner_form_inherit_line" model="ir.ui.view">
+            <field name="name">res.partner.form.line</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='category_id']" position="after">
+                    <field name="line_id" options="{'no_create': True, 'no_create_edit': True}" placeholder="Seleccione Línea..."/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

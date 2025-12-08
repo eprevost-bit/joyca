@@ -306,15 +306,15 @@ class SaleOrder(models.Model):
 
     # --- INTEGRACIÓN CON ACCIONES NATIVAS DE ODOO ---
 
-    @api.returns('mail.message', lambda value: value.id)
-    def message_post(self, **kwargs):
-        """
-        Heredamos message_post para detectar cuándo se envía un correo.
-        Cuando el estado nativo pasa a 'sent', actualizamos nuestro estado.
-        """
-        if self.env.context.get('mark_so_as_sent'):
-            self.write({'custom_state': 'sent'})
-        return super(SaleOrder, self.with_context(mail_post_autofollow=True)).message_post(**kwargs)
+    # @api.returns('mail.message', lambda value: value.id)
+    # def message_post(self, **kwargs):
+    #     """
+    #     Heredamos message_post para detectar cuándo se envía un correo.
+    #     Cuando el estado nativo pasa a 'sent', actualizamos nuestro estado.
+    #     """
+    #     if self.env.context.get('mark_so_as_sent'):
+    #         self.write({'custom_state': 'sent'})
+    #     return super(SaleOrder, self.with_context(mail_post_autofollow=True)).message_post(**kwargs)
 
     def action_confirm(self):
         """
@@ -394,12 +394,12 @@ class SaleOrder(models.Model):
         po_vals = {
             'partner_id': default_supplier.id,
             'origin': self.name,
-            'notes': _('Orden de compra generada desde la venta %s', self.name),  # Nota más genérica
+            'note': _('Orden de compra generada desde la venta %s', self.name),  # Nota más genérica
             'order_line': [
                 (0, 0, {
                     'product_id': sol.product_id.id,
                     'product_qty': sol.product_uom_qty,
-                    'product_uom': sol.product_id.uom_po_id.id,
+                    # 'product_uom': sol.product_id.uom_po_id.id,
                     'price_unit': sol.product_id.standard_price,
                     'date_planned': fields.Datetime.now(),
                     'name': sol.product_id.display_name,
@@ -522,7 +522,7 @@ class SaleOrder(models.Model):
                     'order_id': purchase_order.id,
                     'product_id': product.id,
                     'product_qty': qty,
-                    'product_uom': product.uom_po_id.id,
+                    # 'product_uom': product.uom_po_id.id,
                     'price_unit': product.standard_price,  # Costo estándar como precio inicial
                     'date_planned': fields.Datetime.now(),
                     'name': product.display_name,

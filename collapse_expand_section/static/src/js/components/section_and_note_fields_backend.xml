@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="collapse_expand_section.RecordRow" t-inherit="sale.ListRenderer.RecordRow" t-inherit-mode="extension">
+        <xpath expr="//t[@t-name='composition_button']" position="inside">
+            <DropdownItem onSelected="() => this.collapseSection(record)" class="'text-info'">
+                <i class="me-1 fa fa-fw"
+                   t-att-class="this.titleCollapseExpand(record) === 'Collapse' ? 'fa-arrow-left' : 'fa-arrow-down'"/>
+                <span t-out="this.titleCollapseExpand(record)"/>
+            </DropdownItem>
+        </xpath>
+
+        <xpath expr="//Dropdown/t[@t-set-slot='content']/t[@t-if='hasDeleteButton']" position="before">
+            <DropdownItem onSelected="() => this.collapseSection(record)" class="'text-info'">
+                <i class="me-1 fa fa-fw"
+                   t-att-class="this.titleCollapseExpand(record) === 'Collapse' ? 'fa-arrow-left' : 'fa-arrow-down'"/>
+                <span t-out="this.titleCollapseExpand(record)"/>
+            </DropdownItem>
+        </xpath>
+    </t>
+
+    <t t-name="collapse_expand_section.ProductLabelSectionAndNoteField" t-inherit="sale.SaleProductField" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_field_product_label_section_and_note_cell')]" position="attributes">
+            <attribute name="class" add="float-start" separator=" "/>
+        </xpath>
+
+        <xpath expr="//div[hasclass('o_field_product_label_section_and_note_cell')]" position="after">
+            <div t-if="isSection(record)">
+                <t t-set="item" t-value="this.countItemUnderSection()"/>
+                <span t-if="state.count_item_under_section > 0" class="item_count_under_section me-5">
+                    <span class="me-1"><t t-out="state.count_item_under_section"/></span><span t-if="state.count_item_under_section > 1">items</span><span t-else="">item</span>
+                </span>
+            </div>
+        </xpath>
+    </t>
+
+
+</templates>
