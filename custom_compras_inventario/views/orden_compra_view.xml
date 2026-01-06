@@ -1,0 +1,18 @@
+<odoo>
+
+    <!-- Proyecto por línea -->
+    <record id="orden_compra_form_linea_proyecto" model="ir.ui.view">
+        <field name="name">purchase.order.form.line.proyecto</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_id']"
+                   position="after">
+                <field name="proyecto_id"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

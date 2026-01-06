@@ -1,0 +1,5 @@
+.center-project-column .o_list_view th[data-name="proyecto_id"],
+.center-project-column .o_list_view td[data-name="proyecto_id"] {
+    text-align: center !important;
+    background: #2a2e3a;
+}
