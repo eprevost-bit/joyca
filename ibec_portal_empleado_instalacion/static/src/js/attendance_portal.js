@@ -3,11 +3,11 @@
 import publicWidget from "@web/legacy/js/public/public_widget";
 import {rpc} from "@web/core/network/rpc";
 
-// =================================================================
+
 // WIDGET 1: SOLO PARA LA TARJETA DE FICHAJE EN LA PÁGINA DE INICIO (/my/home)
-// =================================================================
+
 publicWidget.registry.AttendanceHomeWidget = publicWidget.Widget.extend({
-    selector: '#attendance_portal_widget_home, #attendance_portal_widget .card-body.text-center',
+    selector: '#attendance_portal_widget_home',
     events: {
         'click .btn-clock-in': '_onClickClock',
         'click .btn-clock-out': '_onClickClock',
@@ -24,33 +24,37 @@ publicWidget.registry.AttendanceHomeWidget = publicWidget.Widget.extend({
 
     async _onClickClock(ev) {
         ev.preventDefault();
-        const btnIn = this.el.querySelector('.btn-clock-in');
-        const btnOut = this.el.querySelector('.btn-clock-out');
 
-        btnIn.disabled = true;
-        btnOut.disabled = true;
+        const btn = ev.currentTarget;
+        btn.disabled = true;
 
         try {
             const result = await rpc('/my/attendance/clock', {});
-            console.log("Respuesta del servidor (Home Widget):", result);
+            console.log("Respuesta del servidor:", result);
 
             if (result.error) {
-                this._displayAlert('danger', result.error);
-                this._updateButtonsState(result.previous_state || null);
-            } else {
-                this._updateAttendanceUI(result);
-                if (result.action === 'check_in') {
-                    localStorage.setItem('attendance_entry_notice', '1');
-                }
-                setTimeout(() => {
-                    window.location.reload();
-                }, 5000);
+                this._displayAlert('warning', result.error);
+                btn.disabled = false;
+                return;
             }
+
+            this._displayAlert(
+                'success',
+                result.action === 'check_in'
+                    ? 'Entrada registrada correctamente.'
+                    : 'Salida registrada correctamente.'
+            );
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+
         } catch (error) {
             this._displayAlert('danger', 'Error de conexión con el servidor.');
-            this._updateButtonsState(null);
+            btn.disabled = false;
         }
-    },
+    }
+    ,
 
     _updateAttendanceUI(data) {
         const messageEl = this.el.querySelector('#attendance_message');
@@ -85,13 +89,21 @@ publicWidget.registry.AttendanceHomeWidget = publicWidget.Widget.extend({
         this._displayAlert('success', `Registro de ${actionText} exitoso.`);
     },
 
-    _updateButtonsState(state) {
+    /*_updateButtonsState(state) {
         const btnIn = this.el.querySelector('.btn-clock-in');
         const btnOut = this.el.querySelector('.btn-clock-out');
-        if (!btnIn || !btnOut) return;
-        btnIn.disabled = (state === 'checked_in');
-        btnOut.disabled = (state !== 'checked_in');
-    },
+        if (btnIn) btnIn.disabled = true;
+        if (btnOut) btnOut.disabled = true;
+
+
+        if (state === 'checked_in') {
+            btnIn.disabled = true;
+            btnOut.disabled = false;
+        } else {
+            btnIn.disabled = false;
+            btnOut.disabled = true;
+        }
+    },*/
 
     /**
      * Muestra una alerta dentro de la tarjeta.
@@ -99,22 +111,35 @@ publicWidget.registry.AttendanceHomeWidget = publicWidget.Widget.extend({
     _displayAlert(type, message) {
         const alertContainer = this.el.querySelector('.card-header');
         if (!alertContainer) return;
+
+        // elimina alertas previas
+        const existing = this.el.querySelector('.alert');
+        if (existing) existing.remove();
+
         const alert = document.createElement('div');
-        // alert.className = `alert alert-${type} alert-dismissible fade show mt-2 mb-0`;
-        // alert.role = 'alert';
-        // alert.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
-        // alertContainer.insertAdjacentElement('afterend', alert);
+        alert.className = `alert alert-${type} alert-dismissible fade show mt-2 mb-0`;
+        alert.role = 'alert';
+        alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+        alertContainer.insertAdjacentElement('afterend', alert);
+
         setTimeout(() => alert.remove(), 5000);
     },
+
 });
 
 
-// =================================================================
 // WIDGET 2: PARA LA PÁGINA DE DETALLE DE ASISTENCIAS (/my/attendances)
 // (Contiene la lógica de la tabla, borrado, modal, etc.)
 publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
     selector: '#attendance_portal_widget',
     events: {
+        'click .btn-manual-entry': '_onClickManualEntry',
+        'click .btn-clock-in': '_onClickClock',
+        'click .btn-clock-out': '_onClickClock',
         'click .btn-save': '_onSaveChanges',
         'click .btn-delete': '_onDeleteAttendance',
         'click .page-link': '_onPageClick',
@@ -124,10 +149,90 @@ publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
         'click #btn-save-manual-intervals': '_onSaveManualIntervals',
     },
 
+
     start() {
         this._super.apply(this, arguments);
         $(this.el).find('[data-bs-toggle="tooltip"]').tooltip({trigger: 'hover', placement: 'top'});
     },
+    _displayButtonAlert(btn, type, message) {
+
+        const existing = btn.parentElement.querySelector('.alert');
+        if (existing) {
+            existing.remove();
+        }
+
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} mt-2 mb-2`;
+        alert.role = 'alert';
+        alert.textContent = message;
+
+
+        btn.parentElement.insertBefore(alert, btn);
+
+        if (type !== 'success') {
+            setTimeout(() => alert.remove(), 5000);
+        }
+    },
+
+    async _onClickClock(ev) {
+        ev.preventDefault();
+
+        const btn = ev.currentTarget;
+        btn.disabled = true;
+
+        try {
+            const result = await rpc('/my/attendance/clock', {});
+            console.log("Respuesta del servidor:", result);
+
+            if (result.error) {
+                this._displayAlert('warning', result.error);
+                btn.disabled = false;
+                return;
+            }
+
+            this._displayAlert(
+                'success',
+                result.action === 'check_in'
+                    ? 'Entrada registrada correctamente.'
+                    : 'Salida registrada correctamente.'
+            );
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+
+        } catch (error) {
+            this._displayAlert('danger', 'Error de conexión con el servidor.');
+            btn.disabled = false;
+        }
+    },
+
+    _onClickManualEntry(ev) {
+        const btn = ev.currentTarget;
+        const hasOpenAttendance = btn.dataset.hasOpenAttendance === 'True';
+
+        if (hasOpenAttendance) {
+            ev.preventDefault();
+            ev.stopImmediatePropagation();
+
+            this._displayButtonAlert(
+                btn,
+                'warning',
+                '⚠️ No puedes registrar un día completo porque tienes una jornada abierta. Registra primero la SALIDA.'
+            );
+
+
+            return;
+        }
+
+
+        const modal = this.el.querySelector('#manualEntryModal');
+        if (modal) {
+            $(modal).modal('show');
+        }
+    }
+    ,
+
 
     _onPageClick(ev) {
         ev.preventDefault();
@@ -135,7 +240,6 @@ publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
     },
 
     async _onSaveChanges(ev) {
-        // Esta función se mantiene igual que la tenías
         const btn = ev.currentTarget;
         const attendanceId = parseInt(btn.dataset.id);
         const row = btn.closest('tr');
@@ -179,7 +283,6 @@ publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
     },
 
     async _onDeleteAttendance(ev) {
-        // Esta función se mantiene igual que la tenías
         ev.preventDefault();
         const btn = ev.currentTarget;
         const attendanceId = parseInt(btn.dataset.id);
@@ -208,7 +311,7 @@ publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
     },
 
     _onManualIntervalModalShown: function () {
-        // Esta función se mantiene igual que la tenías
+
         const container = this.el.querySelector('#time-intervals-container');
         container.innerHTML = `
             <div class="row g-3 align-items-center mb-2 time-interval-row">
@@ -231,7 +334,6 @@ publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
     },
 
     _onAddInterval: function () {
-        // Esta función se mantiene igual que la tenías
         const container = this.el.querySelector('#time-intervals-container');
         const firstRow = container.querySelector('.time-interval-row');
         const newRow = firstRow.cloneNode(true);
@@ -242,19 +344,32 @@ publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
     },
 
     _onRemoveInterval: function (ev) {
-        // Esta función se mantiene igual que la tenías
         ev.currentTarget.closest('.time-interval-row').remove();
     },
 
     async _onSaveManualIntervals(ev) {
         const btn = ev.currentTarget;
+
+        const hasOpenAttendance = this.el.querySelector('.btn-manual-entry')
+            ?.dataset.hasOpenAttendance === 'True';
+
+        if (hasOpenAttendance) {
+            this._displayButtonAlert(
+                btn,
+                'warning',
+                'No puedes registrar un día completo mientras tengas una jornada abierta.'
+            );
+            return;
+        }
+
         btn.disabled = true;
         btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
-        const modalBodySelector = '#manualEntryModal .modal-body';
 
+        const modalBodySelector = '#manualEntryModal .modal-body';
         const date = this.el.querySelector('#manualEntryDate').value;
+
         if (!date) {
-            this._displayAlert('danger', 'Por favor, selecciona una fecha.', modalBodySelector);
+            this._displayAlert('danger', 'Selecciona una fecha.', modalBodySelector);
             btn.disabled = false;
             btn.innerHTML = 'Guardar Horarios';
             return;
@@ -262,53 +377,85 @@ publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
 
         const intervals = [];
         const rows = this.el.querySelectorAll('.time-interval-row');
-        let isValid = true;
-        rows.forEach(row => {
+
+        for (const row of rows) {
             const checkIn = row.querySelector('.manual-check-in').value;
             const checkOut = row.querySelector('.manual-check-out').value;
+
             if (checkIn && checkOut) {
-                if (checkIn >= checkOut) {
-                    this._displayAlert('danger', `La hora de entrada (${checkIn}) debe ser menor que la de salida (${checkOut}).`, modalBodySelector);
-                    isValid = false;
-                }
                 intervals.push({check_in: checkIn, check_out: checkOut});
             }
-        });
+        }
 
-        if (!isValid || intervals.length === 0) {
-            if (intervals.length === 0) {
-                this._displayAlert('warning', 'No has introducido ningún horario válido para guardar.', modalBodySelector);
-            }
+        if (!intervals.length) {
+            this._displayAlert('warning', 'Introduce al menos un horario válido.', modalBodySelector);
             btn.disabled = false;
             btn.innerHTML = 'Guardar Horarios';
             return;
         }
 
+        intervals.sort((a, b) => a.check_in.localeCompare(b.check_in));
+
+        for (let i = 0; i < intervals.length; i++) {
+            const {check_in, check_out} = intervals[i];
+
+            if (check_in >= check_out) {
+                this._displayAlert(
+                    'danger',
+                    'La hora de entrada debe ser menor que la de salida.',
+                    modalBodySelector
+                );
+                btn.disabled = false;
+                btn.innerHTML = 'Guardar Horarios';
+                return;
+            }
+
+            if (i > 0 && intervals[i - 1].check_out > check_in) {
+                this._displayAlert(
+                    'danger',
+                    'Los horarios no pueden solaparse.',
+                    modalBodySelector
+                );
+                btn.disabled = false;
+                btn.innerHTML = 'Guardar Horarios';
+                return;
+            }
+        }
+
         try {
-            const result = await rpc('/my/attendance/manual_entry_intervals', {date: date, intervals: intervals});
+            const result = await rpc('/my/attendance/manual_entry_intervals', {
+                date,
+                intervals,
+            });
 
             if (result.error) {
                 this._displayAlert('danger', result.error, modalBodySelector);
                 btn.disabled = false;
                 btn.innerHTML = 'Guardar Horarios';
-            } else {
-                this._displayAlert('success', result.message || 'Horarios guardados correctamente.', modalBodySelector);
-                // Esperamos un poco para que el usuario lea el mensaje y luego recargamos
-                setTimeout(() => {
-                    const modalEl = this.el.querySelector('#manualEntryModal');
-                    if (modalEl) {
-                        $(modalEl).modal('hide');
-                    }
-                    // Forzamos la recarga para ver los nuevos datos
-                    window.location.reload();
-                }, 2000); // 2 segundos
+                return;
             }
+
+            this._displayButtonAlert(
+                btn,
+                'success',
+                result.message || 'Horarios guardados correctamente.'
+            );
+
+            setTimeout(() => {
+                const modalEl = this.el.querySelector('#manualEntryModal');
+                if (modalEl) {
+                    $(modalEl).modal('hide');
+                }
+                window.location.reload();
+            }, 1500);
+
         } catch (error) {
             this._displayAlert('danger', 'Error de conexión con el servidor.', modalBodySelector);
             btn.disabled = false;
             btn.innerHTML = 'Guardar Horarios';
         }
     },
+
 
     /**
      * Muestra una alerta en la interfaz. Acepta un 'target' opcional
@@ -321,9 +468,8 @@ publicWidget.registry.AttendancePageWidget = publicWidget.Widget.extend({
             return;
         }
 
-        // Elimina cualquier alerta anterior en ese contenedor para no acumularlas
         const existingAlert = container.querySelector('.alert');
-        if(existingAlert) {
+        if (existingAlert) {
             existingAlert.remove();
         }
 

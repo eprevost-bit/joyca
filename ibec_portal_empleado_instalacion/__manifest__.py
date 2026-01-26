@@ -15,8 +15,6 @@
     'category': 'Human Resources/Attendances',
     'version': '18.0.1.0.0',
     'license': 'LGPL-3',
-
-
     'depends': [
         'base',
         'portal',
@@ -24,8 +22,6 @@
         'hr_attendance',
         'hr_contract',  # Lo necesitaremos para las horas extra más adelante
     ],
-
-    # Archivos de datos que se cargarán (vistas, assets, etc.)
     'data': [
         # 'security/ir.model.access.csv', # Lo añadiremos cuando sea necesario
         'views/portal_templates.xml',
@@ -38,8 +34,8 @@
     # Archivos de assets (JS, CSS)
     'assets': {
         'web.assets_frontend': [
-            'ibec_portal_empleado_instalacion/static/src/js/attendance_portal.js',
-            'ibec_portal_empleado_instalacion/static/src/css/attendance_portal.css',
+            'ibec_portal_empleado/static/src/js/attendance_portal.js',
+            'ibec_portal_empleado/static/src/css/attendance_portal.css',
         ],
     },
     'installable': True,

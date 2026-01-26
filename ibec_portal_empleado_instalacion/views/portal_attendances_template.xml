@@ -43,23 +43,32 @@
                                 <br></br>
                                 <t t-esc="employee.name"/>, tu estado actual es:
                                 <span id="attendance_status_badge"
-                                      t-att-class="'badge ' + ('bg-success' if employee.attendance_state == 'checked_in' else 'bg-danger')">
-                                    <t t-esc="'DENTRO' if employee.attendance_state == 'checked_in' else 'FUERA'"/>
+                                      t-att-class="'badge ' + ('bg-success' if has_open_attendance else 'bg-danger')">
+                                    <t t-esc="'DENTRO' if has_open_attendance else 'FUERA'"/>
                                 </span>
+
                             </h5>
 
                             <p id="attendance_time_info" class="text-muted small"></p>
 
                             <div class="mb-3">
-                                <button class="btn btn-success btn-lg mx-2 btn-clock-in"
-                                        t-att-disabled="employee.attendance_state == 'checked_in' or None">
-                                    <i class="fa fa-sign-in me-2"/>Registrar ENTRADA
-                                </button>
-                                <button class="btn btn-danger btn-lg mx-2 btn-clock-out"
-                                        t-att-disabled="employee.attendance_state == 'checked_out' or None">
-                                    <i class="fa fa-sign-out me-2"/>Registrar SALIDA
-                                </button>
+
+                                <t t-if="has_open_attendance">
+                                    <button class="btn btn-danger btn-lg mx-2 btn-clock-out">
+                                        <i class="fa fa-sign-out me-2"/>Registrar SALIDA
+                                    </button>
+                                </t>
+
+                                <t t-if="not has_open_attendance">
+                                    <button class="btn btn-success btn-lg mx-2 btn-clock-in">
+                                        <i class="fa fa-sign-in me-2"/>Registrar ENTRADA
+                                    </button>
+                                </t>
+
+
                             </div>
+
+
                         </div>
                     </div>
 
@@ -177,10 +186,13 @@
                                 </tbody>
 
                             </table>
-                            <button class="btn btn-info btn-lg mx-2 btn-manual-entry" data-bs-toggle="modal"
-                                    data-bs-target="#manualEntryModal">
+                            <button class="btn btn-info btn-lg mx-2 btn-manual-entry"
+                                   
+                                    t-att-data-has-open-attendance="has_open_attendance">
                                 <i class="fa fa-calendar-plus me-2"/>Registrar día completo
                             </button>
+
+
                             <div class="modal fade" id="manualEntryModal" tabindex="-1"
                                  aria-labelledby="manualEntryModalLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-lg">
