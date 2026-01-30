@@ -19,7 +19,7 @@
     'version': '1.0',
 
     # Dependencias: nuestro módulo necesita el módulo de Ventas ('sale_management') para funcionar
-    'depends': ['sale_management', 'sale'],
+    'depends': ['sale_management', 'sale',"web"],
 
     # Los archivos XML que se cargarán
     'data': [

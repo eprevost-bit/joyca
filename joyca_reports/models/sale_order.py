@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+from pypdf import PdfReader, PdfWriter
+import base64
+import logging
+import io
+
+_logger = logging.getLogger(__name__)
 
 
 class SaleOrder(models.Model):
@@ -47,3 +53,84 @@ class SaleOrder(models.Model):
             pages.append(current_page)
 
         return pages
+
+    """def action_debug_count_pages(self):
+        self.ensure_one()
+
+
+        pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf(
+            'joyca_reports.report_sale_custom_standalone',
+            self.id
+        )
+
+
+        reader = PdfReader(io.BytesIO(pdf_content))
+        total_pages = len(reader.pages)
+
+        _logger.warning(
+            "Presupuesto %s: total_paginas=%s",
+            self.name,
+            total_pages
+        )
+
+
+        pdf_content = self._write_total_pages_first_page(
+            pdf_content,
+            total_pages
+        )
+
+
+        attachment = self.env['ir.attachment'].create({
+            'name': f'Presupuesto_{self.name}.pdf',
+            'type': 'binary',
+            'datas': base64.b64encode(pdf_content),
+            'res_model': 'sale.order',
+            'res_id': self.id,
+            'mimetype': 'application/pdf',
+        })
+
+
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/{attachment.id}?download=true',
+            'target': 'self',
+        }
+
+    def _write_total_pages_first_page(self, pdf_content, total_pages):
+        from pypdf import PdfReader, PdfWriter, Transformation
+        from reportlab.pdfgen import canvas
+        import io
+
+        reader = PdfReader(io.BytesIO(pdf_content))
+        writer = PdfWriter()
+
+        for index, page in enumerate(reader.pages):
+            if index == 0:
+                width = float(page.mediabox.width)
+                height = float(page.mediabox.height)
+
+                packet = io.BytesIO()
+                c = canvas.Canvas(packet, pagesize=(width, height))
+                c.setFont("Helvetica-Bold", 9)
+
+                c.drawString(510, 590, str(total_pages))
+
+                c.save()
+                packet.seek(0)
+
+                overlay = PdfReader(packet).pages[0]
+
+                page.merge_transformed_page(
+                    overlay,
+                    Transformation().translate(0, 0),
+                    over=True
+                )
+
+            writer.add_page(page)
+
+        output = io.BytesIO()
+        writer.write(output)
+        return output.getvalue()"""
+
+
+

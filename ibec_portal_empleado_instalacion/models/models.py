@@ -31,22 +31,25 @@ class HrAttendance(models.Model):
             attendance.worked_hours = attendance.x_worked_time_calculated
 
     # Validación
+
     @api.constrains('employee_id', 'check_in', 'check_out')
     def _check_attendance_overlap(self):
-        for att in self:
-            if not att.check_in:
-                continue
-
-            check_out = att.check_out or att.check_in
-
-            domain = [
-                ('id', '!=', att.id),
-                ('employee_id', '=', att.employee_id.id),
-                ('check_in', '<', check_out),
-                ('check_out', '>', att.check_in),
-            ]
-
-            if self.search_count(domain):
-                raise ValidationError(_(
-                    "Este registro se solapa con otro fichaje existente."
-                ))
+                for att in self:
+                    if not att.check_in:
+                        continue
+        
+                    # Si no hay salida aún, pues no validamos solapamiento
+                    if not att.check_out:
+                        continue
+        
+                    domain = [
+                        ('employee_id', '=', att.employee_id.id),
+                        ('id', '!=', att.id),
+                        ('check_in', '<', att.check_out),
+                        ('check_out', '>', att.check_in),
+                    ]
+        
+                    if self.search_count(domain):
+                        raise ValidationError(
+                            _("Este registro se solapa con otro fichaje existente.")
+                        )

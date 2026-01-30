@@ -64,7 +64,7 @@
                 </t>
                 <t t-if="current_section and (line_last or doc.order_line[line_index+1].display_type == 'line_section') and doc.print_folded">
                     <tr class="text-right">
-                        <td class=" ml-0 text-left" style="border-bottom:">
+                        <td class=" ml-0 text-left" style="border-bottom:none">
                             <strong t-esc="current_section.name"/>
                         </td>
                         <td colspan="99" style="text-align:right;" >
