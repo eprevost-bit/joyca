@@ -2,13 +2,14 @@
 <odoo>
     <template id="report_saleorder_custom" inherit_id="sale.report_saleorder_document">
         <xpath expr="//t[@t-call='web.external_layout']/div[@class='page']" position="replace">
-            <div class="page"
-            style="
+            <!--  style="
                 background-image: url('/web/image?model=res.company&amp;id=1&amp;field=x_studio_img');
                 background-repeat: no-repeat;
                 background-position: center;
                 background-size: 70%;
-                background-color: white;">
+                background-color: white;" -->
+            <div class="page"
+           >
                 <div class="container" style="margin-top: 0px;">
                     <div class="row">
                         <div class="col-12">

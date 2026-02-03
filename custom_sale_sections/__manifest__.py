@@ -1,17 +1,16 @@
-
 {
     'name': 'Personalización de Secciones de Venta',
     'version': '18.0.1.0.0',
     'summary': 'Añade un botón para crear secciones estructuradas y calcula costes porcentuales.',
     'author': 'Tu Nombre',
     'category': 'Sales/Sales',
-    'depends': ['sale_management', 'sale', 'mail', 'project'], 
+    'depends': ['sale_management', 'sale', 'mail', 'project'],
     'data': [
-        'reports/project_report_views.xml', 
+        'reports/project_report_views.xml',
         'views/sale_order_view.xml',
-        'views/proyect_view.xml', 
-        'views/product_template.xml', 
+        'views/proyect_view.xml',
+        'views/product_template.xml',
     ],
     'installable': True,
     'application': False,
-}   
+}

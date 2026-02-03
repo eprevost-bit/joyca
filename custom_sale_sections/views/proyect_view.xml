@@ -10,6 +10,7 @@
                     <button name="action_send_so_list_by_email" type="object" string="Enviar Lista por Correo" class="oe_highlight" icon="fa-envelope"/>
                     <button name="%(custom_sale_sections.action_report_project_summary)d" string="Imprimir Resumen" type="action" class="oe_highlight" icon="fa-print"/>
                 </xpath>
+                <!--
                 <xpath expr="//notebook" position="inside">
                     <page string="Presupuestos" name="sale_orders">
                         <button name="action_create_sale_order_with_lines" 
@@ -123,7 +124,7 @@
                             </div>
                         </div>
                     </group>
-                </xpath>
+                </xpath>-->
             </field>
         </record>
     </data>
