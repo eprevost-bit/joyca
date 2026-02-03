@@ -24,10 +24,11 @@
                     <attribute name="string">Descripción para cliente</attribute>
                     <attribute name="placeholder">Descripción para cliente...</attribute>
                 </xpath>
+                 <!--
                 <xpath expr="//field[@name='order_line']//list[@editable]//field[@name='product_uom']"
                        position="replace"/>
 
-                <!--
+
                 <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']"
                        position="attributes">
                     <attribute name="column_invisible">0</attribute>
