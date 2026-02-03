@@ -29,10 +29,9 @@
 
 
                 <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']"
-                       position="attributes">
-                    <attribute name="column_invisible">1</attribute>
+                       position="replace">
+                    <field name="price_unit" string="Precio Unitario"/>
                 </xpath>
-
 
             </field>
         </record>
