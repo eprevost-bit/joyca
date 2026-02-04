@@ -5,8 +5,8 @@
             <t t-foreach="docs" t-as="doc">
                 <div class="article">
                     <!--style="background-image: url('/web/image?model=res.company&amp;id=1&amp;field=x_studio_img');background-repeat: no-repeat; background-position: center;background-size: 70%;background-color: white; "-->
-                    <div class="page" >
-                        <div class="header" >
+                    <div class="page">
+                        <div class="header">
                             <div class="row align-items-start">
                                 <div class="col-7">
                                     <div class="d-flex align-items-start">
@@ -81,27 +81,37 @@
                             </div>
                         </div>
 
-                        <div class="content-manual" >
-                        <!--style="background-image: url('/web/image?model=res.company&amp;id=1&amp;field=x_studio_img');background-repeat: no-repeat; background-position: center;background-size: 70%;background-color: white; "-->
+                        <div class="content-manual">
+                            <!--style="background-image: url('/web/image?model=res.company&amp;id=1&amp;field=x_studio_img');background-repeat: no-repeat; background-position: center;background-size: 70%;background-color: white; "-->
 
                             <table class="table table-bordered" style="font-size:0.9rem; width:100%;">
                                 <thead>
                                     <tr style="background-color: rgba(193, 194, 195, 0.5);">
                                         <th class="text-center"
-                                            style="border-left:2.5px solid black; border-right:none; border-top:2.5px solid black; border-bottom:2.5px solid black;">
+                                            style="border-left:2.5px solid black; border-right:2.5px solid black; border-top:2.5px solid black; border-bottom:2.5px solid black;">
                                             <strong>FECHA</strong>
                                         </th>
                                         <th class="text-center"
-                                            style="border-left:none; border-right:none; border-top:2.5px solid black; border-bottom:2.5px solid black;">
+                                            style="border-left:2.5px solid black; border-right:2.5px solid black; border-top:2.5px solid black; border-bottom:2.5px solid black;">
                                             <strong>PRESUPUESTO</strong>
                                         </th>
                                         <th class="text-center"
-                                            style="border-left:none; border-right:2.5px solid black; border-top:2.5px solid black; border-bottom:2.5px solid black;">
+                                            style="border-left:2.5px solid black; border-right:2.5px solid black; border-top:2.5px solid black; border-bottom:2.5px solid black;">
                                             <strong>PÁG.</strong>
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <style>
+                                    .no-border-body td, tr, tbody {
+                                        border: none !important;
+                                    }
+
+                                    .no-border-body td:first-child {
+                                        text-align: justify;
+                                    }
+                                </style>
+
+                                <tbody class="no-border-body">
                                     <tr>
                                         <td class="text-center"
                                             style="border-left:2.5px solid black; border-right:2.5px solid black; border-bottom:2.5px solid black;">
@@ -117,50 +127,70 @@
                                         </td>
                                     </tr>
                                 </tbody>
-                                <table class="table table-bordered"
-                                       style="font-size:0.8rem; width:100%; margin-top:15px;">
-                                    <thead>
-                                        <tr style="background-color: rgba(193, 194, 195, 0.5);">
-                                            <th style="border-left:2.5px solid black; border-right:none; border-top:2.5px solid black; border-bottom:2.5px solid black; text-align:left;">
-                                                <strong>DESCRIPCIÓN</strong>
-                                            </th>
-                                            <th class="text-center"
-                                                style="border-left:none; border-right:none; border-top:2.5px solid black; border-bottom:2.5px solid black;">
-                                                <strong>UNIDAD.</strong>
-                                            </th>
-                                            <th class="text-center"
-                                                style="border-left:none; border-right:none; border-top:2.5px solid black; border-bottom:2.5px solid black;">
-                                                <strong>PRECIO UD.</strong>
-                                            </th>
-                                            <th class="text-center"
-                                                style="border-left:none; border-right:2.5px solid black; border-top:2.5px solid black; border-bottom:2.5px solid black;">
-                                                <strong>IMPORTE</strong>
-                                            </th>
-                                        </tr>
-                                    </thead>
+                            </table>
+                            <table class="table table-bordered"
+                                   style="font-size:0.8rem; width:100%; margin-top:15px; table-layout: fixed;">
 
 
-                                    <tbody>
-                                        <t t-foreach="doc.order_line" t-as="l">
-                                            <tr>
-                                                <td>
-                                                    <span t-field="l.name"/>
-                                                </td>
-                                                <td class="text-center">
+                                <colgroup>
+                                    <col style="width:70%"/>
+                                    <col style="width:7%"/>
+                                    <col style="width:11%"/>
+                                    <col style="width:12%"/>
+                                </colgroup>
+
+
+
+                                <thead style="border:2.5px solid black; text-align:left;">
+                                    <tr style="background-color: rgba(193, 194, 195, 0.5);">
+                                        <th style="border-right:2.5px solid black;">
+                                            <strong>DESCRIPCIÓN</strong>
+                                        </th>
+
+                                        <th class="text-center" style="border-right:2.5px solid black;">
+                                            <strong>UD</strong>
+                                        </th>
+
+                                        <th class="text-center" style="border-right:2.5px solid black;">
+                                            <strong>PRECIO UD.</strong>
+                                        </th>
+
+                                        <th class="text-center" style="border:none;">
+                                            <strong>IMPORTE</strong>
+                                        </th>
+                                    </tr>
+                                </thead>
+
+
+
+                                <tbody class="no-border-body">
+                                    <t t-foreach="doc.order_line" t-as="l">
+                                        <tr>
+                                            <!-- DESCRIPCIÓN (permite salto de línea) -->
+                                            <td style="word-wrap: break-word; white-space: normal;">
+                                                <span t-field="l.name"/>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <t t-if="l.product_uom_qty != 0">
                                                     <span t-field="l.product_uom_qty"/>
-                                                </td>
-                                                <td class="text-center"
-                                                >
+                                                </t>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <t t-if="l.price_unit != 0">
                                                     <span t-field="l.price_unit"/>
-                                                </td>
-                                                <td class="text-center"
-                                                >
+                                                </t>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <t t-if="l.price_subtotal != 0">
                                                     <span t-field="l.price_subtotal"/>
-                                                </td>
-                                            </tr>
-                                        </t>
-                                    </tbody>
-                                </table>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
                             </table>
 
 
@@ -171,28 +201,28 @@
                         </div>
                         <div class="row justify-content-end" style="margin-top: 100px;">
                             <div class="col-12">
-                                <table class="table table-bordered" style="font-size: 0.9rem;">
-                                    <thead>
+                                <table class="table " style="font-size: 0.9rem;">
+                                    <thead style="border-left:2.5px solid black; border-right:none; border-top:2.5px solid black; border-bottom:2.5px solid black; text-align:left;">
                                         <tr style="background-color: rgba(193, 194, 195, 0.5);">
                                             <th class="text-center"
-                                                style="border-right: none; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black">
+                                                style="border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black">
                                                 <strong>BASE</strong>
                                             </th>
                                             <th class="text-center"
-                                                style="border-right: none; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: none">
+                                                style="border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black">
                                                 <strong>%</strong>
                                             </th>
                                             <th class="text-center"
-                                                style="border-right: none; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left:none">
+                                                style="border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left:2.5px solid black">
                                                 <strong>IVA</strong>
                                             </th>
                                             <th class="text-center"
-                                                style="border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: none">
+                                                style="border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left:  2.5px solid black">
                                                 <strong>TOTAL</strong>
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="no-border-body">
                                         <tr style="background-color: unset;">
                                             <td class="text-center" rowspan="2"
                                                 style="background-color: unset; border-right: 2.5px solid black; border-top: 2.5px solid black; border-bottom: 2.5px solid black; border-left: 2.5px solid black">
@@ -624,7 +654,7 @@
 
                 </div>
             </t>
-            </t>
+        </t>
 
     </template>
 </odoo>
